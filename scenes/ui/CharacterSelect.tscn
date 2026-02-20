@@ -303,6 +303,24 @@ theme_override_styles/normal = SubResource("StyleBoxFlat_r0o0e")
 theme_override_styles/hover = SubResource("StyleBoxFlat_hjnfi")
 text = "Play"
 
+[node name="ResetDiceButton" type="Button" parent="."]
+custom_minimum_size = Vector2(400, 120)
+layout_mode = 1
+anchors_preset = 1
+anchor_left = 1.0
+anchor_right = 1.0
+offset_left = -460.0
+offset_top = 240.0
+offset_right = -60.0
+offset_bottom = 360.0
+grow_horizontal = 0
+theme_override_fonts/font = ExtResource("2_2todw")
+theme_override_font_sizes/font_size = 50
+theme_override_styles/normal = SubResource("StyleBoxFlat_r0o0e")
+theme_override_styles/hover = SubResource("StyleBoxFlat_hjnfi")
+text = "Reset Dice Range
+(10-10)"
+
 [connection signal="mouse_entered" from="CenterContainer/HBoxContainer/Knight" to="." method="_on_knight_hover"]
 [connection signal="mouse_exited" from="CenterContainer/HBoxContainer/Knight" to="." method="_on_button_mouse_exited"]
 [connection signal="pressed" from="CenterContainer/HBoxContainer/Knight" to="." method="_on_knight_pressed"]
@@ -314,3 +332,4 @@ text = "Play"
 [connection signal="pressed" from="CenterContainer/HBoxContainer/Wizard" to="." method="_on_wizard_pressed"]
 [connection signal="pressed" from="BackButton" to="." method="_on_back_button_pressed"]
 [connection signal="pressed" from="PlayButton" to="." method="_on_play_button_pressed"]
+[connection signal="pressed" from="ResetDiceButton" to="." method="_on_reset_dice_button_pressed"]

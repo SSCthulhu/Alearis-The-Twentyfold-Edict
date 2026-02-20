@@ -6,6 +6,7 @@ extends Control
 @onready var wizard_button: Button = $CenterContainer/HBoxContainer/Wizard
 @onready var back_button: Button = $BackButton
 @onready var play_button: Button = $PlayButton
+@onready var reset_dice_button: Button = $ResetDiceButton
 
 var selected_character: String = ""
 
@@ -84,10 +85,17 @@ func _on_back_button_pressed():
 	get_tree().change_scene_to_file("res://scenes/ui/MainMenu.tscn")
 
 
+func _on_reset_dice_button_pressed():
+	"""Reset dice range to default 10-10"""
+	if RunStateSingleton != null:
+		RunStateSingleton.update_starting_dice_range(10)
+		print("[CharacterSelect] Dice range reset to 10-10")
+
+
 # ✨ Button hover effects (matches MainMenu style)
 func _setup_button_hover_effects() -> void:
 	"""Set up button scaling on hover"""
-	var buttons: Array[Button] = [knight_button, rogue_button, wizard_button, back_button, play_button]
+	var buttons: Array[Button] = [knight_button, rogue_button, wizard_button, back_button, play_button, reset_dice_button]
 	
 	for btn in buttons:
 		if btn != null:
