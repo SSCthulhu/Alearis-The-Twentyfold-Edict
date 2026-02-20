@@ -58,6 +58,11 @@ var _is_forging: bool = false
 var _player_on_elevator: bool = false
 
 func _ready() -> void:
+	# CRITICAL: Set world_index to 3 when World3 loads
+	if RunStateSingleton != null:
+		RunStateSingleton.world_index = 3
+		print("[BossEncounterWorld3] Set world_index to 3 for World3")
+	
 	_boss = get_node_or_null(boss_path)
 	if _boss == null:
 		push_error("[BossEncounterWorld3] Boss not found at: ", boss_path)
