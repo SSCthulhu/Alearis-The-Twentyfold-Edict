@@ -1,0 +1,106 @@
+[gd_scene load_steps=17 format=3 uid="uid://bq7m3x5k8npwj"]
+
+[ext_resource type="Script" uid="uid://bcxauqxvxpt7m" path="res://scripts/enemies/EnemyNecromancer.gd" id="1_necro"]
+[ext_resource type="PackedScene" uid="uid://bvgni0b2cndxi" path="res://scenes/ui/DamageNumber.tscn" id="2_07ych"]
+[ext_resource type="Script" uid="uid://b0nfn5rqrixak" path="res://scripts/boss/Hurtbox.gd" id="3_4p88x"]
+[ext_resource type="PackedScene" uid="uid://4hct8hv0xqa" path="res://scenes/enemies/EnemyMeleeHitbox.tscn" id="3_41yo3"]
+[ext_resource type="PackedScene" uid="uid://bx1y203a4b5c6" path="res://scenes/enemies/EnemyMinionSkeleton.tscn" id="3_minion"]
+[ext_resource type="PackedScene" uid="uid://dpq6m7v8h2ple" path="res://scenes/enemies/Necromancer3DView.tscn" id="3_necro3d"]
+[ext_resource type="PackedScene" uid="uid://d0etxjrwuncr" path="res://scenes/enemies/NecromancerProjectile.tscn" id="3_projectile"]
+[ext_resource type="Script" uid="uid://ct6vabs6fcwub" path="res://scripts/enemies/EnemyHealth.gd" id="4_4p88x"]
+[ext_resource type="Script" uid="uid://dnkb2ub8ghbd8" path="res://scripts/enemies/EnemyRunScaler.gd" id="7_p8x61"]
+[ext_resource type="Script" uid="uid://xq6026rltx5k" path="res://scripts/enemies/EnemyStatusEffects.gd" id="7_statusfx"]
+[ext_resource type="PackedScene" uid="uid://cvlobx6k68egu" path="res://scenes/vfx/EnemyHitVFX.tscn" id="8_os1ej"]
+[ext_resource type="PackedScene" path="res://scenes/vfx/EnemyCritVFX.tscn" id="9_aeuev"]
+[ext_resource type="Script" uid="uid://bxkstno4wqyqf" path="res://scripts/ui/DamageNumberEmitter.gd" id="13_c4nu0"]
+
+[sub_resource type="CapsuleShape2D" id="CapsuleShape2D_4ouk6"]
+radius = 55.0
+height = 168.0
+
+[sub_resource type="CapsuleShape2D" id="CapsuleShape2D_2boc0"]
+radius = 55.0
+height = 168.0
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_07ych"]
+bg_color = Color(0.7529412, 0.22352941, 0.16862746, 1)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0, 0, 0, 1)
+corner_radius_top_left = 10
+corner_radius_top_right = 10
+corner_radius_bottom_right = 10
+corner_radius_bottom_left = 10
+
+[node name="EnemyNecromancer" type="CharacterBody2D"]
+z_index = 5
+collision_layer = 4
+script = ExtResource("1_necro")
+minion_scene = ExtResource("3_minion")
+projectile_scene = ExtResource("3_projectile")
+melee_spawn_forward_px = 50.0
+edge_aggro_lockout_time = 0.35
+aggro_range = 1200.0
+lose_aggro_range = 1440.0
+patrol_distance = 200.0
+sprite_faces_right = true
+strikezone_scene = ExtResource("3_41yo3")
+attack_cooldown = 2.5
+attack_hit_time = 0.75
+same_platform_y_tolerance = 24.0
+same_platform_floor_y_tolerance = 16.0
+anim_attack = &"Player/Melee_2H_Attack_Chop"
+
+[node name="Enemy3DView" parent="." instance=ExtResource("3_necro3d")]
+position = Vector2(0, -10)
+viewport_size = Vector2i(1024, 512)
+screen_pixels = Vector2i(512, 256)
+
+[node name="BodyCollision" type="CollisionShape2D" parent="."]
+position = Vector2(0, -10.075)
+shape = SubResource("CapsuleShape2D_4ouk6")
+
+[node name="Hurtbox" type="Area2D" parent="." groups=["enemies"]]
+script = ExtResource("3_4p88x")
+receiver_path = NodePath("../Health")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Hurtbox"]
+position = Vector2(0, -10.075)
+shape = SubResource("CapsuleShape2D_2boc0")
+
+[node name="Health" type="Node" parent="."]
+script = ExtResource("4_4p88x")
+hit_vfx_scene = ExtResource("8_os1ej")
+crit_vfx_scene = ExtResource("9_aeuev")
+
+[node name="StatusEffects" type="Node" parent="."]
+script = ExtResource("7_statusfx")
+
+[node name="HealthBar" type="ProgressBar" parent="."]
+custom_minimum_size = Vector2(0, 12)
+offset_left = -39.47
+offset_top = -113.33
+offset_right = 40.53
+offset_bottom = -107.33
+theme_override_styles/fill = SubResource("StyleBoxFlat_07ych")
+max_value = 60.0
+show_percentage = false
+
+[node name="CastBar" type="ProgressBar" parent="."]
+modulate = Color(0.3, 0.7, 1, 1)
+custom_minimum_size = Vector2(0, 8)
+offset_left = -39.47
+offset_top = -122.0
+offset_right = 40.53
+offset_bottom = -118.0
+max_value = 1.0
+show_percentage = false
+
+[node name="RunScaler" type="Node" parent="."]
+script = ExtResource("7_p8x61")
+
+[node name="DamageNumberEmitter" type="Node" parent="."]
+script = ExtResource("13_c4nu0")
+damage_number_scene = ExtResource("2_07ych")

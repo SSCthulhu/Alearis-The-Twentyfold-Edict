@@ -1,0 +1,135 @@
+[gd_scene load_steps=17 format=3 uid="uid://rr0wpr0j"]
+
+[ext_resource type="Script" uid="uid://ci1v7i46tfek6" path="res://scripts/enemies/EnemyProjectile.gd" id="1_proj"]
+[ext_resource type="Texture2D" uid="uid://cnx7ux6lulx0a" path="res://assets/VFX/Wind VFX Spritesheets/Dash_Wind_White_v7_spritesheet.png" id="2_vfx"]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_arrow"]
+size = Vector2(40, 8)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_pr018"]
+atlas = ExtResource("2_vfx")
+region = Rect2(0, 512, 512, 512)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_abv2o"]
+atlas = ExtResource("2_vfx")
+region = Rect2(512, 512, 512, 512)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_m0pkx"]
+atlas = ExtResource("2_vfx")
+region = Rect2(1024, 512, 512, 512)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_vcpdq"]
+atlas = ExtResource("2_vfx")
+region = Rect2(1536, 512, 512, 512)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_tcwbe"]
+atlas = ExtResource("2_vfx")
+region = Rect2(0, 1024, 512, 512)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_17bn0"]
+atlas = ExtResource("2_vfx")
+region = Rect2(512, 1024, 512, 512)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_ldjph"]
+atlas = ExtResource("2_vfx")
+region = Rect2(1024, 1024, 512, 512)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_axkik"]
+atlas = ExtResource("2_vfx")
+region = Rect2(1536, 1024, 512, 512)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_c5gv6"]
+atlas = ExtResource("2_vfx")
+region = Rect2(0, 1536, 512, 512)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_u72j2"]
+atlas = ExtResource("2_vfx")
+region = Rect2(512, 1536, 512, 512)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_nf5mw"]
+atlas = ExtResource("2_vfx")
+region = Rect2(1024, 1536, 512, 512)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_hjys3"]
+atlas = ExtResource("2_vfx")
+region = Rect2(1536, 1536, 512, 512)
+
+[sub_resource type="SpriteFrames" id="SpriteFrames_wind"]
+animations = [{
+"frames": [{
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_pr018")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_abv2o")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_m0pkx")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_vcpdq")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_tcwbe")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_17bn0")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_ldjph")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_axkik")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_c5gv6")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_u72j2")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_nf5mw")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_hjys3")
+}],
+"loop": true,
+"name": &"wind",
+"speed": 30.0
+}]
+
+[node name="SkeletonArrowProjectile" type="Area2D"]
+z_index = 20
+collision_layer = 0
+collision_mask = 2
+script = ExtResource("1_proj")
+speed = 800.0
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="."]
+shape = SubResource("RectangleShape2D_arrow")
+
+[node name="Visual" type="ColorRect" parent="."]
+z_index = 20
+offset_left = -20.0
+offset_top = -4.0
+offset_right = 20.0
+offset_bottom = 4.0
+color = Color(0.6, 0.4, 0.2, 1)
+
+[node name="Tip" type="ColorRect" parent="."]
+z_index = 20
+offset_left = 16.0
+offset_top = -6.0
+offset_right = 24.0
+offset_bottom = 6.0
+rotation = 0.785398
+pivot_offset = Vector2(0, 6)
+color = Color(0.7, 0.7, 0.7, 1)
+
+[node name="WindVFX" type="AnimatedSprite2D" parent="."]
+z_index = 20
+position = Vector2(-10, 0)
+scale = Vector2(1.2, 1.2)
+sprite_frames = SubResource("SpriteFrames_wind")
+animation = &"wind"
+autoplay = "wind"

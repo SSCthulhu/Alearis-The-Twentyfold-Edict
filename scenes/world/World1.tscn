@@ -1,0 +1,350 @@
+[gd_scene load_steps=37 format=3 uid="uid://4viiqcwnkguk"]
+
+[ext_resource type="Script" uid="uid://cf1e5h4b5lu3u" path="res://scripts/systems/EncounterController.gd" id="1_qvqnh"]
+[ext_resource type="PackedScene" uid="uid://cai81qjmmgokj" path="res://scenes/arena/AscensionCharge.tscn" id="2_n8wkn"]
+[ext_resource type="PackedScene" uid="uid://ccrejlifa6gwm" path="res://scenes/enemies/EnemyKnightAdd.tscn" id="3_61woi"]
+[ext_resource type="PackedScene" uid="uid://deotiruix5irf" path="res://scenes/enemies/EnemySkeletonGolem.tscn" id="3_golem"]
+[ext_resource type="PackedScene" uid="uid://3n3mym4g3" path="res://scenes/enemies/EnemySkeletonMage.tscn" id="3_mage"]
+[ext_resource type="PackedScene" uid="uid://bq7m3x5k8npwj" path="res://scenes/enemies/EnemyNecromancer.tscn" id="3_necro"]
+[ext_resource type="PackedScene" uid="uid://cjteqkv3dbcyl" path="res://scenes/enemies/EnemyRogueSkeleton.tscn" id="3_rogue"]
+[ext_resource type="Script" uid="uid://kl22l7l8p1rd" path="res://scripts/systems/FloorProgressionController.gd" id="4_yjglx"]
+[ext_resource type="PackedScene" uid="uid://dlbxvu5p3c25n" path="res://scenes/world/RewardChest.tscn" id="5_mi5e1"]
+[ext_resource type="Script" uid="uid://c34rst6nb4hnx" path="res://scripts/enemies/FloorEnemySpawner.gd" id="6_imtto"]
+[ext_resource type="PackedScene" uid="uid://0hu6af2x3pya" path="res://scenes/arena/Arena1.tscn" id="7_ej262"]
+[ext_resource type="Script" uid="uid://b7t57ut585hvy" path="res://scripts/arena/ChargeStation.gd" id="8_kagm6"]
+[ext_resource type="Texture2D" uid="uid://d1em67hpaua7g" path="res://art/charge/charge_ring.png" id="10_wc667"]
+[ext_resource type="Script" uid="uid://cn3ibi67l1lfu" path="res://scripts/arena/CeilingGate.gd" id="11_f3kdu"]
+[ext_resource type="PackedScene" uid="uid://c72m65e63bs0o" path="res://scenes/player/player.tscn" id="12_gp4b6"]
+[ext_resource type="PackedScene" uid="uid://b6qbnom4vba8g" path="res://scenes/boss/Boss_World1.tscn" id="13_1srhu"]
+[ext_resource type="PackedScene" uid="uid://ojpp3p46grti" path="res://scenes/arena/AscensionSocket.tscn" id="14_usd6y"]
+[ext_resource type="PackedScene" uid="uid://b3grgamegrqq2" path="res://scenes/hazards/RisingHazard.tscn" id="15_6fyig"]
+[ext_resource type="Texture2D" uid="uid://bu7rb3iuofwlb" path="res://art/ChargeStation/pipo-mapeffect013a.png" id="15_imtto"]
+[ext_resource type="PackedScene" uid="uid://da2fr6n8vi4x7" path="res://scenes/ui/UI.tscn" id="16_thmre"]
+[ext_resource type="Resource" uid="uid://dtfg2ntfkn5oa" path="res://styles/HUDStyle.tres" id="17_80gak"]
+[ext_resource type="PackedScene" uid="uid://cxsb0sxvfl0t" path="res://scenes/ui/DiceModifierChoice.tscn" id="18_alxcq"]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_400s5"]
+size = Vector2(171, 241.06)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_del0j"]
+atlas = ExtResource("15_imtto")
+region = Rect2(0, 0, 400, 400)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_nber5"]
+atlas = ExtResource("15_imtto")
+region = Rect2(400, 0, 400, 400)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_p755k"]
+atlas = ExtResource("15_imtto")
+region = Rect2(800, 0, 400, 400)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_gkhtv"]
+atlas = ExtResource("15_imtto")
+region = Rect2(1200, 0, 400, 400)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_vbwik"]
+atlas = ExtResource("15_imtto")
+region = Rect2(1600, 0, 400, 400)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_15ony"]
+atlas = ExtResource("15_imtto")
+region = Rect2(0, 400, 400, 400)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_rn1y0"]
+atlas = ExtResource("15_imtto")
+region = Rect2(400, 400, 400, 400)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_2qo72"]
+atlas = ExtResource("15_imtto")
+region = Rect2(800, 400, 400, 400)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_j4kwm"]
+atlas = ExtResource("15_imtto")
+region = Rect2(1200, 400, 400, 400)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_fuafr"]
+atlas = ExtResource("15_imtto")
+region = Rect2(1600, 400, 400, 400)
+
+[sub_resource type="SpriteFrames" id="SpriteFrames_ej262"]
+animations = [{
+"frames": [{
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_del0j")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_nber5")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_p755k")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_gkhtv")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_vbwik")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_15ony")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_rn1y0")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_2qo72")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_j4kwm")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_fuafr")
+}],
+"loop": true,
+"name": &"default",
+"speed": 10.0
+}]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_d0ueh"]
+size = Vector2(3500, 64)
+
+[node name="World1" type="Node2D"]
+
+[node name="EncounterController" type="Node" parent="."]
+script = ExtResource("1_qvqnh")
+charge_scene = ExtResource("2_n8wkn")
+world_scene_paths = Array[String](["res://scenes/world/World1.tscn", "res://scenes/world/World2.tscn", "res://scenes/world/World3.tscn"])
+ascension_sockets_root_path = NodePath("../AscensionSocket")
+add_scene = ExtResource("3_61woi")
+golem_scene = ExtResource("3_golem")
+start_on_ready = false
+
+[node name="FloorProgressionController" type="Node" parent="."]
+script = ExtResource("4_yjglx")
+gate_paths = Array[NodePath]([NodePath("../Arena/Ceilings/CeilingGate_F1"), NodePath("../Arena/Ceilings/CeilingGate_F2"), NodePath("../Arena/Ceilings/CeilingGate_F3"), NodePath("../Arena/Ceilings/CeilingGate_F4")])
+derive_floor_ceiling_y_from_gates = true
+floor_ceiling_y = PackedFloat32Array(0)
+chest_scene = ExtResource("5_mi5e1")
+dice_choice_ui_path = NodePath("../DiceModifierChoice")
+chest_spawn_fallback_path = NodePath("../Arena/ChestSpawns")
+enable_orb_flight = false
+unlock_floor_1_platforms = Array[NodePath]([NodePath("../Arena/Platform8"), NodePath("../Arena/Platform9")])
+unlock_floor_2_platforms = Array[NodePath]([NodePath("../Arena/Platform14")])
+unlock_floor_3_platforms = Array[NodePath]([NodePath("../Arena/Platform23")])
+unlock_floor_4_platforms = Array[NodePath]([NodePath("../Arena/Platform20"), NodePath("../Arena/Platform24")])
+
+[node name="FloorEnemySpawner" type="Node" parent="."]
+script = ExtResource("6_imtto")
+enemy_scenes = Array[PackedScene]([ExtResource("3_61woi"), ExtResource("3_necro"), ExtResource("3_rogue"), ExtResource("3_mage")])
+golem_scene = ExtResource("3_golem")
+enable_strict_ledge_guard = true
+
+[node name="Arena" parent="." instance=ExtResource("7_ej262")]
+
+[node name="Platform4" parent="Arena" index="9"]
+position = Vector2(0, 280)
+
+[node name="Platform10" parent="Arena" index="10"]
+position = Vector2(-1400, -300)
+
+[node name="Platform11" parent="Arena" index="11"]
+position = Vector2(-500, -300)
+
+[node name="Platform13" parent="Arena" index="12"]
+position = Vector2(500, -300)
+
+[node name="Platform14" parent="Arena" index="13"]
+position = Vector2(400, -750)
+
+[node name="Platform18" parent="Arena" index="14"]
+position = Vector2(0, -2000)
+
+[node name="Platform19" parent="Arena" index="15"]
+position = Vector2(-700, -2000)
+
+[node name="Platform21" parent="Arena" index="17"]
+position = Vector2(700, -2000)
+
+[node name="Platform22" parent="Arena" index="18"]
+position = Vector2(1400, -2000)
+
+[node name="Platform23" parent="Arena" index="19"]
+position = Vector2(-1400, -1600)
+
+[node name="Platform15" parent="Arena" index="21"]
+position = Vector2(-1200, -1050)
+
+[node name="Platform12" parent="Arena" index="23"]
+position = Vector2(1400, -300)
+
+[node name="ChargeSpawnA" parent="Arena/ChargeSpawn" index="0"]
+position = Vector2(-850, -3175)
+
+[node name="ChargeSpawnB" parent="Arena/ChargeSpawn" index="1"]
+position = Vector2(530, -3167)
+
+[node name="ArenaCenter" parent="Arena" index="26"]
+position = Vector2(0, -3200)
+
+[node name="P2" parent="Arena/Spawns/Floor1" index="1"]
+position = Vector2(-800, 1330)
+
+[node name="ChestSpawn_F1" parent="Arena/ChestSpawns" index="0"]
+position = Vector2(0, 1310)
+
+[node name="ChestSpawn_F3" parent="Arena/ChestSpawns" index="2"]
+position = Vector2(-1000, -1340)
+
+[node name="ChestSpawn_F4" parent="Arena/ChestSpawns" index="3"]
+position = Vector2(700, -2160)
+
+[node name="HazardBottom" type="Marker2D" parent="Arena"]
+position = Vector2(0, 1500)
+
+[node name="HazardCeiling" type="Marker2D" parent="Arena"]
+position = Vector2(0, -95)
+
+[node name="ChargeStations" type="Node2D" parent="Arena"]
+
+[node name="ChargeStation_A" type="Area2D" parent="Arena/ChargeStations"]
+position = Vector2(-1092, -3757)
+script = ExtResource("8_kagm6")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Arena/ChargeStations/ChargeStation_A"]
+position = Vector2(0, 136.53)
+shape = SubResource("RectangleShape2D_400s5")
+
+[node name="Highlight" type="Sprite2D" parent="Arena/ChargeStations/ChargeStation_A"]
+visible = false
+texture = ExtResource("10_wc667")
+
+[node name="AnimatedSprite2D" type="AnimatedSprite2D" parent="Arena/ChargeStations/ChargeStation_A"]
+modulate = Color(1, 1, 1, 0.78431374)
+z_index = 6
+position = Vector2(0, 128)
+sprite_frames = SubResource("SpriteFrames_ej262")
+autoplay = "default"
+
+[node name="ChargeStation_B" type="Area2D" parent="Arena/ChargeStations"]
+position = Vector2(1092, -3746)
+script = ExtResource("8_kagm6")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Arena/ChargeStations/ChargeStation_B"]
+position = Vector2(4.5, 136.53003)
+shape = SubResource("RectangleShape2D_400s5")
+
+[node name="Highlight" type="Sprite2D" parent="Arena/ChargeStations/ChargeStation_B"]
+visible = false
+texture = ExtResource("10_wc667")
+
+[node name="AnimatedSprite2D" type="AnimatedSprite2D" parent="Arena/ChargeStations/ChargeStation_B"]
+modulate = Color(1, 1, 1, 0.78431374)
+z_index = 6
+position = Vector2(0, 128)
+sprite_frames = SubResource("SpriteFrames_ej262")
+autoplay = "default"
+
+[node name="Ceilings" type="Node2D" parent="Arena"]
+
+[node name="CeilingGate_F1" type="StaticBody2D" parent="Arena/Ceilings" groups=["ceiling_gate"]]
+position = Vector2(0, 200)
+collision_mask = 2
+script = ExtResource("11_f3kdu")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Arena/Ceilings/CeilingGate_F1"]
+shape = SubResource("RectangleShape2D_d0ueh")
+
+[node name="CeilingGate_F2" type="StaticBody2D" parent="Arena/Ceilings" groups=["ceiling_gate"]]
+position = Vector2(0, -900)
+collision_mask = 2
+script = ExtResource("11_f3kdu")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Arena/Ceilings/CeilingGate_F2"]
+shape = SubResource("RectangleShape2D_d0ueh")
+
+[node name="CeilingGate_F3" type="StaticBody2D" parent="Arena/Ceilings" groups=["ceiling_gate"]]
+position = Vector2(0, -1925)
+collision_mask = 2
+script = ExtResource("11_f3kdu")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Arena/Ceilings/CeilingGate_F3"]
+shape = SubResource("RectangleShape2D_d0ueh")
+
+[node name="CeilingGate_F4" type="StaticBody2D" parent="Arena/Ceilings" groups=["ceiling_gate"]]
+position = Vector2(0, -2866)
+collision_mask = 2
+script = ExtResource("11_f3kdu")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Arena/Ceilings/CeilingGate_F4"]
+shape = SubResource("RectangleShape2D_d0ueh")
+
+[node name="Player" parent="." instance=ExtResource("12_gp4b6")]
+position = Vector2(-83, 1276)
+
+[node name="InteractArea" parent="Player" index="2"]
+position = Vector2(-11.56, 51.15)
+
+[node name="CollisionShape2D" parent="Player/InteractArea" index="0"]
+position = Vector2(11.555, -51.155)
+
+[node name="Camera2D" parent="Player" index="9"]
+limit_top = -4500
+
+[node name="Boss" parent="." instance=ExtResource("13_1srhu")]
+position = Vector2(0, -3330)
+collision_mask = 3
+
+[node name="AcensionCharge" parent="." instance=ExtResource("2_n8wkn")]
+position = Vector2(536, -3163)
+
+[node name="AscensionSocket" type="Node2D" parent="."]
+
+[node name="AscensionSocketA" parent="AscensionSocket" instance=ExtResource("14_usd6y")]
+position = Vector2(-303, -3995)
+scale = Vector2(1, 1)
+
+[node name="AscensionSocketB" parent="AscensionSocket" instance=ExtResource("14_usd6y")]
+position = Vector2(311, -3995)
+scale = Vector2(1, 1)
+
+[node name="RisingHazard" parent="." instance=ExtResource("15_6fyig")]
+collision_layer = 3
+collision_mask = 3
+bottom_marker_path = NodePath("../Arena/HazardBottom")
+
+[node name="UI" parent="." instance=ExtResource("16_thmre")]
+
+[node name="PlayerHUDCluster" parent="UI/ScreenRoot/HUDRoot/BottomRight" index="0"]
+style = ExtResource("17_80gak")
+
+[node name="PlayerHUDWiring" parent="UI/ScreenRoot/HUDRoot" index="4"]
+player_path = NodePath("../../../../Player")
+combat_path = NodePath("../../../../Player/Combat")
+
+[node name="EncounterHUDWiring" parent="UI/ScreenRoot/HUDRoot" index="5"]
+floor_controller_path = NodePath("../../../../FloorProgressionController")
+boss_path = NodePath("../../../../Boss")
+
+[node name="DiceModifierChoice" parent="." instance=ExtResource("18_alxcq")]
+rising_hazard_path = NodePath("../RisingHazard")
+
+[editable path="Arena"]
+[editable path="Player"]
+[editable path="Player/Visual/Body3DView"]
+[editable path="Boss"]
+[editable path="AcensionCharge"]
+[editable path="AscensionSocket/AscensionSocketA"]
+[editable path="AscensionSocket/AscensionSocketB"]
+[editable path="RisingHazard"]
+[editable path="UI"]
+[editable path="UI/DeathOverlay/RunSummaryPanel"]
+[editable path="UI/VictoryUI/Root/CardA"]
+[editable path="UI/VictoryUI/Root/CardB"]
+[editable path="UI/VictoryUI/Root/CardC"]
+[editable path="UI/VictoryUI/Root/CardD"]
+[editable path="UI/VictoryUI/Root/CardE"]
+[editable path="DiceModifierChoice"]
+[editable path="DiceModifierChoice/Root/CardA"]
+[editable path="DiceModifierChoice/Root/CardB"]
+[editable path="DiceModifierChoice/Root/CardC"]
+[editable path="DiceModifierChoice/Root/CardD"]
+[editable path="DiceModifierChoice/Root/CardE"]

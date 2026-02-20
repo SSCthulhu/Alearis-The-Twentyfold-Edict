@@ -1,0 +1,80 @@
+[gd_scene load_steps=8 format=3 uid="uid://c1757dykl7ner"]
+
+[ext_resource type="PackedScene" uid="uid://3fuld8awghlh" path="res://scenes/arena/PlatformResizable.tscn" id="1_mls5m"]
+[ext_resource type="Texture2D" uid="uid://bnf1o1bujacxe" path="res://art/Worlds/Volcanic/Tileset/1.png" id="2_2yaae"]
+[ext_resource type="Texture2D" uid="uid://142q5mhwruo7" path="res://art/Worlds/Volcanic/Tileset/6.png" id="5_jw8ik"]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_fafco"]
+size = Vector2(6000, 500)
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_ddqj4"]
+size = Vector2(43, 362.5)
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_tc5gq"]
+size = Vector2(60, 15000)
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_etbs0"]
+size = Vector2(60, 15000)
+
+[node name="FinalArena" type="Node2D"]
+
+[node name="Geometry" type="Node2D" parent="."]
+
+[node name="Floors" type="Node2D" parent="Geometry"]
+
+[node name="Floor1" parent="Geometry/Floors" instance=ExtResource("1_mls5m")]
+position = Vector2(0, 1522)
+texture = ExtResource("2_2yaae")
+width_px = 6000
+height_px = 484
+collision_height_px = 500
+collision_offset_y_px = 46.425
+patch_left = 50
+patch_right = 50
+patch_top = 48
+patch_bottom = 48
+
+[node name="Visual" parent="Geometry/Floors/Floor1" index="0"]
+offset_left = -3000.0
+offset_top = -242.0
+offset_right = 3000.0
+offset_bottom = 242.0
+texture = ExtResource("2_2yaae")
+patch_margin_left = 50
+patch_margin_top = 48
+patch_margin_right = 50
+patch_margin_bottom = 48
+
+[node name="Collision" parent="Geometry/Floors/Floor1/Body" index="0"]
+position = Vector2(0, 46.425)
+shape = SubResource("RectangleShape2D_fafco")
+
+[node name="Platforms" type="Node2D" parent="Geometry"]
+
+[node name="6" type="Sprite2D" parent="Geometry/Platforms"]
+position = Vector2(6, 700)
+scale = Vector2(2, 1)
+texture = ExtResource("5_jw8ik")
+
+[node name="StaticBody2D" type="StaticBody2D" parent="Geometry/Platforms/6"]
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Geometry/Platforms/6/StaticBody2D"]
+position = Vector2(0.25, -89.5)
+rotation = 1.5707964
+shape = SubResource("RectangleShape2D_ddqj4")
+
+[node name="LeftWall" type="StaticBody2D" parent="Geometry"]
+position = Vector2(-2733, -13199)
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Geometry/LeftWall"]
+scale = Vector2(2, 2)
+shape = SubResource("RectangleShape2D_tc5gq")
+
+[node name="RightWall" type="StaticBody2D" parent="Geometry"]
+position = Vector2(2694, -13214)
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Geometry/RightWall"]
+scale = Vector2(2, 2)
+shape = SubResource("RectangleShape2D_etbs0")
+
+[editable path="Geometry/Floors/Floor1"]

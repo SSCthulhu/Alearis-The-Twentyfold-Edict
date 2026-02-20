@@ -1,0 +1,147 @@
+[gd_scene load_steps=20 format=3 uid="uid://ciqc6d6tl1827"]
+
+[ext_resource type="Texture2D" uid="uid://60lv3sbuhs8q" path="res://assets/VFX/Fire VFX Spritesheets/Jet_Fire_v9_spritesheet.png" id="1_fire"]
+
+[sub_resource type="GDScript" id="GDScript_fire"]
+script/source = "extends Node2D
+
+@onready var sprite: AnimatedSprite2D = $AnimatedSprite2D
+
+func _ready() -> void:
+	if sprite:
+		sprite.play(\"fire\")
+		sprite.animation_finished.connect(_on_animation_finished)
+
+func _on_animation_finished() -> void:
+	queue_free()
+"
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_fire_00"]
+atlas = ExtResource("1_fire")
+region = Rect2(0, 0, 512, 512)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_fire_01"]
+atlas = ExtResource("1_fire")
+region = Rect2(512, 0, 512, 512)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_fire_02"]
+atlas = ExtResource("1_fire")
+region = Rect2(1024, 0, 512, 512)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_fire_03"]
+atlas = ExtResource("1_fire")
+region = Rect2(1536, 0, 512, 512)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_fire_04"]
+atlas = ExtResource("1_fire")
+region = Rect2(0, 512, 512, 512)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_fire_05"]
+atlas = ExtResource("1_fire")
+region = Rect2(512, 512, 512, 512)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_fire_06"]
+atlas = ExtResource("1_fire")
+region = Rect2(1024, 512, 512, 512)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_fire_07"]
+atlas = ExtResource("1_fire")
+region = Rect2(1536, 512, 512, 512)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_fire_08"]
+atlas = ExtResource("1_fire")
+region = Rect2(0, 1024, 512, 512)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_fire_09"]
+atlas = ExtResource("1_fire")
+region = Rect2(512, 1024, 512, 512)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_fire_10"]
+atlas = ExtResource("1_fire")
+region = Rect2(1024, 1024, 512, 512)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_fire_11"]
+atlas = ExtResource("1_fire")
+region = Rect2(1536, 1024, 512, 512)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_fire_12"]
+atlas = ExtResource("1_fire")
+region = Rect2(0, 1536, 512, 512)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_fire_13"]
+atlas = ExtResource("1_fire")
+region = Rect2(512, 1536, 512, 512)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_fire_14"]
+atlas = ExtResource("1_fire")
+region = Rect2(1024, 1536, 512, 512)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_fire_15"]
+atlas = ExtResource("1_fire")
+region = Rect2(1536, 1536, 512, 512)
+
+[sub_resource type="SpriteFrames" id="SpriteFrames_fire"]
+animations = [{
+"frames": [{
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_fire_00")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_fire_01")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_fire_02")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_fire_03")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_fire_04")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_fire_05")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_fire_06")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_fire_07")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_fire_08")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_fire_09")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_fire_10")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_fire_11")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_fire_12")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_fire_13")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_fire_14")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_fire_15")
+}],
+"loop": false,
+"name": &"fire",
+"speed": 25.0
+}]
+
+[node name="LavaFireVFX" type="Node2D"]
+script = SubResource("GDScript_fire")
+
+[node name="AnimatedSprite2D" type="AnimatedSprite2D" parent="."]
+z_index = -2
+position = Vector2(0, -50)
+scale = Vector2(2, 2)
+sprite_frames = SubResource("SpriteFrames_fire")
+animation = &"fire"

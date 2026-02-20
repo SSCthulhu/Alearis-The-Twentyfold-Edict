@@ -1,0 +1,13 @@
+[gd_resource type="Resource" script_class="RelicData" load_steps=2 format=3 uid="uid://diesbhpwneshx"]
+
+[ext_resource type="Script" uid="uid://dwyhl0a0pqlnn" path="res://scripts/systems/RelicData.gd" id="1_3ua56"]
+
+[resource]
+script = ExtResource("1_3ua56")
+id = &"c6_bleedstone"
+display_name = "Bleedstone"
+band = 2
+tags = Array[StringName]([&"damage", &"dot", &"bleed"])
+description_lines = Array[String](["Bleed deals +35% damage."])
+effect_id = &"relic_bleedstone"
+metadata/_custom_type_script = "uid://dwyhl0a0pqlnn"

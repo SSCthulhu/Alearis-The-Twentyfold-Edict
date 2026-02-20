@@ -1,0 +1,15 @@
+[gd_scene load_steps=3 format=3 uid="uid://djiyhvjw4fj03"]
+
+[ext_resource type="Script" uid="uid://dof0hrrr87rnh" path="res://scripts/player/Player3DView.gd" id="1_mddaj"]
+[ext_resource type="PackedScene" uid="uid://6qg4j5a3ru4x" path="res://scenes/player/Player3DStage.tscn" id="2_bvmyq"]
+
+[node name="Player3DView" type="Node2D"]
+script = ExtResource("1_mddaj")
+stage_scene = ExtResource("2_bvmyq")
+
+[node name="SubViewport" type="SubViewport" parent="."]
+msaa_3d = 2
+
+[node name="ScreenSprite" type="Sprite2D" parent="."]
+
+[node name="VisibleOnScreenNotifier2D" type="VisibleOnScreenNotifier2D" parent="."]

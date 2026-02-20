@@ -1,0 +1,18 @@
+[gd_scene load_steps=3 format=3 uid="uid://exnu6fx10rgm"]
+
+[ext_resource type="Script" uid="uid://bm058dkqm6f7m" path="res://scripts/enemies/Enemy3DView.gd" id="1_script"]
+[ext_resource type="PackedScene" uid="uid://ccta54fa4ns3b" path="res://scenes/boss/Clanker3DStage.tscn" id="2_hf37c"]
+
+[node name="Clanker3DView" type="Node2D"]
+script = ExtResource("1_script")
+stage_scene = ExtResource("2_hf37c")
+viewport_size = Vector2i(4096, 3072)
+screen_pixels = Vector2i(1536, 1024)
+stage_animation_player_path = NodePath("")
+
+[node name="SubViewport" type="SubViewport" parent="."]
+msaa_3d = 2
+
+[node name="ScreenSprite" type="Sprite2D" parent="."]
+
+[node name="VisibleOnScreenNotifier2D" type="VisibleOnScreenNotifier2D" parent="."]

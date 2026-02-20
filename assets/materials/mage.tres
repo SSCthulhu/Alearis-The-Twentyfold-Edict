@@ -1,0 +1,9 @@
+[gd_resource type="StandardMaterial3D" load_steps=2 format=3 uid="uid://yu2bg2y1b33p"]
+
+[ext_resource type="Texture2D" uid="uid://fbqp3tap61gy" path="res://assets/textures/mage_texture.png" id="1_5ppbc"]
+
+[resource]
+resource_name = "mage"
+cull_mode = 2
+albedo_texture = ExtResource("1_5ppbc")
+roughness = 0.5

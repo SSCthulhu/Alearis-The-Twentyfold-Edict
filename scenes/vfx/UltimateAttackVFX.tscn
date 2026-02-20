@@ -1,0 +1,134 @@
+[gd_scene load_steps=20 format=3]
+
+[ext_resource type="Texture2D" uid="uid://c3yfg1ma85bxn" path="res://assets/VFX/Sword Slash VFX Spritesheets/Impact_Cut_V4_spritesheet.png" id="1_vfx_sprite"]
+[ext_resource type="Script" path="res://scripts/vfx/UltimateAttackVFX.gd" id="2_vfx_script"]
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_ultimate_0"]
+atlas = ExtResource("1_vfx_sprite")
+region = Rect2(0, 0, 512, 512)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_ultimate_1"]
+atlas = ExtResource("1_vfx_sprite")
+region = Rect2(512, 0, 512, 512)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_ultimate_2"]
+atlas = ExtResource("1_vfx_sprite")
+region = Rect2(1024, 0, 512, 512)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_ultimate_3"]
+atlas = ExtResource("1_vfx_sprite")
+region = Rect2(1536, 0, 512, 512)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_ultimate_4"]
+atlas = ExtResource("1_vfx_sprite")
+region = Rect2(0, 512, 512, 512)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_ultimate_5"]
+atlas = ExtResource("1_vfx_sprite")
+region = Rect2(512, 512, 512, 512)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_ultimate_6"]
+atlas = ExtResource("1_vfx_sprite")
+region = Rect2(1024, 512, 512, 512)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_ultimate_7"]
+atlas = ExtResource("1_vfx_sprite")
+region = Rect2(1536, 512, 512, 512)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_ultimate_8"]
+atlas = ExtResource("1_vfx_sprite")
+region = Rect2(0, 1024, 512, 512)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_ultimate_9"]
+atlas = ExtResource("1_vfx_sprite")
+region = Rect2(512, 1024, 512, 512)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_ultimate_10"]
+atlas = ExtResource("1_vfx_sprite")
+region = Rect2(1024, 1024, 512, 512)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_ultimate_11"]
+atlas = ExtResource("1_vfx_sprite")
+region = Rect2(1536, 1024, 512, 512)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_ultimate_12"]
+atlas = ExtResource("1_vfx_sprite")
+region = Rect2(0, 1536, 512, 512)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_ultimate_13"]
+atlas = ExtResource("1_vfx_sprite")
+region = Rect2(512, 1536, 512, 512)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_ultimate_14"]
+atlas = ExtResource("1_vfx_sprite")
+region = Rect2(1024, 1536, 512, 512)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_ultimate_15"]
+atlas = ExtResource("1_vfx_sprite")
+region = Rect2(1536, 1536, 512, 512)
+
+[sub_resource type="SpriteFrames" id="SpriteFrames_ultimate"]
+animations = [{
+"frames": [{
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_ultimate_0")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_ultimate_1")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_ultimate_2")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_ultimate_3")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_ultimate_4")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_ultimate_5")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_ultimate_6")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_ultimate_7")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_ultimate_8")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_ultimate_9")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_ultimate_10")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_ultimate_11")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_ultimate_12")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_ultimate_13")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_ultimate_14")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_ultimate_15")
+}],
+"loop": false,
+"name": &"ultimate_hit",
+"speed": 60.0
+}]
+
+[node name="UltimateAttackVFX" type="Node2D"]
+script = ExtResource("2_vfx_script")
+
+[node name="AnimatedSprite2D" type="AnimatedSprite2D" parent="."]
+sprite_frames = SubResource("SpriteFrames_ultimate")
+animation = &"ultimate_hit"
+autoplay = "ultimate_hit"
+
+[connection signal="animation_finished" from="AnimatedSprite2D" to="." method="queue_free"]

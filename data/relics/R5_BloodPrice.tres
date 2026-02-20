@@ -1,0 +1,14 @@
+[gd_resource type="Resource" script_class="RelicData" load_steps=2 format=3 uid="uid://paajfx7awhjo"]
+
+[ext_resource type="Script" uid="uid://dwyhl0a0pqlnn" path="res://scripts/systems/RelicData.gd" id="1_0ft8a"]
+
+[resource]
+script = ExtResource("1_0ft8a")
+id = &"r5_blood_price"
+display_name = "Blood Price"
+rarity = 1
+band = 2
+tags = Array[StringName]([&"build", &"risk", &"damage", &"low_hp"])
+description_lines = Array[String](["Below 40% HP: +25% damage."])
+effect_id = &"relic_blood_price"
+metadata/_custom_type_script = "uid://dwyhl0a0pqlnn"

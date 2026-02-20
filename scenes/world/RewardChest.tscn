@@ -1,0 +1,54 @@
+[gd_scene load_steps=6 format=3 uid="uid://dlbxvu5p3c25n"]
+
+[ext_resource type="Script" uid="uid://dbp8cdabds6k3" path="res://scripts/systems/RewardChest.gd" id="1_s61ub"]
+[ext_resource type="Texture2D" uid="uid://c3cdtpflc6vu" path="res://art/Worlds/Tropical/Props/1.png" id="2_xvm03"]
+[ext_resource type="Texture2D" uid="uid://8webm31ed1ew" path="res://art/Worlds/Tropical/Props/2.png" id="3_b5s01"]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_h5a46"]
+size = Vector2(110.17796, 130.2727)
+
+[sub_resource type="SpriteFrames" id="SpriteFrames_g8v2r"]
+animations = [{
+"frames": [{
+"duration": 1.0,
+"texture": ExtResource("2_xvm03")
+}],
+"loop": true,
+"name": &"idle_closed",
+"speed": 5.0
+}, {
+"frames": [{
+"duration": 1.0,
+"texture": ExtResource("3_b5s01")
+}],
+"loop": true,
+"name": &"idle_open",
+"speed": 5.0
+}, {
+"frames": [{
+"duration": 1.0,
+"texture": ExtResource("2_xvm03")
+}, {
+"duration": 1.0,
+"texture": ExtResource("3_b5s01")
+}],
+"loop": false,
+"name": &"open",
+"speed": 8.0
+}]
+
+[node name="RewardChest" type="Area2D"]
+position = Vector2(0, -62)
+collision_layer = 9
+collision_mask = 3
+script = ExtResource("1_s61ub")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="."]
+position = Vector2(0.56764174, 4.000001)
+scale = Vector2(1.1333003, 0.8750873)
+shape = SubResource("RectangleShape2D_h5a46")
+
+[node name="AnimatedSprite2D" type="AnimatedSprite2D" parent="."]
+scale = Vector2(0.4, 0.4)
+sprite_frames = SubResource("SpriteFrames_g8v2r")
+animation = &"idle_closed"

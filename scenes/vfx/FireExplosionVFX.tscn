@@ -1,0 +1,136 @@
+[gd_scene load_steps=20 format=3 uid="uid://cew6vwqafhtg7"]
+
+[ext_resource type="Texture2D" uid="uid://cg8fter712chr" path="res://assets/VFX/Fire VFX Spritesheets/Fire_Burst_v5_spritesheet.png" id="1_fire"]
+[ext_resource type="Script" uid="uid://sbo3otl13w6b" path="res://scripts/vfx/FireExplosionVFX.gd" id="2_script"]
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_fire_0"]
+atlas = ExtResource("1_fire")
+region = Rect2(0, 0, 512, 512)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_fire_1"]
+atlas = ExtResource("1_fire")
+region = Rect2(512, 0, 512, 512)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_fire_2"]
+atlas = ExtResource("1_fire")
+region = Rect2(1024, 0, 512, 512)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_fire_3"]
+atlas = ExtResource("1_fire")
+region = Rect2(1536, 0, 512, 512)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_fire_4"]
+atlas = ExtResource("1_fire")
+region = Rect2(0, 512, 512, 512)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_fire_5"]
+atlas = ExtResource("1_fire")
+region = Rect2(512, 512, 512, 512)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_fire_6"]
+atlas = ExtResource("1_fire")
+region = Rect2(1024, 512, 512, 512)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_fire_7"]
+atlas = ExtResource("1_fire")
+region = Rect2(1536, 512, 512, 512)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_fire_8"]
+atlas = ExtResource("1_fire")
+region = Rect2(0, 1024, 512, 512)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_fire_9"]
+atlas = ExtResource("1_fire")
+region = Rect2(512, 1024, 512, 512)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_fire_10"]
+atlas = ExtResource("1_fire")
+region = Rect2(1024, 1024, 512, 512)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_fire_11"]
+atlas = ExtResource("1_fire")
+region = Rect2(1536, 1024, 512, 512)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_fire_12"]
+atlas = ExtResource("1_fire")
+region = Rect2(0, 1536, 512, 512)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_fire_13"]
+atlas = ExtResource("1_fire")
+region = Rect2(512, 1536, 512, 512)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_fire_14"]
+atlas = ExtResource("1_fire")
+region = Rect2(1024, 1536, 512, 512)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_fire_15"]
+atlas = ExtResource("1_fire")
+region = Rect2(1536, 1536, 512, 512)
+
+[sub_resource type="SpriteFrames" id="SpriteFrames_fire"]
+animations = [{
+"frames": [{
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_fire_0")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_fire_1")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_fire_2")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_fire_3")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_fire_4")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_fire_5")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_fire_6")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_fire_7")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_fire_8")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_fire_9")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_fire_10")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_fire_11")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_fire_12")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_fire_13")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_fire_14")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_fire_15")
+}],
+"loop": false,
+"name": &"fire_explosion",
+"speed": 60.0
+}]
+
+[node name="FireExplosionVFX" type="Node2D"]
+z_index = 10
+script = ExtResource("2_script")
+
+[node name="AnimatedSprite2D" type="AnimatedSprite2D" parent="."]
+z_index = 20
+sprite_frames = SubResource("SpriteFrames_fire")
+animation = &"fire_explosion"
+autoplay = "fire_explosion"
+
+[connection signal="animation_finished" from="AnimatedSprite2D" to="." method="queue_free"]

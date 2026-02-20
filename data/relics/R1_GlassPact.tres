@@ -1,0 +1,14 @@
+[gd_resource type="Resource" script_class="RelicData" load_steps=2 format=3 uid="uid://cuhv5bb7yfbav"]
+
+[ext_resource type="Script" uid="uid://dwyhl0a0pqlnn" path="res://scripts/systems/RelicData.gd" id="1_1ydx1"]
+
+[resource]
+script = ExtResource("1_1ydx1")
+id = &"r1_glass_pact"
+display_name = "Glass Pact"
+rarity = 1
+band = 2
+tags = Array[StringName]([&"greed", &"damage", &"risk"])
+description_lines = Array[String](["+22% damage.", "+12% damage taken."])
+effect_id = &"relic_glass_pact"
+metadata/_custom_type_script = "uid://dwyhl0a0pqlnn"

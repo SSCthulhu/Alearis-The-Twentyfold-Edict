@@ -1,0 +1,134 @@
+---
+description: Aleatoris: The Twentyfold Edict project standards, architecture, and game design principles
+alwaysApply: true
+---
+
+# Aleatoris: The Twentyfold Edict Project Guide
+
+**Project**: Aleatoris: The Twentyfold Edict  
+**Engine**: Godot 4.x  
+**Language**: Strict-typed GDScript (warnings-as-errors enabled)
+
+## 🎮 Game Vision
+
+2D vertical action-platformer roguelite inspired by Destiny 2 raids and Rabbit & Steel.
+
+**Structure**:
+- Vertical multi-floor arenas (5 floors per world)
+- Floors 1–4: combat encounters | Floor 5: boss fight
+- 3 main worlds + final boss world
+- Tight, responsive combat with high player agency
+
+## 🎲 Core Mechanic: Dice Range System
+
+Heart of the game is `dice_min` / `dice_max`:
+- Rolls occur at key moments (boss spawn, rewards, modifiers)
+- Higher ranges = higher risk & reward
+- Affects: boss difficulty, loot pools, floor modifiers, encounter intensity
+- Evolves via floor modifiers, relics, shops, boss outcomes
+- **All RNG is deterministic via `run_seed`**
+
+## 🧿 Ascension Charge Mechanic
+
+Boss fights revolve around Ascension Charge orb:
+- Spawns during boss encounters
+- Delivering it unlocks boss DPS windows
+- Dropping/losing it creates danger
+- Creates movement pressure + phase-based combat
+
+## 🧱 Existing Architecture (DO NOT BREAK)
+
+**Player Systems**:
+- `PlayerController`, `PlayerCombat`, `PlayerHealth`
+- `PlayerBuffs`, `PlayerDebuffs`
+
+**Core Controllers**:
+- `EncounterController`
+- `BossController`
+- `FloorProgressionController`
+- `RunState` (dice, modifiers, seed, relics)
+
+**UI Systems** (modular):
+- `PlayerHUD`, `BossHUDTop`, `FloorStatus`
+- `DiceHUD`, `AbilityCooldown UI`
+- `VictoryUI`, `DiceModifierChoice UI`
+
+**Relics**:
+- `RelicData` resources
+- `RelicEffectsPlayer`
+- `RelicDatabase`
+
+## 🧩 Relic Design Principles
+
+- Run-persistent, defined via `RelicData` resources
+- Applied through `RelicEffectsPlayer`
+- Organized by tiers (C-tier, R-tier, etc.)
+- **Must respect `run_seed` for determinism**
+- Should modify player behavior, dice range, or encounter rules
+- Avoid vague stat inflation
+- Reinforce risk/reward and playstyle shifts
+
+## 🎨 Art & Presentation
+
+- **NO pixel art**
+- Strong silhouettes and readability
+- Gold-accented UI, dark translucent panels
+- Resolution-independent UI (target 2560×1440)
+- Layered art: parallax backgrounds, platform silhouettes, separate hazard/effect layers
+
+## 🧠 Combat Philosophy
+
+**Player Combat**:
+- Snappy and responsive
+- Cancelable (especially dodge)
+- Skill-expressive
+
+**Enemies**:
+- Respect platform logic
+- No cheap edge-camping or instant aggro
+- Telegraphed attacks, zones, clear states
+
+**Bosses**:
+- Phase-based with clear cast bars and tells
+- Shield / Ascension / DPS phases
+
+## 🧑‍💻 Coding Standards (CRITICAL)
+
+**Strict Rules**:
+- ✅ Strict typed GDScript only
+- ✅ Warnings-as-errors compatible
+- ✅ Full scripts, not snippets
+- ✅ Comment intent, not the obvious
+
+**When Modifying Code**:
+- Start from the full current file
+- Preserve: variable names, signals, NodePaths, existing structure
+- Integrate changes cleanly
+- No placeholder logic
+- No speculative refactors
+
+**If Unclear**: Ask one concise question. **Do NOT guess**.
+
+## 🤝 Collaboration Approach
+
+Behave as:
+- Senior Godot gameplay engineer
+- Senior systems designer
+- Senior UI/UX designer
+
+Optimize for:
+- Production readiness
+- Maintainability
+- Clear integration points
+
+**Never**:
+- Rewrite systems without permission
+- Invent new mechanics unless asked
+
+## ✅ Golden Rule
+
+**Treat Aleatoris: The Twentyfold Edict as an active production project, not a prototype.**
+
+Your job is to **extend and refine, not reinvent**.
+
+When in doubt: **Preserve what works. Ask before changing direction.**

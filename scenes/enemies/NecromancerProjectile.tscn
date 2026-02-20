@@ -1,0 +1,142 @@
+[gd_scene load_steps=21 format=3 uid="uid://d0etxjrwuncr"]
+
+[ext_resource type="Script" uid="uid://ci1v7i46tfek6" path="res://scripts/enemies/EnemyProjectile.gd" id="1_proj"]
+[ext_resource type="Texture2D" uid="uid://cku3p85ll1q2l" path="res://assets/VFX/Water VFX Spritesheets/Blood_Projectile_v4_B_spritesheet.png" id="2_blood"]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_proj"]
+size = Vector2(96, 96)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_blood01"]
+atlas = ExtResource("2_blood")
+region = Rect2(0, 0, 512, 512)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_blood02"]
+atlas = ExtResource("2_blood")
+region = Rect2(512, 0, 512, 512)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_blood03"]
+atlas = ExtResource("2_blood")
+region = Rect2(1024, 0, 512, 512)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_blood04"]
+atlas = ExtResource("2_blood")
+region = Rect2(1536, 0, 512, 512)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_blood05"]
+atlas = ExtResource("2_blood")
+region = Rect2(2048, 0, 512, 512)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_blood06"]
+atlas = ExtResource("2_blood")
+region = Rect2(2560, 0, 512, 512)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_blood07"]
+atlas = ExtResource("2_blood")
+region = Rect2(3072, 0, 512, 512)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_blood08"]
+atlas = ExtResource("2_blood")
+region = Rect2(3584, 0, 512, 512)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_blood09"]
+atlas = ExtResource("2_blood")
+region = Rect2(0, 512, 512, 512)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_blood10"]
+atlas = ExtResource("2_blood")
+region = Rect2(512, 512, 512, 512)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_blood11"]
+atlas = ExtResource("2_blood")
+region = Rect2(1024, 512, 512, 512)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_blood12"]
+atlas = ExtResource("2_blood")
+region = Rect2(1536, 512, 512, 512)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_blood13"]
+atlas = ExtResource("2_blood")
+region = Rect2(2048, 512, 512, 512)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_blood14"]
+atlas = ExtResource("2_blood")
+region = Rect2(2560, 512, 512, 512)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_blood15"]
+atlas = ExtResource("2_blood")
+region = Rect2(3072, 512, 512, 512)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_blood16"]
+atlas = ExtResource("2_blood")
+region = Rect2(3584, 512, 512, 512)
+
+[sub_resource type="SpriteFrames" id="SpriteFrames_blood"]
+animations = [{
+"frames": [{
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_blood01")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_blood02")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_blood03")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_blood04")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_blood05")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_blood06")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_blood07")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_blood08")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_blood09")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_blood10")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_blood11")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_blood12")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_blood13")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_blood14")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_blood15")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_blood16")
+}],
+"loop": true,
+"name": &"projectile",
+"speed": 30.0
+}]
+
+[node name="NecromancerProjectile" type="Area2D"]
+z_index = 20
+collision_layer = 0
+collision_mask = 2
+script = ExtResource("1_proj")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="."]
+shape = SubResource("RectangleShape2D_proj")
+
+[node name="Visual" type="AnimatedSprite2D" parent="."]
+position = Vector2(-175, 0)
+sprite_frames = SubResource("SpriteFrames_blood")
+animation = &"projectile"
+autoplay = "projectile"

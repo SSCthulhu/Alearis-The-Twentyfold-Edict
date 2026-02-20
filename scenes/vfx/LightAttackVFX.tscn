@@ -1,0 +1,152 @@
+[gd_scene load_steps=20 format=3 uid="uid://davndbjaaplny"]
+
+[ext_resource type="Texture2D" uid="uid://bwv6cpmf2enm6" path="res://assets/VFX/Sword Slash VFX Spritesheets/Blue Slash v2 - Flurry_A_spritesheet.png" id="1_hk8tf"]
+
+[sub_resource type="GDScript" id="GDScript_lightattack"]
+script/source = "extends Node2D
+
+@onready var sprite: AnimatedSprite2D = $AnimatedSprite2D
+
+func _ready() -> void:
+	if sprite != null:
+		sprite.play(&\"light_attack\")
+		# Auto-destroy when animation finishes
+		sprite.animation_finished.connect(_on_animation_finished)
+
+func _on_animation_finished() -> void:
+	queue_free()
+
+func set_facing(direction: int) -> void:
+	\"\"\"Set facing direction: -1=left, 1=right\"\"\"
+	if sprite != null:
+		sprite.flip_h = (direction < 0)
+"
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_hq8v4"]
+atlas = ExtResource("1_hk8tf")
+region = Rect2(0, 0, 512, 512)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_3b36o"]
+atlas = ExtResource("1_hk8tf")
+region = Rect2(512, 0, 512, 512)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_ltsqa"]
+atlas = ExtResource("1_hk8tf")
+region = Rect2(1024, 0, 512, 512)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_f057t"]
+atlas = ExtResource("1_hk8tf")
+region = Rect2(1536, 0, 512, 512)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_u4qco"]
+atlas = ExtResource("1_hk8tf")
+region = Rect2(0, 512, 512, 512)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_n5bxr"]
+atlas = ExtResource("1_hk8tf")
+region = Rect2(512, 512, 512, 512)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_octmj"]
+atlas = ExtResource("1_hk8tf")
+region = Rect2(1024, 512, 512, 512)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_0d3hd"]
+atlas = ExtResource("1_hk8tf")
+region = Rect2(1536, 512, 512, 512)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_6hm6o"]
+atlas = ExtResource("1_hk8tf")
+region = Rect2(0, 1024, 512, 512)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_8u433"]
+atlas = ExtResource("1_hk8tf")
+region = Rect2(512, 1024, 512, 512)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_rmr2s"]
+atlas = ExtResource("1_hk8tf")
+region = Rect2(1024, 1024, 512, 512)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_m3206"]
+atlas = ExtResource("1_hk8tf")
+region = Rect2(1536, 1024, 512, 512)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_iu7j1"]
+atlas = ExtResource("1_hk8tf")
+region = Rect2(0, 1536, 512, 512)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_4nj7n"]
+atlas = ExtResource("1_hk8tf")
+region = Rect2(512, 1536, 512, 512)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_gnm4n"]
+atlas = ExtResource("1_hk8tf")
+region = Rect2(1024, 1536, 512, 512)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_ssrnr"]
+atlas = ExtResource("1_hk8tf")
+region = Rect2(1536, 1536, 512, 512)
+
+[sub_resource type="SpriteFrames" id="SpriteFrames_lightattack"]
+animations = [{
+"frames": [{
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_hq8v4")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_3b36o")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_ltsqa")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_f057t")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_u4qco")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_n5bxr")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_octmj")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_0d3hd")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_6hm6o")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_8u433")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_rmr2s")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_m3206")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_iu7j1")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_4nj7n")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_gnm4n")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_ssrnr")
+}],
+"loop": false,
+"name": &"light_attack",
+"speed": 60.0
+}]
+
+[node name="LightAttackVFX" type="Node2D"]
+script = SubResource("GDScript_lightattack")
+
+[node name="AnimatedSprite2D" type="AnimatedSprite2D" parent="."]
+sprite_frames = SubResource("SpriteFrames_lightattack")
+animation = &"light_attack"
+frame = 15
+frame_progress = 1.0

@@ -1,0 +1,23 @@
+---
+description: "Guidelines for generating Godot 4.X GDScript code."
+globs: "*.gd"
+alwaysApply: true
+---
+
+# Godot 4.X GDScript Guidelines
+
+You are an expert Godot 4.X developer AI.
+
+## Critical Rules
+*   **ALWAYS** use GDScript syntax, not Python or C#.
+*   **ALWAYS** use `snake_case` for all variable, function, and file names in GDScript, e.g., `my_variable` or `calculate_score()`.
+*   **ALWAYS** use a `_ready()` function instead of `Ready()` for node initialization.
+*   **NEVER** use deprecated APIs. If you are unsure, use `@codebase` or `@docs` to verify the correct Godot 4 API.
+*   **ALWAYS** ensure generated code follows Godot's official code style guidelines.
+*   **ALWAYS** document public functions clearly and concisely.
+
+## Examples
+*   **Correct variable declaration:** `var speed: float = 100.0`
+*   **Correct function declaration:** `func _physics_process(delta: float): pass`
+
+Ensure you follow these rules strictly for all generated code.

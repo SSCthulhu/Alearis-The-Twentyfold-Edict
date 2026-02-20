@@ -1,0 +1,12 @@
+[gd_resource type="Resource" script_class="RelicData" load_steps=2 format=3 uid="uid://ckdt0cgdjehed"]
+
+[ext_resource type="Script" uid="uid://dwyhl0a0pqlnn" path="res://scripts/systems/RelicData.gd" id="1_m84no"]
+
+[resource]
+script = ExtResource("1_m84no")
+id = &"c7_shock_charm"
+display_name = "Shock Charm"
+tags = Array[StringName]([&"aoe", &"proc", &"light"])
+description_lines = Array[String](["Every 8s, your next Light chains", "to 1 extra enemy."])
+effect_id = &"relic_shock_charm"
+metadata/_custom_type_script = "uid://dwyhl0a0pqlnn"

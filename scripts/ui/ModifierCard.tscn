@@ -1,0 +1,39 @@
+[gd_scene load_steps=2 format=3 uid="uid://cfqkvud5nn8ce"]
+
+[ext_resource type="Script" uid="uid://bimidkgd51ngw" path="res://scripts/ui/ModifierCard.gd" id="1_er372"]
+
+[node name="ModifierCard" type="Button"]
+offset_right = 8.0
+offset_bottom = 8.0
+script = ExtResource("1_er372")
+
+[node name="Tag" type="Label" parent="."]
+layout_mode = 0
+offset_right = 40.0
+offset_bottom = 23.0
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="Body" type="Panel" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="Margin" type="MarginContainer" parent="Body"]
+layout_mode = 0
+offset_right = 40.0
+offset_bottom = 40.0
+theme_override_constants/margin_left = 14
+theme_override_constants/margin_top = 14
+theme_override_constants/margin_right = 14
+theme_override_constants/margin_bottom = 14
+
+[node name="BodyText" type="RichTextLabel" parent="Body/Margin"]
+clip_contents = false
+layout_mode = 2
+mouse_filter = 2
+bbcode_enabled = true
+scroll_active = false

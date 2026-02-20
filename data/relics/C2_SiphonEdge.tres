@@ -1,0 +1,13 @@
+[gd_resource type="Resource" script_class="RelicData" load_steps=2 format=3 uid="uid://c6sg1n57sjl16"]
+
+[ext_resource type="Script" uid="uid://dwyhl0a0pqlnn" path="res://scripts/systems/RelicData.gd" id="1_8ix6i"]
+
+[resource]
+script = ExtResource("1_8ix6i")
+id = &"c2_siphon_edge"
+display_name = "Siphon Edge"
+band = 0
+tags = Array[StringName]([&"sustain", &"heal", &"heavy"])
+description_lines = Array[String](["Heavy attacks heal 1% max HP.", "Cooldown: 1s."])
+effect_id = &"relic_siphon_edge"
+metadata/_custom_type_script = "uid://dwyhl0a0pqlnn"

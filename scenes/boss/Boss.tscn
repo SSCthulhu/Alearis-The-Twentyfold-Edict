@@ -1,0 +1,47 @@
+[gd_scene load_steps=9 format=3 uid="uid://d1of1vyirkb87"]
+
+[ext_resource type="Script" uid="uid://cdidei78kcag4" path="res://scripts/boss/BossController.gd" id="1_trtv8"]
+[ext_resource type="Script" uid="uid://b0nfn5rqrixak" path="res://scripts/boss/Hurtbox.gd" id="2_0jdgh"]
+[ext_resource type="PackedScene" path="res://scenes/boss/BlackKnight3DView.tscn" id="2_knight3d"]
+[ext_resource type="PackedScene" uid="uid://bvgni0b2cndxi" path="res://scenes/ui/DamageNumber.tscn" id="3_cog1j"]
+[ext_resource type="Script" uid="uid://bh1vf0remp5r4" path="res://scripts/boss/BossHealth.gd" id="4_pm08e"]
+[ext_resource type="Script" uid="uid://bxkstno4wqyqf" path="res://scripts/ui/DamageNumberEmitter.gd" id="7_yn033"]
+[ext_resource type="Texture2D" uid="uid://kbl5dsjexubd" path="res://art/particles/light_02_a.png" id="8_telegraph"]
+[ext_resource type="Texture2D" uid="uid://cjfjsdhtm8wa2" path="res://art/particles/effect_03_a.png" id="9_effect"]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_gvkpj"]
+size = Vector2(185.4844, 330.0312)
+
+[node name="Boss" type="StaticBody2D" groups=["boss"]]
+script = ExtResource("1_trtv8")
+max_hp = 1000
+visual_path = NodePath("BlackKnight3DView")
+projectile_auto_cast = false
+
+[node name="Hurtbox" type="Area2D" parent="."]
+script = ExtResource("2_0jdgh")
+receiver_path = NodePath("../BossHealth")
+require_group = &""
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Hurtbox"]
+position = Vector2(70, -1695.81)
+shape = SubResource("RectangleShape2D_gvkpj")
+
+[node name="BlackKnight3DView" parent="." instance=ExtResource("2_knight3d")]
+position = Vector2(0, -1200)
+viewport_size = Vector2i(4096, 3072)
+screen_pixels = Vector2i(1536, 1024)
+
+[node name="BossHealth" type="Node" parent="."]
+script = ExtResource("4_pm08e")
+max_hp = 2500
+
+[node name="DamageNumberEmitter" type="Node" parent="."]
+script = ExtResource("7_yn033")
+damage_number_scene = ExtResource("3_cog1j")
+health_path = NodePath("../BossHealth")
+
+[node name="DamageNumberEmitter2" type="Node" parent="."]
+script = ExtResource("7_yn033")
+damage_number_scene = ExtResource("3_cog1j")
+health_path = NodePath("../BossHealth")

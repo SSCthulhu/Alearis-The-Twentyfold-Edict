@@ -1,0 +1,7 @@
+[gd_scene load_steps=2 format=3 uid="uid://rr0w123456"]
+
+[ext_resource type="PackedScene" uid="uid://bbtawdgbuhr57" path="res://assets/weapons/enemy/Skeleton_Arrow.gltf" id="1_arrow"]
+
+[node name="Skeleton_Arrow" type="Node3D"]
+
+[node name="skeleton_arrow" parent="." instance=ExtResource("1_arrow")]

@@ -1,0 +1,5 @@
+[gd_scene load_steps=2 format=3 uid="uid://dehw2kv3dbcyl"]
+
+[ext_resource type="PackedScene" uid="uid://byb13nfspulql" path="res://assets/weapons/enemy/Skeleton_Staff.gltf" id="1_staff"]
+
+[node name="Skeleton_Staff" instance=ExtResource("1_staff")]

@@ -1,0 +1,21 @@
+[gd_scene load_steps=3 format=3 uid="uid://dunjuoex0ylf5"]
+
+[ext_resource type="Script" uid="uid://bumwxj6s15r7t" path="res://scripts/player/PerfectDodgeToast.gd" id="1_bet4r"]
+[ext_resource type="FontFile" uid="uid://c2uf3qbb6s8c1" path="res://fonts/RobotoSerif-Bold.ttf" id="2_enlnr"]
+
+[node name="PerfectDodgeToast" type="Control"]
+layout_mode = 3
+anchors_preset = 0
+script = ExtResource("1_bet4r")
+
+[node name="Label" type="Label" parent="."]
+layout_mode = 0
+offset_right = 40.0
+offset_bottom = 23.0
+theme_override_colors/font_color = Color(0.18039216, 0.4509804, 0.8509804, 1)
+theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
+theme_override_fonts/font = ExtResource("2_enlnr")
+theme_override_font_sizes/font_size = 50
+text = "PERFECT!"
+horizontal_alignment = 1
+vertical_alignment = 1

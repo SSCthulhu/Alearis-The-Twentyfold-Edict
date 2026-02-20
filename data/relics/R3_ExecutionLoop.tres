@@ -1,0 +1,14 @@
+[gd_resource type="Resource" script_class="RelicData" load_steps=2 format=3 uid="uid://ndiw71gvn5v1"]
+
+[ext_resource type="Script" uid="uid://dwyhl0a0pqlnn" path="res://scripts/systems/RelicData.gd" id="1_cy6wc"]
+
+[resource]
+script = ExtResource("1_cy6wc")
+id = &"r3_execution_loop"
+display_name = "Execution Loop"
+rarity = 1
+band = 2
+tags = Array[StringName]([&"burst", &"heavy", &"dodge", &"crit"])
+description_lines = Array[String](["Heavy crits reset dodge cooldown by 40%.", "Cooldown: 8s."])
+effect_id = &"relic_execution_loop"
+metadata/_custom_type_script = "uid://dwyhl0a0pqlnn"

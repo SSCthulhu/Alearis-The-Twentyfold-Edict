@@ -1,0 +1,27 @@
+[gd_scene load_steps=3 format=3 uid="uid://b3j8kx5mh4pqr"]
+
+[ext_resource type="Script" path="res://scripts/ui/InteractionPrompt.gd" id="1_prompt"]
+[ext_resource type="Resource" uid="uid://dtfg2ntfkn5oa" path="res://styles/HUDStyle.tres" id="2_style"]
+
+[node name="InteractionPrompt" type="Control"]
+layout_mode = 3
+anchors_preset = 0
+offset_left = -50.0
+offset_top = -40.0
+offset_right = 50.0
+offset_bottom = 40.0
+mouse_filter = 2
+script = ExtResource("1_prompt")
+style = ExtResource("2_style")
+
+[node name="PromptLabel" type="Label" parent="."]
+unique_name_in_owner = true
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+text = "E"
+horizontal_alignment = 1
+vertical_alignment = 1

@@ -1,0 +1,12 @@
+[gd_resource type="Resource" script_class="RelicData" load_steps=2 format=3 uid="uid://bv1wyccy70sb4"]
+
+[ext_resource type="Script" uid="uid://dwyhl0a0pqlnn" path="res://scripts/systems/RelicData.gd" id="1_fre1s"]
+
+[resource]
+script = ExtResource("1_fre1s")
+id = &"c9_orb_conductor"
+display_name = "Orb Conductor"
+tags = Array[StringName]([&"mechanic", &"orb"])
+description_lines = Array[String](["Charging the orb is 20% faster."])
+effect_id = &"relic_orb_conductor"
+metadata/_custom_type_script = "uid://dwyhl0a0pqlnn"

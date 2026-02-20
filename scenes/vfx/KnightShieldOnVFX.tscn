@@ -1,0 +1,133 @@
+[gd_scene load_steps=19 format=3]
+
+[ext_resource type="Texture2D" path="res://assets/VFX/Essentials VFX Spritesheets/Shield_On_spritesheet.png" id="1_shield"]
+[ext_resource type="Script" path="res://scripts/vfx/KnightShieldOnVFX.gd" id="2_script"]
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_shield_0"]
+atlas = ExtResource("1_shield")
+region = Rect2(0, 0, 512, 512)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_shield_1"]
+atlas = ExtResource("1_shield")
+region = Rect2(512, 0, 512, 512)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_shield_2"]
+atlas = ExtResource("1_shield")
+region = Rect2(1024, 0, 512, 512)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_shield_3"]
+atlas = ExtResource("1_shield")
+region = Rect2(1536, 0, 512, 512)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_shield_4"]
+atlas = ExtResource("1_shield")
+region = Rect2(0, 512, 512, 512)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_shield_5"]
+atlas = ExtResource("1_shield")
+region = Rect2(512, 512, 512, 512)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_shield_6"]
+atlas = ExtResource("1_shield")
+region = Rect2(1024, 512, 512, 512)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_shield_7"]
+atlas = ExtResource("1_shield")
+region = Rect2(1536, 512, 512, 512)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_shield_8"]
+atlas = ExtResource("1_shield")
+region = Rect2(0, 1024, 512, 512)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_shield_9"]
+atlas = ExtResource("1_shield")
+region = Rect2(512, 1024, 512, 512)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_shield_10"]
+atlas = ExtResource("1_shield")
+region = Rect2(1024, 1024, 512, 512)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_shield_11"]
+atlas = ExtResource("1_shield")
+region = Rect2(1536, 1024, 512, 512)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_shield_12"]
+atlas = ExtResource("1_shield")
+region = Rect2(0, 1536, 512, 512)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_shield_13"]
+atlas = ExtResource("1_shield")
+region = Rect2(512, 1536, 512, 512)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_shield_14"]
+atlas = ExtResource("1_shield")
+region = Rect2(1024, 1536, 512, 512)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_shield_15"]
+atlas = ExtResource("1_shield")
+region = Rect2(1536, 1536, 512, 512)
+
+[sub_resource type="SpriteFrames" id="SpriteFrames_shield"]
+animations = [{
+"frames": [{
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_shield_0")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_shield_1")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_shield_2")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_shield_3")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_shield_4")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_shield_5")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_shield_6")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_shield_7")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_shield_8")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_shield_9")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_shield_10")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_shield_11")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_shield_12")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_shield_13")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_shield_14")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_shield_15")
+}],
+"loop": false,
+"name": &"shield_on",
+"speed": 60.0
+}]
+
+[node name="KnightShieldOnVFX" type="Node2D"]
+z_index = 10
+script = ExtResource("2_script")
+
+[node name="AnimatedSprite2D" type="AnimatedSprite2D" parent="."]
+sprite_frames = SubResource("SpriteFrames_shield")
+animation = &"shield_on"
+autoplay = "shield_on"

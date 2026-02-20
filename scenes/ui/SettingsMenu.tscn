@@ -1,0 +1,259 @@
+[gd_scene load_steps=6 format=3 uid="uid://dsettings001"]
+
+[ext_resource type="Script" uid="uid://cp25xoiy3tfd8" path="res://scripts/ui/SettingsMenu.gd" id="1_settings"]
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_panel"]
+bg_color = Color(0.07, 0.07, 0.09, 0.95)
+border_width_left = 3
+border_width_top = 3
+border_width_right = 3
+border_width_bottom = 3
+border_color = Color(0.858824, 0.721569, 0.329412, 1)
+corner_radius_top_left = 10
+corner_radius_top_right = 10
+corner_radius_bottom_right = 10
+corner_radius_bottom_left = 10
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_button_normal"]
+bg_color = Color(0.6, 0.6, 0.6, 0)
+border_width_left = 8
+border_width_top = 8
+border_width_right = 8
+border_width_bottom = 8
+border_color = Color(0.858824, 0.721569, 0.329412, 1)
+
+[sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty"]
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_button_hover"]
+bg_color = Color(0.6, 0.6, 0.6, 0)
+border_width_left = 8
+border_width_top = 8
+border_width_right = 8
+border_width_bottom = 8
+border_color = Color(0.858824, 0.721569, 0.329412, 1)
+shadow_color = Color(0.858824, 0.721569, 0.329412, 0)
+shadow_size = 5
+
+[node name="SettingsMenu" type="Control"]
+process_mode = 3
+z_index = 100
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_settings")
+
+[node name="Overlay" type="ColorRect" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+color = Color(0, 0, 0, 0.6)
+
+[node name="Root" type="Control" parent="."]
+process_mode = 3
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+
+[node name="SettingsPanel" type="Panel" parent="Root"]
+custom_minimum_size = Vector2(1220, 1150)
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -610.0
+offset_top = -575.0
+offset_right = 610.0
+offset_bottom = 575.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_panel")
+
+[node name="VBox" type="VBoxContainer" parent="Root/SettingsPanel"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 60.0
+offset_top = 60.0
+offset_right = -60.0
+offset_bottom = -60.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/separation = 30
+
+[node name="Title" type="Label" parent="Root/SettingsPanel/VBox"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.858824, 0.721569, 0.329412, 1)
+theme_override_font_sizes/font_size = 80
+text = "SETTINGS"
+horizontal_alignment = 1
+
+[node name="AudioSection" type="VBoxContainer" parent="Root/SettingsPanel/VBox"]
+layout_mode = 2
+theme_override_constants/separation = 15
+
+[node name="AudioLabel" type="Label" parent="Root/SettingsPanel/VBox/AudioSection"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.95, 0.95, 0.97, 1)
+theme_override_font_sizes/font_size = 60
+text = "Audio"
+
+[node name="AudioGrid" type="GridContainer" parent="Root/SettingsPanel/VBox/AudioSection"]
+layout_mode = 2
+theme_override_constants/h_separation = 20
+theme_override_constants/v_separation = 15
+columns = 3
+
+[node name="MasterLabel" type="Label" parent="Root/SettingsPanel/VBox/AudioSection/AudioGrid"]
+custom_minimum_size = Vector2(280, 0)
+layout_mode = 2
+theme_override_colors/font_color = Color(0.7, 0.72, 0.78, 1)
+theme_override_font_sizes/font_size = 50
+text = "Master Volume"
+vertical_alignment = 1
+
+[node name="MasterSlider" type="HSlider" parent="Root/SettingsPanel/VBox/AudioSection/AudioGrid"]
+custom_minimum_size = Vector2(550, 0)
+layout_mode = 2
+value = 100.0
+
+[node name="MasterValue" type="Label" parent="Root/SettingsPanel/VBox/AudioSection/AudioGrid"]
+custom_minimum_size = Vector2(100, 0)
+layout_mode = 2
+theme_override_colors/font_color = Color(0.858824, 0.721569, 0.329412, 1)
+theme_override_font_sizes/font_size = 50
+text = "100%"
+horizontal_alignment = 2
+vertical_alignment = 1
+
+[node name="MusicLabel" type="Label" parent="Root/SettingsPanel/VBox/AudioSection/AudioGrid"]
+custom_minimum_size = Vector2(280, 0)
+layout_mode = 2
+theme_override_colors/font_color = Color(0.7, 0.72, 0.78, 1)
+theme_override_font_sizes/font_size = 50
+text = "Music Volume"
+vertical_alignment = 1
+
+[node name="MusicSlider" type="HSlider" parent="Root/SettingsPanel/VBox/AudioSection/AudioGrid"]
+custom_minimum_size = Vector2(550, 0)
+layout_mode = 2
+value = 80.0
+
+[node name="MusicValue" type="Label" parent="Root/SettingsPanel/VBox/AudioSection/AudioGrid"]
+custom_minimum_size = Vector2(100, 0)
+layout_mode = 2
+theme_override_colors/font_color = Color(0.858824, 0.721569, 0.329412, 1)
+theme_override_font_sizes/font_size = 50
+text = "80%"
+horizontal_alignment = 2
+vertical_alignment = 1
+
+[node name="SFXLabel" type="Label" parent="Root/SettingsPanel/VBox/AudioSection/AudioGrid"]
+custom_minimum_size = Vector2(280, 0)
+layout_mode = 2
+theme_override_colors/font_color = Color(0.7, 0.72, 0.78, 1)
+theme_override_font_sizes/font_size = 50
+text = "SFX Volume"
+vertical_alignment = 1
+
+[node name="SFXSlider" type="HSlider" parent="Root/SettingsPanel/VBox/AudioSection/AudioGrid"]
+custom_minimum_size = Vector2(550, 0)
+layout_mode = 2
+value = 100.0
+
+[node name="SFXValue" type="Label" parent="Root/SettingsPanel/VBox/AudioSection/AudioGrid"]
+custom_minimum_size = Vector2(100, 0)
+layout_mode = 2
+theme_override_colors/font_color = Color(0.858824, 0.721569, 0.329412, 1)
+theme_override_font_sizes/font_size = 50
+text = "100%"
+horizontal_alignment = 2
+vertical_alignment = 1
+
+[node name="DisplaySection" type="VBoxContainer" parent="Root/SettingsPanel/VBox"]
+layout_mode = 2
+theme_override_constants/separation = 15
+
+[node name="DisplayLabel" type="Label" parent="Root/SettingsPanel/VBox/DisplaySection"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.95, 0.95, 0.97, 1)
+theme_override_font_sizes/font_size = 60
+text = "Display"
+
+[node name="FullscreenRow" type="HBoxContainer" parent="Root/SettingsPanel/VBox/DisplaySection"]
+layout_mode = 2
+theme_override_constants/separation = 20
+
+[node name="Label" type="Label" parent="Root/SettingsPanel/VBox/DisplaySection/FullscreenRow"]
+custom_minimum_size = Vector2(280, 0)
+layout_mode = 2
+theme_override_colors/font_color = Color(0.7, 0.72, 0.78, 1)
+theme_override_font_sizes/font_size = 50
+text = "Fullscreen"
+vertical_alignment = 1
+
+[node name="Checkbox" type="CheckBox" parent="Root/SettingsPanel/VBox/DisplaySection/FullscreenRow"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 40
+
+[node name="VSyncRow" type="HBoxContainer" parent="Root/SettingsPanel/VBox/DisplaySection"]
+layout_mode = 2
+theme_override_constants/separation = 20
+
+[node name="Label" type="Label" parent="Root/SettingsPanel/VBox/DisplaySection/VSyncRow"]
+custom_minimum_size = Vector2(280, 0)
+layout_mode = 2
+theme_override_colors/font_color = Color(0.7, 0.72, 0.78, 1)
+theme_override_font_sizes/font_size = 50
+text = "VSync"
+vertical_alignment = 1
+
+[node name="Checkbox" type="CheckBox" parent="Root/SettingsPanel/VBox/DisplaySection/VSyncRow"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 40
+
+[node name="ResolutionRow" type="HBoxContainer" parent="Root/SettingsPanel/VBox/DisplaySection"]
+layout_mode = 2
+theme_override_constants/separation = 20
+
+[node name="Label" type="Label" parent="Root/SettingsPanel/VBox/DisplaySection/ResolutionRow"]
+custom_minimum_size = Vector2(280, 0)
+layout_mode = 2
+theme_override_colors/font_color = Color(0.7, 0.72, 0.78, 1)
+theme_override_font_sizes/font_size = 50
+text = "Resolution"
+vertical_alignment = 1
+
+[node name="OptionButton" type="OptionButton" parent="Root/SettingsPanel/VBox/DisplaySection/ResolutionRow"]
+custom_minimum_size = Vector2(400, 0)
+layout_mode = 2
+theme_override_font_sizes/font_size = 40
+
+[node name="Spacer" type="Control" parent="Root/SettingsPanel/VBox"]
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="BackButton" type="Button" parent="Root/SettingsPanel/VBox"]
+custom_minimum_size = Vector2(600, 0)
+layout_mode = 2
+size_flags_horizontal = 4
+theme_override_font_sizes/font_size = 70
+theme_override_styles/normal = SubResource("StyleBoxFlat_button_normal")
+theme_override_styles/pressed = SubResource("StyleBoxEmpty")
+theme_override_styles/hover = SubResource("StyleBoxFlat_button_hover")
+theme_override_styles/disabled = SubResource("StyleBoxEmpty")
+theme_override_styles/focus = SubResource("StyleBoxEmpty")
+text = "Back"

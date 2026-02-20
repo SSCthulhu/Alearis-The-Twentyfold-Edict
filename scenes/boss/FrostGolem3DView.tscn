@@ -1,0 +1,18 @@
+[gd_scene load_steps=3 format=3 uid="uid://bnacyicqqd64r"]
+
+[ext_resource type="Script" uid="uid://bm058dkqm6f7m" path="res://scripts/enemies/Enemy3DView.gd" id="1_hc2rp"]
+[ext_resource type="PackedScene" uid="uid://c8ygl3o13nlj8" path="res://scenes/boss/FrostGolem3DStage.tscn" id="2_c1x6r"]
+
+[node name="FrostGolem3DView" type="Node2D"]
+script = ExtResource("1_hc2rp")
+stage_scene = ExtResource("2_c1x6r")
+viewport_size = Vector2i(4096, 3072)
+screen_pixels = Vector2i(1536, 1024)
+stage_animation_player_path = NodePath("FacingPivot/FrostGolem/AnimationPlayer")
+
+[node name="SubViewport" type="SubViewport" parent="."]
+msaa_3d = 2
+
+[node name="ScreenSprite" type="Sprite2D" parent="."]
+
+[node name="VisibleOnScreenNotifier2D" type="VisibleOnScreenNotifier2D" parent="."]

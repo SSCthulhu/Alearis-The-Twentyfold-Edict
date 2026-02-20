@@ -1,0 +1,12 @@
+[gd_scene load_steps=3 format=3 uid="uid://cancy0g58ximg"]
+
+[ext_resource type="Script" uid="uid://cn3ibi67l1lfu" path="res://scripts/arena/CeilingGate.gd" id="1_5w6eu"]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_12u0o"]
+
+[node name="CeilingGate" type="StaticBody2D"]
+collision_mask = 3
+script = ExtResource("1_5w6eu")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="."]
+shape = SubResource("RectangleShape2D_12u0o")

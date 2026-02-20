@@ -1,0 +1,42 @@
+[gd_resource type="Resource" script_class="CharacterData" load_steps=2 format=3 uid="uid://clfku34mhhho6"]
+
+[ext_resource type="Script" uid="uid://bu8xwhu1vl4rw" path="res://scripts/resources/CharacterData.gd" id="1_rogue"]
+
+[resource]
+script = ExtResource("1_rogue")
+character_name = "Rogue"
+character_display_name = "Rogue"
+model_scene_path = "res://assets/scenes/rogue.tscn"
+move_speed_multiplier = 1.2
+attack_movement = {
+"heavy": {
+"distance": 600.0,
+"duration": 0.5
+}
+}
+roll_movement = {
+"direction": "forward",
+"distance": 550.0,
+"duration": 0.55
+}
+animation_mappings = {
+"chest_open": "QAnim/Chest_Open",
+"death": "QAnim/Death01",
+"dodge": "QAnim/Roll",
+"double_jump_idle": "QAnim/NinjaJump_Idle",
+"double_jump_land": "QAnim/NinjaJump_Land",
+"double_jump_start": "QAnim/NinjaJump_Start",
+"fall": "QAnim/Jump",
+"heavy_attack": "QAnim/Sword_Dash_NoRM",
+"hit": "QAnim/Hit_Chest",
+"hold": "QAnim/Walk_Carry",
+"idle": "QAnim/Sword_Idle",
+"interact": "QAnim/Interact",
+"jump": "QAnim/Jump",
+"jump_land": "QAnim/Jump_Land",
+"jump_start": "QAnim/Jump_Start",
+"light_attack": "QAnim/Sword_Regular_A",
+"run": "QAnim/Jog_Fwd",
+"sprint": "QAnim/Sprint",
+"ultimate": "QAnim/Sword_Dash_NoRM"
+}

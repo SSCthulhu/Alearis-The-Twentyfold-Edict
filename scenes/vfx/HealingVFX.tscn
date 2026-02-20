@@ -1,0 +1,146 @@
+[gd_scene load_steps=20 format=3 uid="uid://c0cgvaxe0atrp"]
+
+[ext_resource type="Texture2D" uid="uid://brloyv6h3sr7s" path="res://assets/VFX/Essentials VFX Spritesheets/Healing_V7_A_Aura_spritesheet.png" id="1_heal"]
+
+[sub_resource type="GDScript" id="GDScript_heal"]
+script/source = "extends Node2D
+
+@onready var sprite: AnimatedSprite2D = $AnimatedSprite2D
+
+func _ready() -> void:
+	if sprite != null:
+		sprite.play(&\"heal\")
+		# Auto-destroy when animation finishes
+		sprite.animation_finished.connect(_on_animation_finished)
+
+func _on_animation_finished() -> void:
+	queue_free()
+"
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_heal01"]
+atlas = ExtResource("1_heal")
+region = Rect2(0, 0, 512, 512)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_heal02"]
+atlas = ExtResource("1_heal")
+region = Rect2(512, 0, 512, 512)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_heal03"]
+atlas = ExtResource("1_heal")
+region = Rect2(1024, 0, 512, 512)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_heal04"]
+atlas = ExtResource("1_heal")
+region = Rect2(1536, 0, 512, 512)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_heal05"]
+atlas = ExtResource("1_heal")
+region = Rect2(2048, 0, 512, 512)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_heal06"]
+atlas = ExtResource("1_heal")
+region = Rect2(2560, 0, 512, 512)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_heal07"]
+atlas = ExtResource("1_heal")
+region = Rect2(3072, 0, 512, 512)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_heal08"]
+atlas = ExtResource("1_heal")
+region = Rect2(3584, 0, 512, 512)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_heal09"]
+atlas = ExtResource("1_heal")
+region = Rect2(0, 512, 512, 512)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_heal10"]
+atlas = ExtResource("1_heal")
+region = Rect2(512, 512, 512, 512)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_heal11"]
+atlas = ExtResource("1_heal")
+region = Rect2(1024, 512, 512, 512)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_heal12"]
+atlas = ExtResource("1_heal")
+region = Rect2(1536, 512, 512, 512)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_heal13"]
+atlas = ExtResource("1_heal")
+region = Rect2(2048, 512, 512, 512)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_heal14"]
+atlas = ExtResource("1_heal")
+region = Rect2(2560, 512, 512, 512)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_heal15"]
+atlas = ExtResource("1_heal")
+region = Rect2(3072, 512, 512, 512)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_heal16"]
+atlas = ExtResource("1_heal")
+region = Rect2(3584, 512, 512, 512)
+
+[sub_resource type="SpriteFrames" id="SpriteFrames_heal"]
+animations = [{
+"frames": [{
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_heal01")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_heal02")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_heal03")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_heal04")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_heal05")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_heal06")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_heal07")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_heal08")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_heal09")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_heal10")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_heal11")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_heal12")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_heal13")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_heal14")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_heal15")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_heal16")
+}],
+"loop": false,
+"name": &"heal",
+"speed": 20.0
+}]
+
+[node name="HealingVFX" type="Node2D"]
+script = SubResource("GDScript_heal")
+
+[node name="AnimatedSprite2D" type="AnimatedSprite2D" parent="."]
+modulate = Color(1, 1, 1, 0.6862745)
+sprite_frames = SubResource("SpriteFrames_heal")
+animation = &"heal"

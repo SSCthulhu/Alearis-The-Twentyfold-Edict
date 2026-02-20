@@ -1,0 +1,13 @@
+[gd_resource type="Resource" script_class="RelicData" load_steps=2 format=3 uid="uid://dt2yxwsapcbvb"]
+
+[ext_resource type="Script" uid="uid://dwyhl0a0pqlnn" path="res://scripts/systems/RelicData.gd" id="1_7sjql"]
+
+[resource]
+script = ExtResource("1_7sjql")
+id = &"r2_time_slip"
+display_name = "Time Slip"
+rarity = 1
+tags = Array[StringName]([&"skill", &"dodge", &"control", &"slow"])
+description_lines = Array[String](["Perfect dodge slows enemies for 2s.", "Cooldown: 6s."])
+effect_id = &"relic_time_slip"
+metadata/_custom_type_script = "uid://dwyhl0a0pqlnn"

@@ -1,0 +1,19 @@
+[remap]
+
+importer="mp3"
+type="AudioStreamMP3"
+uid="uid://dn3jm8svfdr6j"
+path="res://.godot/imported/(Disc 2) 14 - Catacecaumene.mp3-141271a335d26010a5da9cc4b796993d.mp3str"
+
+[deps]
+
+source_file="res://music/level/(Disc 2) 14 - Catacecaumene.mp3"
+dest_files=["res://.godot/imported/(Disc 2) 14 - Catacecaumene.mp3-141271a335d26010a5da9cc4b796993d.mp3str"]
+
+[params]
+
+loop=true
+loop_offset=0
+bpm=0
+beat_count=0
+bar_beats=4

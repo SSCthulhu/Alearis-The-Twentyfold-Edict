@@ -1,0 +1,64 @@
+[gd_scene load_steps=10 format=3 uid="uid://f1806r75ig2j"]
+
+[ext_resource type="PackedScene" uid="uid://cxj2t1hd1ww4q" path="res://assets/characters/enemy/Skeleton_Golem.glb" id="1_golem"]
+[ext_resource type="PackedScene" path="res://assets/scenes/Skeleton_Golem_Axe_Large.tscn" id="2_axe"]
+[ext_resource type="Animation" uid="uid://co1hl2a7ru0qo" path="res://animations_source/animations/large_rig/Hit_A.res" id="3_hit"]
+[ext_resource type="Animation" uid="uid://d1m5vx8notyv8" path="res://animations_source/animations/large_rig/Death_A.res" id="4_death"]
+[ext_resource type="Animation" uid="uid://blrkhr4iocdgf" path="res://animations_source/animations/large_rig/Melee_2H_Idle.res" id="5_idle"]
+[ext_resource type="Animation" path="res://animations_source/animations/large_rig/Melee_1H_Slash.res" id="6_attack"]
+[ext_resource type="Animation" uid="uid://dsvtlgex5bym8" path="res://animations_source/animations/large_rig/Melee_2H_Slam.res" id="7_slam"]
+[ext_resource type="Animation" uid="uid://60a3tgt3yxdc" path="res://animations_source/animations/large_rig/Walking_A.res" id="8_walk"]
+
+[sub_resource type="AnimationLibrary" id="AnimationLibrary_golem"]
+_data = {
+&"Death_AS": ExtResource("4_death"),
+&"Hit_A": ExtResource("3_hit"),
+&"Melee_1H_Slash": ExtResource("6_attack"),
+&"Melee_2H_Idle": ExtResource("5_idle"),
+&"Melee_2H_Slam": ExtResource("7_slam"),
+&"Walking_A": ExtResource("8_walk")
+}
+
+[node name="Skeleton_Golem" instance=ExtResource("1_golem")]
+
+[node name="Skeleton3D" parent="Rig_Large" index="0"]
+bones/1/position = Vector3(0, 0.95983857, 0)
+bones/1/rotation = Quaternion(-3.6635896e-16, 0.17319314, 2.7939684e-09, 0.9848879)
+bones/2/position = Vector3(-0.3418901, 0.22717452, 2.039884e-08)
+bones/2/rotation = Quaternion(0.94679, -0.10643698, 0.29934296, 0.05151461)
+bones/3/rotation = Quaternion(0.35656467, -5.1511485e-08, 2.56665e-07, 0.9342706)
+bones/4/rotation = Quaternion(-0.6128999, 0.038280822, -0.082084335, 0.7849525)
+bones/5/rotation = Quaternion(0.00018867833, 0.92013305, -0.39160585, -4.140789e-05)
+bones/6/position = Vector3(0.34189013, 0.22717452, 2.7846536e-08)
+bones/6/rotation = Quaternion(0.97625697, 0.060139302, 0.04471894, 0.20323808)
+bones/7/rotation = Quaternion(0.38606462, 2.467459e-08, -2.9506342e-07, 0.9224718)
+bones/8/rotation = Quaternion(-0.5434467, -0.020576114, 0.06515546, 0.8366583)
+bones/9/rotation = Quaternion(-0.0001446524, 0.9202248, -0.3913903, 3.216302e-05)
+bones/10/rotation = Quaternion(0.028232735, -0.13047159, 0.0062316656, 0.99103045)
+bones/11/rotation = Quaternion(1.3877787e-17, -1.191729e-07, -1.1641532e-10, 1)
+bones/12/position = Vector3(0.88401353, 0.49826336, 1.4558212e-07)
+bones/12/rotation = Quaternion(-0.5363062, 0.0005754661, -0.7652755, 0.35599005)
+bones/13/rotation = Quaternion(7.881494e-09, -5.7954093e-08, -0.54420954, 0.8389493)
+bones/15/rotation = Quaternion(-0.025542498, -0.3116838, 0.14376508, 0.9388996)
+bones/16/position = Vector3(1.0047009e-09, 0.23070042, -0.13799977)
+bones/16/rotation = Quaternion(-0.094399825, 0.107380435, -0.64511883, 0.75058645)
+bones/17/rotation = Quaternion(0.055964846, -0.035059962, 0.0037994604, 0.9978098)
+bones/18/position = Vector3(-0.8840135, 0.49826312, 1.6573354e-07)
+bones/18/rotation = Quaternion(-0.60395, -0.0981525, 0.6885558, 0.38923177)
+bones/19/rotation = Quaternion(1.7729256e-08, 4.0982396e-08, 0.5501995, 0.83503324)
+bones/21/rotation = Quaternion(-0.027677989, 0.28841054, -0.0752226, 0.95414615)
+bones/22/position = Vector3(-1.0046867e-09, 0.23070036, -0.13799977)
+bones/22/rotation = Quaternion(-0.094399795, -0.10738043, 0.64511883, 0.75058645)
+
+[node name="Socket_RightHand" type="BoneAttachment3D" parent="Rig_Large/Skeleton3D" index="7"]
+transform = Transform3D(0.15370229, -0.14615104, -0.9772489, -0.24781056, -0.96309495, 0.105058655, -0.95653814, 0.2260245, -0.18424776, -1.2805108, 1.4921705, 0.12477383)
+bone_name = "hand.r"
+bone_idx = 21
+
+[node name="Skeleton_Golem_Axe_Large" parent="Rig_Large/Skeleton3D/Socket_RightHand" index="0" instance=ExtResource("2_axe")]
+transform = Transform3D(-0.23411275, -0.9624706, 0.1372645, -0.9526787, 0.25526953, 0.1650476, -0.19389288, -0.092129216, -0.97668713, 0, 0.27, 0)
+
+[node name="AnimationPlayer" type="AnimationPlayer" parent="." index="1"]
+libraries = {
+&"Player": SubResource("AnimationLibrary_golem")
+}

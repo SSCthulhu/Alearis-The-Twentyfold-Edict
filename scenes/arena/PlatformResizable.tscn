@@ -1,0 +1,29 @@
+[gd_scene load_steps=3 format=3 uid="uid://3fuld8awghlh"]
+
+[ext_resource type="Script" uid="uid://dbp4pe4nrifkl" path="res://scripts/arena/PlatformResizable.gd" id="1_kg7rn"]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_jx0og"]
+size = Vector2(1757, 359)
+
+[node name="PlatformResizable" type="Node2D"]
+script = ExtResource("1_kg7rn")
+width_px = 1757
+collision_height_px = 359
+collision_offset_y_px = 26.0
+
+[node name="Visual" type="NinePatchRect" parent="."]
+offset_left = -878.5
+offset_top = -210.0
+offset_right = 878.5
+offset_bottom = 210.0
+patch_margin_left = 80
+patch_margin_top = 120
+patch_margin_right = 80
+patch_margin_bottom = 40
+axis_stretch_horizontal = 1
+
+[node name="Body" type="StaticBody2D" parent="."]
+
+[node name="Collision" type="CollisionShape2D" parent="Body"]
+position = Vector2(0, 26)
+shape = SubResource("RectangleShape2D_jx0og")

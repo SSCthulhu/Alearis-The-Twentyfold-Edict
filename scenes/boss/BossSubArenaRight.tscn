@@ -1,0 +1,254 @@
+[gd_scene load_steps=28 format=3 uid="uid://de1yua27a1bb2"]
+
+[ext_resource type="Script" uid="uid://bmi06qcgd5fny" path="res://scripts/boss/SubArenaController.gd" id="1_q1pg1"]
+[ext_resource type="PackedScene" uid="uid://c72m65e63bs0o" path="res://scenes/player/player.tscn" id="2_player"]
+[ext_resource type="PackedScene" uid="uid://cai81qjmmgokj" path="res://scenes/arena/AscensionCharge.tscn" id="2_rdkml"]
+[ext_resource type="Texture2D" uid="uid://bu71lu0wv2orc" path="res://art/Worlds/cave/background/wall bg.png" id="3_btemu"]
+[ext_resource type="PackedScene" uid="uid://3fuld8awghlh" path="res://scenes/arena/PlatformResizable.tscn" id="3_i4t2d"]
+[ext_resource type="Texture2D" uid="uid://c0ho73d2kvuil" path="res://art/Worlds/Dungeon/Tile Set/1.png" id="4_4talo"]
+[ext_resource type="Texture2D" uid="uid://di2c413mbri0w" path="res://art/Worlds/cave/background/bg1.png" id="4_8raaj"]
+[ext_resource type="Texture2D" uid="uid://1bn08fcfrknt" path="res://art/Worlds/cave/background/bg3.png" id="5_p37e3"]
+[ext_resource type="PackedScene" uid="uid://da2fr6n8vi4x7" path="res://scenes/ui/UI.tscn" id="5_ui"]
+[ext_resource type="Texture2D" uid="uid://dcdruorr6jr2i" path="res://art/Worlds/cave/background/filter.png" id="6_ypi54"]
+[ext_resource type="Texture2D" uid="uid://c5ddyxhatruiw" path="res://art/Worlds/cave/background/light.png" id="7_b40yj"]
+[ext_resource type="Texture2D" uid="uid://bc6tsv60dckg7" path="res://art/Worlds/Tropical/Background/water.png" id="8_j62pi"]
+[ext_resource type="Texture2D" uid="uid://c3e272eshfjuk" path="res://art/Worlds/cave/platform/Bridge.png" id="11_pxukb"]
+[ext_resource type="Texture2D" uid="uid://but35i62nr4c6" path="res://art/Worlds/cave/props/Skull on Spear.png" id="12_yi70c"]
+[ext_resource type="Texture2D" uid="uid://c5wxgxlakb3jc" path="res://art/Worlds/cave/props/Closed Wooden Crate.png" id="13_yiwnt"]
+[ext_resource type="Texture2D" uid="uid://lu708nykd5i3" path="res://art/Worlds/cave/props/dead_skeleton_Warrior.png" id="14_roiow"]
+[ext_resource type="Texture2D" uid="uid://cffhun22lgbnl" path="res://art/Worlds/cave/props/dead_skeleton_Warrior2.png" id="15_wynaf"]
+[ext_resource type="Texture2D" uid="uid://duajxu3ik3ioa" path="res://art/Worlds/cave/crystal/green/crystal4.png" id="16_k83vj"]
+[ext_resource type="Texture2D" uid="uid://btyjbcfxwu7vm" path="res://art/Worlds/cave/crystal/red/crystal5.png" id="17_6jqoe"]
+[ext_resource type="Texture2D" uid="uid://bnlfj4qkatwfr" path="res://art/Worlds/cave/crystal/red/crystal2.png" id="18_jfvsr"]
+[ext_resource type="Texture2D" uid="uid://cdm206os8wfmy" path="res://art/Worlds/cave/crystal/blue/crystal3.png" id="19_p61l4"]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_4m3bg"]
+size = Vector2(80, 2000)
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_btemu"]
+size = Vector2(2222, 254)
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_8raaj"]
+size = Vector2(1797, 254)
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_q1etm"]
+size = Vector2(1208.98, 80)
+
+[sub_resource type="CapsuleShape2D" id="CapsuleShape2D_aasog"]
+radius = 20.0
+height = 310.35
+
+[sub_resource type="CapsuleShape2D" id="CapsuleShape2D_2kocp"]
+radius = 20.0
+height = 310.35
+
+[node name="BossSubArenaRight" type="Node2D"]
+script = ExtResource("1_q1pg1")
+orb_scene = ExtResource("2_rdkml")
+orb_spawn_position = Vector2(0, -50)
+
+[node name="ParallaxRoot" type="Node2D" parent="."]
+position = Vector2(0, 471)
+
+[node name="Furthest" type="Parallax2D" parent="ParallaxRoot"]
+scroll_scale = Vector2(0.1, 0.05)
+scroll_offset = Vector2(-2048, -1348)
+repeat_size = Vector2(2165, 0)
+repeat_times = 3
+follow_viewport = false
+
+[node name="WallBg" type="Sprite2D" parent="ParallaxRoot/Furthest"]
+scale = Vector2(4, 4)
+texture = ExtResource("3_btemu")
+
+[node name="Bg1" type="Sprite2D" parent="ParallaxRoot/Furthest"]
+texture_repeat = 2
+position = Vector2(29, 0)
+scale = Vector2(1, 2)
+texture = ExtResource("4_8raaj")
+
+[node name="Mid" type="Parallax2D" parent="ParallaxRoot"]
+scroll_scale = Vector2(0.13, 0.08)
+scroll_offset = Vector2(0, -1340)
+repeat_size = Vector2(2112, 0)
+repeat_times = 4
+follow_viewport = false
+
+[node name="Bg3" type="Sprite2D" parent="ParallaxRoot/Mid"]
+texture_repeat = 2
+position = Vector2(639, 0)
+scale = Vector2(1, 2)
+texture = ExtResource("5_p37e3")
+
+[node name="Nearest" type="Parallax2D" parent="ParallaxRoot"]
+scroll_scale = Vector2(0.2, 0.1)
+scroll_offset = Vector2(0, -750)
+follow_viewport = false
+
+[node name="Filter" type="Sprite2D" parent="ParallaxRoot/Nearest"]
+modulate = Color(1, 1, 1, 0.5882353)
+position = Vector2(0, -541)
+scale = Vector2(1.7349999, 1.7349999)
+texture = ExtResource("6_ypi54")
+
+[node name="Light" type="Sprite2D" parent="ParallaxRoot/Nearest"]
+position = Vector2(343.00003, -929)
+rotation = 0.3228859
+texture = ExtResource("7_b40yj")
+
+[node name="Water" type="Parallax2D" parent="ParallaxRoot"]
+scroll_offset = Vector2(-3, -66)
+repeat_size = Vector2(866, 0)
+autoscroll = Vector2(400, 0)
+repeat_times = 8
+
+[node name="Water" type="Sprite2D" parent="ParallaxRoot/Water"]
+position = Vector2(0, -201)
+texture = ExtResource("8_j62pi")
+
+[node name="LeftWall" type="Node2D" parent="."]
+
+[node name="StaticBody2D" type="StaticBody2D" parent="LeftWall"]
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="LeftWall/StaticBody2D"]
+position = Vector2(-1577, -821)
+shape = SubResource("RectangleShape2D_4m3bg")
+
+[node name="RightWall" type="Node2D" parent="."]
+
+[node name="StaticBody2D" type="StaticBody2D" parent="RightWall"]
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="RightWall/StaticBody2D"]
+position = Vector2(1577, -821)
+shape = SubResource("RectangleShape2D_4m3bg")
+
+[node name="PlatformResizable" parent="." instance=ExtResource("3_i4t2d")]
+position = Vector2(942, 111)
+texture = ExtResource("4_4talo")
+width_px = 2222
+height_px = 306
+collision_height_px = 254
+collision_offset_y_px = 28.0
+
+[node name="Visual" parent="PlatformResizable" index="0"]
+offset_left = -1111.0
+offset_top = -153.0
+offset_right = 1111.0
+offset_bottom = 153.0
+texture = ExtResource("4_4talo")
+
+[node name="Collision" parent="PlatformResizable/Body" index="0"]
+position = Vector2(0, 28)
+shape = SubResource("RectangleShape2D_btemu")
+
+[node name="PlatformResizable2" parent="." instance=ExtResource("3_i4t2d")]
+position = Vector2(-1500, 111)
+texture = ExtResource("4_4talo")
+width_px = 1797
+height_px = 306
+collision_height_px = 254
+collision_offset_y_px = 28.0
+
+[node name="Visual" parent="PlatformResizable2" index="0"]
+offset_left = -898.5
+offset_top = -153.0
+offset_right = 898.5
+offset_bottom = 153.0
+texture = ExtResource("4_4talo")
+
+[node name="Collision" parent="PlatformResizable2/Body" index="0"]
+position = Vector2(0, 28)
+shape = SubResource("RectangleShape2D_8raaj")
+
+[node name="Node2D" type="Node2D" parent="."]
+position = Vector2(0, -22)
+
+[node name="Bridge" type="Sprite2D" parent="Node2D"]
+z_index = 1
+position = Vector2(-386, 25.999998)
+scale = Vector2(0.35, 0.35)
+texture = ExtResource("11_pxukb")
+
+[node name="StaticBody2D" type="StaticBody2D" parent="Node2D"]
+position = Vector2(-386, 25.999998)
+scale = Vector2(0.35, 0.35)
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Node2D/StaticBody2D"]
+z_index = 1
+position = Vector2(-2.8571777, 34.285767)
+scale = Vector2(0.99999994, 0.99999994)
+shape = SubResource("RectangleShape2D_q1etm")
+
+[node name="CollisionShape2D2" type="CollisionShape2D" parent="Node2D/StaticBody2D"]
+z_index = 1
+position = Vector2(725.7143, 31.428589)
+rotation = 1.7051867
+shape = SubResource("CapsuleShape2D_aasog")
+
+[node name="CollisionShape2D3" type="CollisionShape2D" parent="Node2D/StaticBody2D"]
+z_index = 1
+position = Vector2(-728.5712, 31.42858)
+rotation = 1.436406
+shape = SubResource("CapsuleShape2D_2kocp")
+
+[node name="Decor" type="Node2D" parent="."]
+
+[node name="SkullOnSpear" type="Sprite2D" parent="Decor"]
+z_index = 2
+position = Vector2(541.00006, -106)
+scale = Vector2(0.2, 0.2)
+texture = ExtResource("12_yi70c")
+
+[node name="ClosedWoodenCrate" type="Sprite2D" parent="Decor"]
+position = Vector2(-718, -59)
+scale = Vector2(0.25, 0.25)
+texture = ExtResource("13_yiwnt")
+
+[node name="DeadSkeletonWarrior" type="Sprite2D" parent="Decor"]
+position = Vector2(-774, -93)
+rotation = -0.42760566
+scale = Vector2(0.25, 0.25)
+texture = ExtResource("14_roiow")
+
+[node name="DeadSkeletonWarrior2" type="Sprite2D" parent="Decor"]
+z_index = 2
+position = Vector2(978, -46)
+scale = Vector2(0.25, 0.25)
+texture = ExtResource("15_wynaf")
+
+[node name="Crystal4" type="Sprite2D" parent="Decor"]
+position = Vector2(-1101, -176)
+texture = ExtResource("16_k83vj")
+
+[node name="Crystal5" type="Sprite2D" parent="Decor"]
+z_index = 10
+position = Vector2(1173, 4.999996)
+scale = Vector2(0.7, 0.7)
+texture = ExtResource("17_6jqoe")
+
+[node name="Crystal2" type="Sprite2D" parent="Decor"]
+z_index = 10
+position = Vector2(-1378, -28)
+scale = Vector2(0.55, 0.55)
+texture = ExtResource("18_jfvsr")
+
+[node name="Crystal3" type="Sprite2D" parent="Decor"]
+position = Vector2(294.99994, -173)
+scale = Vector2(0.8, 0.8)
+texture = ExtResource("19_p61l4")
+
+[node name="Player" parent="." instance=ExtResource("2_player")]
+
+[node name="Camera2D" parent="Player" index="9"]
+offset = Vector2(0, -400)
+limit_top = -1050
+limit_bottom = 475
+
+[node name="PlayerSpawn" type="Marker2D" parent="."]
+
+[node name="UI" parent="." instance=ExtResource("5_ui")]
+
+[editable path="PlatformResizable"]
+[editable path="PlatformResizable2"]
+[editable path="Player"]
+[editable path="Player/Visual/Body3DView"]

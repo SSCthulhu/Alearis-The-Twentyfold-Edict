@@ -1,0 +1,43 @@
+[gd_resource type="Resource" script_class="CharacterData" load_steps=2 format=3 uid="uid://dhd1pd2cef6ne"]
+
+[ext_resource type="Script" uid="uid://bu8xwhu1vl4rw" path="res://scripts/resources/CharacterData.gd" id="1_knight"]
+
+[resource]
+script = ExtResource("1_knight")
+character_name = "Knight"
+character_display_name = "Knight"
+model_scene_path = "res://assets/scenes/knight.tscn"
+move_speed_multiplier = 1.2
+attack_movement = {
+"heavy": {
+"distance": 0.0,
+"duration": 0.8
+}
+}
+roll_movement = {
+"direction": "forward",
+"distance": 0.0,
+"duration": 0.4
+}
+animation_mappings = {
+"chest_open": "QAnim/Chest_Open",
+"death": "QAnim/Death01",
+"defend": "MAnim/SwordandShieldPowerup",
+"dodge": "QAnim/Shield_OneShot",
+"double_jump_idle": "QAnim/NinjaJump_Idle",
+"double_jump_land": "QAnim/NinjaJump_Land",
+"double_jump_start": "QAnim/NinjaJump_Start",
+"fall": "QAnim/Jump",
+"heavy_attack": "MAnim/SwordandShieldAttack",
+"hit": "QAnim/Hit_Chest",
+"hold": "QAnim/Walk_Carry",
+"idle": "QAnim/Idle_Shield",
+"interact": "QAnim/Interact",
+"jump": "QAnim/Jump",
+"jump_land": "QAnim/Jump_Land",
+"jump_start": "QAnim/Jump_Start",
+"light_attack": "QAnim/Sword_Regular_A",
+"run": "QAnim/Jog_Fwd",
+"sprint": "QAnim/Sprint",
+"ultimate": "MAnim/SwordandShieldCast"
+}

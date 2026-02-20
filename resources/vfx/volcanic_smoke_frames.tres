@@ -1,0 +1,128 @@
+[gd_resource type="SpriteFrames" load_steps=18 format=3 uid="uid://b1yro2bn4vybn"]
+
+[ext_resource type="Texture2D" uid="uid://cwht8u54spcqq" path="res://assets/VFX/Wind VFX Spritesheets/Smoke_Burst_White_v7_C_spritesheet.png" id="1_e3mht"]
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_8ncqk"]
+atlas = ExtResource("1_e3mht")
+region = Rect2(0, 0, 512, 512)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_qxbgo"]
+atlas = ExtResource("1_e3mht")
+region = Rect2(512, 0, 512, 512)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_trsbh"]
+atlas = ExtResource("1_e3mht")
+region = Rect2(1024, 0, 512, 512)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_hoaq5"]
+atlas = ExtResource("1_e3mht")
+region = Rect2(1536, 0, 512, 512)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_15pg6"]
+atlas = ExtResource("1_e3mht")
+region = Rect2(0, 512, 512, 512)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_teffn"]
+atlas = ExtResource("1_e3mht")
+region = Rect2(512, 512, 512, 512)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_xq58b"]
+atlas = ExtResource("1_e3mht")
+region = Rect2(1024, 512, 512, 512)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_jiyyu"]
+atlas = ExtResource("1_e3mht")
+region = Rect2(1536, 512, 512, 512)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_vqn1j"]
+atlas = ExtResource("1_e3mht")
+region = Rect2(0, 1024, 512, 512)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_dep63"]
+atlas = ExtResource("1_e3mht")
+region = Rect2(512, 1024, 512, 512)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_7ckp8"]
+atlas = ExtResource("1_e3mht")
+region = Rect2(1024, 1024, 512, 512)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_7c46w"]
+atlas = ExtResource("1_e3mht")
+region = Rect2(1536, 1024, 512, 512)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_ux87j"]
+atlas = ExtResource("1_e3mht")
+region = Rect2(0, 1536, 512, 512)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_e4vby"]
+atlas = ExtResource("1_e3mht")
+region = Rect2(512, 1536, 512, 512)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_clfy2"]
+atlas = ExtResource("1_e3mht")
+region = Rect2(1024, 1536, 512, 512)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_lrudp"]
+atlas = ExtResource("1_e3mht")
+region = Rect2(1536, 1536, 512, 512)
+
+[resource]
+animations = [{
+"frames": [],
+"loop": true,
+"name": &"default",
+"speed": 5.0
+}, {
+"frames": [{
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_8ncqk")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_qxbgo")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_trsbh")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_hoaq5")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_15pg6")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_teffn")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_xq58b")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_jiyyu")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_vqn1j")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_dep63")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_7ckp8")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_7c46w")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_ux87j")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_e4vby")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_clfy2")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_lrudp")
+}],
+"loop": true,
+"name": &"smoke_burst",
+"speed": 15.0
+}]

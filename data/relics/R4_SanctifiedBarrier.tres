@@ -1,0 +1,14 @@
+[gd_resource type="Resource" script_class="RelicData" load_steps=2 format=3 uid="uid://dpepx4tqki1cg"]
+
+[ext_resource type="Script" uid="uid://dwyhl0a0pqlnn" path="res://scripts/systems/RelicData.gd" id="1_whotv"]
+
+[resource]
+script = ExtResource("1_whotv")
+id = &"r4_sanctified_barrier"
+display_name = "Sanctified Barrier"
+rarity = 1
+band = 0
+tags = Array[StringName]([&"defense", &"shield", &"defensive_cd"])
+description_lines = Array[String](["Using Defensive CD grants a", "20% max HP shield."])
+effect_id = &"relic_sanctified_barrier"
+metadata/_custom_type_script = "uid://dwyhl0a0pqlnn"

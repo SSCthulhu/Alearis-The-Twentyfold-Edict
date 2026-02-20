@@ -1,0 +1,13 @@
+[gd_resource type="Resource" script_class="BossProjectilePattern" load_steps=2 format=3 uid="uid://cns5cnyssf610"]
+
+[ext_resource type="Script" uid="uid://jo1e152jjcof" path="res://scripts/boss/BossProjectilePattern.gd" id="1_pattern"]
+
+[resource]
+script = ExtResource("1_pattern")
+pattern_name = "Horizontal Wave"
+pattern_type = 0
+animation_name = "KAnim/Melee_Unarmed_Punch"
+projectile_count = 12
+projectile_speed = 300.0
+projectile_damage = 12
+sequential_delay = 0.35

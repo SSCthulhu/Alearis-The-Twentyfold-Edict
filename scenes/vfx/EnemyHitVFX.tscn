@@ -1,0 +1,147 @@
+[gd_scene load_steps=20 format=3 uid="uid://cvlobx6k68egu"]
+
+[ext_resource type="Texture2D" uid="uid://qsrtwpsqapaj" path="res://assets/VFX/Essentials VFX Spritesheets/Impact_Hit_Lv2_spritesheet.png" id="1_c1ras"]
+
+[sub_resource type="GDScript" id="GDScript_enemyhit"]
+script/source = "extends Node2D
+
+@onready var sprite: AnimatedSprite2D = $AnimatedSprite2D
+
+func _ready() -> void:
+	if sprite != null:
+		sprite.play(&\"enemy_hit\")
+		# Auto-destroy when animation finishes
+		sprite.animation_finished.connect(_on_animation_finished)
+
+func _on_animation_finished() -> void:
+	queue_free()
+"
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_u8uwm"]
+atlas = ExtResource("1_c1ras")
+region = Rect2(0, 0, 512, 512)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_yw82t"]
+atlas = ExtResource("1_c1ras")
+region = Rect2(512, 0, 512, 512)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_qjqgr"]
+atlas = ExtResource("1_c1ras")
+region = Rect2(1024, 0, 512, 512)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_hxb12"]
+atlas = ExtResource("1_c1ras")
+region = Rect2(1536, 0, 512, 512)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_j2dqg"]
+atlas = ExtResource("1_c1ras")
+region = Rect2(0, 512, 512, 512)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_1ts4u"]
+atlas = ExtResource("1_c1ras")
+region = Rect2(512, 512, 512, 512)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_jpe00"]
+atlas = ExtResource("1_c1ras")
+region = Rect2(1024, 512, 512, 512)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_qdp3r"]
+atlas = ExtResource("1_c1ras")
+region = Rect2(1536, 512, 512, 512)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_0q4kp"]
+atlas = ExtResource("1_c1ras")
+region = Rect2(0, 1024, 512, 512)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_fyi8c"]
+atlas = ExtResource("1_c1ras")
+region = Rect2(512, 1024, 512, 512)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_6u73j"]
+atlas = ExtResource("1_c1ras")
+region = Rect2(1024, 1024, 512, 512)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_dulrg"]
+atlas = ExtResource("1_c1ras")
+region = Rect2(1536, 1024, 512, 512)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_mxpum"]
+atlas = ExtResource("1_c1ras")
+region = Rect2(0, 1536, 512, 512)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_y671u"]
+atlas = ExtResource("1_c1ras")
+region = Rect2(512, 1536, 512, 512)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_5lqvk"]
+atlas = ExtResource("1_c1ras")
+region = Rect2(1024, 1536, 512, 512)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_4op5r"]
+atlas = ExtResource("1_c1ras")
+region = Rect2(1536, 1536, 512, 512)
+
+[sub_resource type="SpriteFrames" id="SpriteFrames_enemyhit"]
+animations = [{
+"frames": [{
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_u8uwm")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_yw82t")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_qjqgr")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_hxb12")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_j2dqg")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_1ts4u")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_jpe00")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_qdp3r")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_0q4kp")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_fyi8c")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_6u73j")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_dulrg")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_mxpum")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_y671u")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_5lqvk")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_4op5r")
+}],
+"loop": false,
+"name": &"enemy_hit",
+"speed": 45.0
+}]
+
+[node name="EnemyHitVFX" type="Node2D"]
+script = SubResource("GDScript_enemyhit")
+
+[node name="AnimatedSprite2D" type="AnimatedSprite2D" parent="."]
+z_index = 25
+sprite_frames = SubResource("SpriteFrames_enemyhit")
+animation = &"enemy_hit"
+frame_progress = 1.0

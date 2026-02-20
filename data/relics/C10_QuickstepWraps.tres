@@ -1,0 +1,13 @@
+[gd_resource type="Resource" script_class="RelicData" load_steps=2 format=3 uid="uid://decwmbc84od7e"]
+
+[ext_resource type="Script" uid="uid://dwyhl0a0pqlnn" path="res://scripts/systems/RelicData.gd" id="1_jf7hj"]
+
+[resource]
+script = ExtResource("1_jf7hj")
+id = &"c10_quickstep_wraps"
+display_name = "Quickstep Wraps"
+band = 2
+tags = Array[StringName]([&"skill", &"dodge", &"damage", &"light"])
+description_lines = Array[String](["After dodge, next Light deals +25%", "damage (2s window)."])
+effect_id = &"relic_quickstep_wraps"
+metadata/_custom_type_script = "uid://dwyhl0a0pqlnn"

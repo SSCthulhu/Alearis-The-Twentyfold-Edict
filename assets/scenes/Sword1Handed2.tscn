@@ -1,0 +1,8 @@
+[gd_scene load_steps=2 format=3 uid="uid://bk0llc0kvh1lk"]
+
+[ext_resource type="PackedScene" uid="uid://03xbwhaovclc" path="res://assets/weapons/player/sword_1handed.gltf" id="1_sword"]
+
+[node name="sword_1handed2" type="Node3D"]
+
+[node name="sword_1handed" parent="." instance=ExtResource("1_sword")]
+

@@ -1,0 +1,137 @@
+[gd_scene load_steps=17 format=3 uid="uid://dash_vfx_scene"]
+
+[ext_resource type="Texture2D" uid="uid://dy4r5q8m7xxat" path="res://assets/VFX/Spritesheets/Wind_Ground_Alpha_Left_0.5_Burst_A_spritesheet.png" id="1_dash"]
+
+[sub_resource type="GDScript" id="GDScript_dash"]
+script/source = "extends Node2D
+
+@onready var sprite: AnimatedSprite2D = $AnimatedSprite2D
+
+func _ready() -> void:
+	if sprite != null:
+		sprite.play(&\"dash\")
+		# Auto-destroy when animation finishes
+		sprite.animation_finished.connect(_on_animation_finished)
+
+func _on_animation_finished() -> void:
+	queue_free()
+
+func set_facing(direction: int) -> void:
+	\"\"\"Set facing direction: -1=left (flipped), 1=right (default)\"\"\"
+	if sprite != null:
+		sprite.flip_h = (direction < 0)  # Flip horizontally when facing left
+"
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_dash01"]
+atlas = ExtResource("1_dash")
+region = Rect2(0, 0, 512, 512)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_dash02"]
+atlas = ExtResource("1_dash")
+region = Rect2(512, 0, 512, 512)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_dash03"]
+atlas = ExtResource("1_dash")
+region = Rect2(1024, 0, 512, 512)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_dash04"]
+atlas = ExtResource("1_dash")
+region = Rect2(1536, 0, 512, 512)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_dash05"]
+atlas = ExtResource("1_dash")
+region = Rect2(2048, 0, 512, 512)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_dash06"]
+atlas = ExtResource("1_dash")
+region = Rect2(2560, 0, 512, 512)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_dash07"]
+atlas = ExtResource("1_dash")
+region = Rect2(3072, 0, 512, 512)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_dash08"]
+atlas = ExtResource("1_dash")
+region = Rect2(0, 512, 512, 512)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_dash09"]
+atlas = ExtResource("1_dash")
+region = Rect2(512, 512, 512, 512)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_dash10"]
+atlas = ExtResource("1_dash")
+region = Rect2(1024, 512, 512, 512)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_dash11"]
+atlas = ExtResource("1_dash")
+region = Rect2(1536, 512, 512, 512)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_dash12"]
+atlas = ExtResource("1_dash")
+region = Rect2(2048, 512, 512, 512)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_dash13"]
+atlas = ExtResource("1_dash")
+region = Rect2(2560, 512, 512, 512)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_dash14"]
+atlas = ExtResource("1_dash")
+region = Rect2(3072, 512, 512, 512)
+
+[sub_resource type="SpriteFrames" id="SpriteFrames_dash"]
+animations = [{
+"frames": [{
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_dash01")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_dash02")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_dash03")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_dash04")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_dash05")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_dash06")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_dash07")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_dash08")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_dash09")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_dash10")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_dash11")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_dash12")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_dash13")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_dash14")
+}],
+"loop": false,
+"name": &"dash",
+"speed": 30.0
+}]
+
+[node name="DashVFX" type="Node2D"]
+script = SubResource("GDScript_dash")
+
+[node name="AnimatedSprite2D" type="AnimatedSprite2D" parent="."]
+sprite_frames = SubResource("SpriteFrames_dash")
+animation = &"dash"
+autoplay = ""

@@ -1,0 +1,13 @@
+[gd_resource type="Resource" script_class="HUDStyle" load_steps=5 format=3 uid="uid://dtfg2ntfkn5oa"]
+
+[ext_resource type="FontFile" uid="uid://c2uf3qbb6s8c1" path="res://fonts/RobotoSerif-Bold.ttf" id="1_dsflt"]
+[ext_resource type="Script" uid="uid://cv2fm87dhr44a" path="res://scripts/ui/HUDStyle.gd" id="1_kxw7h"]
+[ext_resource type="FontFile" uid="uid://c2ru0ylq10uj0" path="res://fonts/RobotoSerif-ExtraLight.ttf" id="2_wcxo5"]
+[ext_resource type="FontFile" uid="uid://e15yw1qs1xwi" path="res://fonts/RobotoSerif-ExtraBold.ttf" id="3_ngt33"]
+
+[resource]
+script = ExtResource("1_kxw7h")
+font_title = ExtResource("3_ngt33")
+font_body = ExtResource("1_dsflt")
+font_small = ExtResource("2_wcxo5")
+metadata/_custom_type_script = "uid://cv2fm87dhr44a"

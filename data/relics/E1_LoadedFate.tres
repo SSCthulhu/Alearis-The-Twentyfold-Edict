@@ -1,0 +1,13 @@
+[gd_resource type="Resource" script_class="RelicData" load_steps=2 format=3 uid="uid://dnwmba1cuh8fi"]
+
+[ext_resource type="Script" uid="uid://dwyhl0a0pqlnn" path="res://scripts/systems/RelicData.gd" id="1_7rnvj"]
+
+[resource]
+script = ExtResource("1_7rnvj")
+id = &"e1_loaded_fate"
+display_name = "Loaded Fate"
+rarity = 2
+tags = Array[StringName]([&"dice", &"control", &"boss"])
+description_lines = Array[String](["Once per World, choose your", "boss roll result (within range)."])
+effect_id = &"relic_loaded_fate"
+metadata/_custom_type_script = "uid://dwyhl0a0pqlnn"

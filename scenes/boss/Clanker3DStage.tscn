@@ -1,0 +1,123 @@
+[gd_scene load_steps=34 format=3 uid="uid://ccta54fa4ns3b"]
+
+[ext_resource type="PackedScene" uid="uid://co2u0tgj0w8ek" path="res://assets/characters/enemy/Clanker.glb" id="1_lnopp"]
+[ext_resource type="Texture2D" uid="uid://td3odw53jbdp" path="res://assets/textures/clanker_texture_alt.png" id="2_co4rj"]
+[ext_resource type="Animation" uid="uid://d1m5vx8notyv8" path="res://animations_source/animations/large_rig/Death_A.res" id="3_siybf"]
+[ext_resource type="Animation" uid="uid://dqtncsn4ihf2i" path="res://animations_source/animations/large_rig/Death_A_Pose.res" id="4_85qad"]
+[ext_resource type="Animation" uid="uid://dbth8622qt80t" path="res://animations_source/animations/large_rig/Dodge_Backwards.res" id="5_axopo"]
+[ext_resource type="Animation" uid="uid://d1sdcglb0ej3x" path="res://animations_source/animations/large_rig/Dodge_Forward.res" id="6_02yfn"]
+[ext_resource type="Animation" uid="uid://o2bccioi1ddu" path="res://animations_source/animations/large_rig/Dodge_Left.res" id="7_h23m1"]
+[ext_resource type="Animation" uid="uid://c8qb6ienh1rr5" path="res://animations_source/animations/large_rig/Dodge_Right.res" id="8_sclp0"]
+[ext_resource type="Animation" uid="uid://dojjh0wycbyw4" path="res://animations_source/animations/large_rig/EXPERIMENTAL_Large_Transform.res" id="9_go0pj"]
+[ext_resource type="Animation" uid="uid://3s4o1w7e1vh3" path="res://animations_source/animations/large_rig/Flexing.res" id="10_r32y3"]
+[ext_resource type="Animation" uid="uid://co1hl2a7ru0qo" path="res://animations_source/animations/large_rig/Hit_A.res" id="11_o3wtx"]
+[ext_resource type="Animation" uid="uid://cyovaaunq5dh6" path="res://animations_source/animations/large_rig/Idle_A.res" id="12_rvual"]
+[ext_resource type="Animation" uid="uid://t285v84em6ri" path="res://animations_source/animations/large_rig/Idle_B.res" id="13_f6q40"]
+[ext_resource type="Animation" uid="uid://c6vwo04o0y7xw" path="res://animations_source/animations/large_rig/Melee_1H_Slash.res" id="14_5om20"]
+[ext_resource type="Animation" uid="uid://kesthnsui80r" path="res://animations_source/animations/large_rig/Melee_1H_Stab.res" id="15_yhiky"]
+[ext_resource type="Animation" uid="uid://i56iauq13xst" path="res://animations_source/animations/large_rig/Melee_2H_Attack.res" id="16_m43up"]
+[ext_resource type="Animation" uid="uid://blrkhr4iocdgf" path="res://animations_source/animations/large_rig/Melee_2H_Idle.res" id="17_t3hye"]
+[ext_resource type="Animation" uid="uid://dsvtlgex5bym8" path="res://animations_source/animations/large_rig/Melee_2H_Slam.res" id="18_ru4ww"]
+[ext_resource type="Animation" uid="uid://jtflbotj0cxk" path="res://animations_source/animations/large_rig/Melee_Block.res" id="19_5gejo"]
+[ext_resource type="Animation" uid="uid://sb0h7adeaitn" path="res://animations_source/animations/large_rig/Melee_Block_Attack.res" id="20_vlw2m"]
+[ext_resource type="Animation" uid="uid://uft65yiykqoj" path="res://animations_source/animations/large_rig/Melee_Block_Hit.res" id="21_l505r"]
+[ext_resource type="Animation" uid="uid://b82cqbk4h1k46" path="res://animations_source/animations/large_rig/Melee_Blocking.res" id="22_6d2fm"]
+[ext_resource type="Animation" uid="uid://df0cosb6v6vbn" path="res://animations_source/animations/large_rig/Melee_Dualwield_Slash.res" id="23_wsb4l"]
+[ext_resource type="Animation" uid="uid://be5wbemf3x4qb" path="res://animations_source/animations/large_rig/Melee_Dualwield_SlashCombo.res" id="24_y1hy3"]
+[ext_resource type="Animation" uid="uid://rogtvhw2xf8c" path="res://animations_source/animations/large_rig/Melee_Unarmed_Idle.res" id="25_642l7"]
+[ext_resource type="Animation" uid="uid://cucttsqyestbr" path="res://animations_source/animations/large_rig/Melee_Unarmed_Kick.res" id="26_ascc5"]
+[ext_resource type="Animation" uid="uid://c0lfvxvbrkg06" path="res://animations_source/animations/large_rig/Melee_Unarmed_Punch.res" id="27_jh1io"]
+[ext_resource type="Animation" uid="uid://8h74qo5tbi6d" path="res://animations_source/animations/large_rig/Melee_Unarmed_Smash.res" id="28_rf88x"]
+[ext_resource type="Animation" uid="uid://bcbcs8huvgriu" path="res://animations_source/animations/large_rig/Running_A.res" id="29_bvcaj"]
+[ext_resource type="Animation" uid="uid://dsbrxwfp3c7m8" path="res://animations_source/animations/large_rig/T-Pose.res" id="30_kqav0"]
+[ext_resource type="Animation" uid="uid://60a3tgt3yxdc" path="res://animations_source/animations/large_rig/Walking_A.res" id="31_psu6l"]
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_phgj6"]
+albedo_texture = ExtResource("2_co4rj")
+
+[sub_resource type="AnimationLibrary" id="AnimationLibrary_ctjcv"]
+_data = {
+&"Death_A": ExtResource("3_siybf"),
+&"Death_A_Pose": ExtResource("4_85qad"),
+&"Dodge_Backwards": ExtResource("5_axopo"),
+&"Dodge_Forward": ExtResource("6_02yfn"),
+&"Dodge_Left": ExtResource("7_h23m1"),
+&"Dodge_Right": ExtResource("8_sclp0"),
+&"EXPERIMENTAL_Large_Transform": ExtResource("9_go0pj"),
+&"Flexing": ExtResource("10_r32y3"),
+&"Hit_A": ExtResource("11_o3wtx"),
+&"Idle_A": ExtResource("12_rvual"),
+&"Idle_B": ExtResource("13_f6q40"),
+&"Melee_1H_Slash": ExtResource("14_5om20"),
+&"Melee_1H_Stab": ExtResource("15_yhiky"),
+&"Melee_2H_Attack": ExtResource("16_m43up"),
+&"Melee_2H_Idle": ExtResource("17_t3hye"),
+&"Melee_2H_Slam": ExtResource("18_ru4ww"),
+&"Melee_Block": ExtResource("19_5gejo"),
+&"Melee_Block_Attack": ExtResource("20_vlw2m"),
+&"Melee_Block_Hit": ExtResource("21_l505r"),
+&"Melee_Blocking": ExtResource("22_6d2fm"),
+&"Melee_Dualwield_Slash": ExtResource("23_wsb4l"),
+&"Melee_Dualwield_SlashCombo": ExtResource("24_y1hy3"),
+&"Melee_Unarmed_Idle": ExtResource("25_642l7"),
+&"Melee_Unarmed_Kick": ExtResource("26_ascc5"),
+&"Melee_Unarmed_Punch": ExtResource("27_jh1io"),
+&"Melee_Unarmed_Smash": ExtResource("28_rf88x"),
+&"Running_A": ExtResource("29_bvcaj"),
+&"T-Pose": ExtResource("30_kqav0"),
+&"Walking_A": ExtResource("31_psu6l")
+}
+
+[node name="Clanker3DStage" type="Node3D"]
+
+[node name="FacingPivot" type="Node3D" parent="."]
+
+[node name="Clanker" parent="FacingPivot" instance=ExtResource("1_lnopp")]
+
+[node name="Skeleton3D" parent="FacingPivot/Clanker/Rig_Large" index="0"]
+bones/1/position = Vector3(-2.0164963e-08, 0.8613762, 0.08457801)
+bones/1/rotation = Quaternion(0.04078114, -0.10163471, -0.0041698916, 0.99397683)
+bones/2/position = Vector3(-0.35668826, 0.22116454, -0.07160575)
+bones/2/rotation = Quaternion(0.9865595, -0.12839031, 0.09871922, -0.021696374)
+bones/3/rotation = Quaternion(0.3681454, -2.664188e-08, 2.870823e-07, 0.92976826)
+bones/4/rotation = Quaternion(-0.6893337, 0.15676905, -0.1500209, 0.69118476)
+bones/5/rotation = Quaternion(0.00021121616, 0.9201442, -0.39157963, -4.657243e-05)
+bones/6/rotation = Quaternion(-0.034846336, -0.16136767, 0.037656512, 0.9855599)
+bones/7/rotation = Quaternion(0.036724407, -0.05009698, -0.019379722, 0.99788076)
+bones/8/position = Vector3(0.9004239, 0.49826336, 0.07940722)
+bones/8/rotation = Quaternion(-0.49817842, -0.4906674, -0.6404768, 0.3175742)
+bones/9/rotation = Quaternion(1.2824131e-08, -3.5702545e-08, -0.6330338, 0.7741242)
+bones/11/rotation = Quaternion(0.06882186, -0.4255926, -0.043023083, 0.9012677)
+bones/12/position = Vector3(1.0046938e-09, 0.23070036, -0.13799989)
+bones/12/rotation = Quaternion(-0.25324365, -0.4044593, -0.6433209, 0.59868073)
+bones/13/rotation = Quaternion(0.039577696, 0.32391948, -0.03410005, 0.9446412)
+bones/14/position = Vector3(-0.8840136, 0.49826336, 2.2212932e-07)
+bones/14/rotation = Quaternion(-0.36634654, 0.40799218, 0.80630237, 0.22183107)
+bones/15/rotation = Quaternion(-1.459286e-09, 3.9007954e-08, 0.6231106, 0.7821337)
+bones/17/rotation = Quaternion(-0.016090052, 0.31790185, 0.19741663, 0.9272034)
+bones/18/position = Vector3(1.1820459e-07, 0.23070048, -0.13799989)
+bones/18/rotation = Quaternion(-0.027440423, 0.046216458, 0.38321236, 0.9220952)
+bones/19/position = Vector3(0.35120845, 0.23095883, 0.04509018)
+bones/19/rotation = Quaternion(0.9377463, 0.1544489, -0.00844129, 0.31097648)
+bones/20/rotation = Quaternion(0.5441658, 3.0266182e-08, -3.9536414e-07, 0.8389777)
+bones/21/rotation = Quaternion(-0.59970236, -0.12835181, 0.12711859, 0.77956635)
+bones/22/rotation = Quaternion(-0.0002349276, 0.92014736, -0.39157236, 5.023746e-05)
+
+[node name="Clanker_Body" parent="FacingPivot/Clanker/Rig_Large/Skeleton3D" index="2"]
+material_override = SubResource("StandardMaterial3D_phgj6")
+
+[node name="AnimationPlayer" type="AnimationPlayer" parent="FacingPivot/Clanker"]
+libraries = {
+&"KAnim": SubResource("AnimationLibrary_ctjcv")
+}
+
+[node name="Camera3D" type="Camera3D" parent="."]
+transform = Transform3D(0.9998157, 0, 0.019197444, 0, 1, 0, -0.019197444, 0, 0.9998157, 0, 2.5, 4)
+projection = 1
+size = 12.0
+near = 0.1
+far = 50.0
+
+[node name="DirectionalLight3D" type="DirectionalLight3D" parent="."]
+
+[editable path="FacingPivot/Clanker"]

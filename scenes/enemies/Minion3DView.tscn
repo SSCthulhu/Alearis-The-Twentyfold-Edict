@@ -1,0 +1,17 @@
+[gd_scene load_steps=3 format=3 uid="uid://dcd57uq8tyb3"]
+
+[ext_resource type="Script" path="res://scripts/enemies/Enemy3DView.gd" id="1_script"]
+[ext_resource type="PackedScene" uid="uid://c1k2m3n4o5p6q" path="res://scenes/enemies/Minion3DStage.tscn" id="2_stage"]
+
+[node name="Minion3DView" type="Node2D"]
+script = ExtResource("1_script")
+stage_scene = ExtResource("2_stage")
+stage_skeleton_root_path = NodePath("FacingPivot")
+stage_animation_player_path = NodePath("FacingPivot/Skeleton_Minion/Model/Skeleton_Minion/AnimationPlayer")
+
+[node name="SubViewport" type="SubViewport" parent="."]
+msaa_3d = 2
+
+[node name="ScreenSprite" type="Sprite2D" parent="."]
+
+[node name="VisibleOnScreenNotifier2D" type="VisibleOnScreenNotifier2D" parent="."]

@@ -1,0 +1,151 @@
+[gd_scene load_steps=18 format=3 uid="uid://bdqtk48pci7yt"]
+
+[ext_resource type="Texture2D" uid="uid://gj6drov4ecqq" path="res://assets/VFX/Sword Slash VFX Spritesheets/Stab_V7_spritesheet.png" id="1_vcx2b"]
+
+[sub_resource type="GDScript" id="GDScript_slash"]
+script/source = "extends Node2D
+
+@onready var sprite: AnimatedSprite2D = $AnimatedSprite2D
+
+func _ready() -> void:
+	if sprite != null:
+		sprite.play(&\"slash\")
+		# Auto-destroy when animation finishes
+		sprite.animation_finished.connect(_on_animation_finished)
+
+func _on_animation_finished() -> void:
+	queue_free()
+
+func set_facing(direction: int) -> void:
+	\"\"\"Set facing direction: -1=left (flipped), 1=right (default)\"\"\"
+	if sprite != null:
+		sprite.flip_h = (direction < 0)
+"
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_xsjan"]
+atlas = ExtResource("1_vcx2b")
+region = Rect2(512, 1536, 512, 512)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_jym3l"]
+atlas = ExtResource("1_vcx2b")
+region = Rect2(0, 1536, 512, 512)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_m86r6"]
+atlas = ExtResource("1_vcx2b")
+region = Rect2(1536, 1024, 512, 512)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_xgtsp"]
+atlas = ExtResource("1_vcx2b")
+region = Rect2(1024, 1024, 512, 512)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_3k0y2"]
+atlas = ExtResource("1_vcx2b")
+region = Rect2(512, 1024, 512, 512)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_340af"]
+atlas = ExtResource("1_vcx2b")
+region = Rect2(0, 1024, 512, 512)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_neas7"]
+atlas = ExtResource("1_vcx2b")
+region = Rect2(1536, 512, 512, 512)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_05cjh"]
+atlas = ExtResource("1_vcx2b")
+region = Rect2(1024, 512, 512, 512)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_2crxd"]
+atlas = ExtResource("1_vcx2b")
+region = Rect2(512, 512, 512, 512)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_tm0or"]
+atlas = ExtResource("1_vcx2b")
+region = Rect2(0, 512, 512, 512)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_rpt5h"]
+atlas = ExtResource("1_vcx2b")
+region = Rect2(1536, 0, 512, 512)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_72cou"]
+atlas = ExtResource("1_vcx2b")
+region = Rect2(1024, 0, 512, 512)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_lgs8p"]
+atlas = ExtResource("1_vcx2b")
+region = Rect2(512, 0, 512, 512)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_27xb6"]
+atlas = ExtResource("1_vcx2b")
+region = Rect2(0, 0, 512, 512)
+
+[sub_resource type="SpriteFrames" id="SpriteFrames_slash"]
+animations = [{
+"frames": [{
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_xsjan")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_xsjan")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_xsjan")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_xsjan")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_xsjan")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_xsjan")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_jym3l")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_m86r6")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_xgtsp")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_3k0y2")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_340af")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_neas7")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_05cjh")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_2crxd")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_tm0or")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_rpt5h")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_72cou")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_lgs8p")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_27xb6")
+}],
+"loop": false,
+"name": &"slash",
+"speed": 30.0
+}]
+
+[node name="BlueSlashVFX" type="Node2D"]
+script = SubResource("GDScript_slash")
+
+[node name="AnimatedSprite2D" type="AnimatedSprite2D" parent="."]
+sprite_frames = SubResource("SpriteFrames_slash")
+animation = &"slash"

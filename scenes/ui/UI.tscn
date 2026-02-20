@@ -1,0 +1,512 @@
+[gd_scene load_steps=31 format=3 uid="uid://da2fr6n8vi4x7"]
+
+[ext_resource type="Script" uid="uid://iive4ggyhvyk" path="res://scripts/ui/BossHealthHUD.gd" id="2_8pieq"]
+[ext_resource type="FontFile" uid="uid://c2uf3qbb6s8c1" path="res://fonts/RobotoSerif-Bold.ttf" id="2_wkfse"]
+[ext_resource type="Script" uid="uid://cnkg6ajf8ulpf" path="res://scripts/ui/ScreenRoot.gd" id="2_wrkmn"]
+[ext_resource type="Script" uid="uid://cajr1wp3p0eqw" path="res://scripts/shared/HealthBarsController.gd" id="3_126pr"]
+[ext_resource type="Script" uid="uid://bxb3r444uyed" path="res://scripts/ui/DeathManager.gd" id="4_iiyyf"]
+[ext_resource type="FontFile" uid="uid://c2ru0ylq10uj0" path="res://fonts/RobotoSerif-ExtraLight.ttf" id="5_28fq0"]
+[ext_resource type="Script" uid="uid://dtfsbllqunpn3" path="res://scripts/ui/BossHUDTop.gd" id="6_mfq64"]
+[ext_resource type="Script" uid="uid://bo4mgjcwqrtjr" path="res://scripts/ui/BossCastBar.gd" id="7_q6505"]
+[ext_resource type="Script" uid="uid://d00ppbf4m5fwj" path="res://scripts/ui/DiceHUD.gd" id="8_ea65l"]
+[ext_resource type="FontFile" uid="uid://e15yw1qs1xwi" path="res://fonts/RobotoSerif-ExtraBold.ttf" id="9_fhn5e"]
+[ext_resource type="Script" uid="uid://l2d46kd6q0yg" path="res://scripts/ui/FloorStatusHUD.gd" id="9_gu145"]
+[ext_resource type="Script" uid="uid://chjx7bjghwsxd" path="res://scripts/ui/PlayerHUDCluster.gd" id="10_m01xj"]
+[ext_resource type="Script" uid="uid://cv2fm87dhr44a" path="res://scripts/ui/HUDStyle.gd" id="11_ii5g7"]
+[ext_resource type="Script" uid="uid://dkxkj5ugurr2u" path="res://scripts/ui/PlayerHUDWiring.gd" id="12_gu145"]
+[ext_resource type="Script" uid="uid://bgqakbxs0lrub" path="res://scripts/ui/EncounterHUDWiring.gd" id="13_28fq0"]
+[ext_resource type="PackedScene" uid="uid://dupyoobfyolg" path="res://scripts/ui/RunSummaryPanel.tscn" id="14_5tdvf"]
+[ext_resource type="Script" uid="uid://b7o4klo4itmt8" path="res://scripts/ui/VictoryHUD.gd" id="16_m01xj"]
+[ext_resource type="PackedScene" uid="uid://cfqkvud5nn8ce" path="res://scripts/ui/ModifierCard.tscn" id="17_ii5g7"]
+[ext_resource type="PackedScene" uid="uid://dpause001menu" path="res://scenes/ui/PauseMenu.tscn" id="19_f7i3j"]
+[ext_resource type="PackedScene" uid="uid://dsettings001" path="res://scenes/ui/SettingsMenu.tscn" id="20_settings"]
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_q5jec"]
+bg_color = Color(0, 0, 0, 1)
+corner_radius_top_left = 8
+corner_radius_top_right = 8
+corner_radius_bottom_right = 8
+corner_radius_bottom_left = 8
+expand_margin_left = 12.0
+expand_margin_top = 12.0
+expand_margin_right = 12.0
+expand_margin_bottom = 12.0
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_65rtq"]
+content_margin_left = 0.0
+content_margin_top = 0.0
+content_margin_right = 0.0
+content_margin_bottom = 0.0
+bg_color = Color(1, 1, 1, 0)
+border_width_left = 4
+border_width_top = 4
+border_width_right = 4
+border_width_bottom = 4
+border_color = Color(0, 0, 0, 1)
+corner_radius_top_left = 20
+corner_radius_top_right = 20
+corner_radius_bottom_right = 20
+corner_radius_bottom_left = 20
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_126pr"]
+content_margin_left = 0.0
+content_margin_top = 0.0
+content_margin_right = 0.0
+content_margin_bottom = 0.0
+bg_color = Color(0.95858234, 0, 0.13791913, 1)
+border_width_left = 4
+border_width_top = 4
+border_width_right = 4
+border_width_bottom = 4
+border_color = Color(0, 0, 0, 1)
+corner_radius_top_left = 20
+corner_radius_top_right = 20
+corner_radius_bottom_right = 20
+corner_radius_bottom_left = 20
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_ea65l"]
+content_margin_left = 0.0
+content_margin_top = 0.0
+content_margin_right = 0.0
+content_margin_bottom = 0.0
+bg_color = Color(0.6, 0.6, 0.6, 0)
+border_width_left = 4
+border_width_top = 4
+border_width_right = 4
+border_width_bottom = 4
+border_color = Color(0, 0, 0, 1)
+corner_radius_top_left = 20
+corner_radius_top_right = 20
+corner_radius_bottom_right = 20
+corner_radius_bottom_left = 20
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_fhn5e"]
+content_margin_left = 0.0
+content_margin_top = 0.0
+content_margin_right = 0.0
+content_margin_bottom = 0.0
+bg_color = Color(0, 0.30578434, 0.6813579, 1)
+border_width_left = 4
+border_width_top = 4
+border_width_right = 4
+border_width_bottom = 4
+border_color = Color(0, 0, 0, 1)
+corner_radius_top_left = 20
+corner_radius_top_right = 20
+corner_radius_bottom_right = 20
+corner_radius_bottom_left = 20
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_bcuxr"]
+content_margin_left = 12.0
+content_margin_top = 12.0
+content_margin_right = 12.0
+content_margin_bottom = 12.0
+bg_color = Color(0, 0, 0, 1)
+corner_radius_top_left = 8
+corner_radius_top_right = 8
+corner_radius_bottom_right = 8
+corner_radius_bottom_left = 8
+
+[sub_resource type="Resource" id="Resource_f7i3j"]
+script = ExtResource("11_ii5g7")
+metadata/_custom_type_script = "uid://cv2fm87dhr44a"
+
+[sub_resource type="Resource" id="Resource_5tdvf"]
+script = ExtResource("11_ii5g7")
+metadata/_custom_type_script = "uid://cv2fm87dhr44a"
+
+[sub_resource type="Resource" id="Resource_4vhuy"]
+script = ExtResource("11_ii5g7")
+metadata/_custom_type_script = "uid://cv2fm87dhr44a"
+
+[sub_resource type="Resource" id="Resource_m01xj"]
+script = ExtResource("11_ii5g7")
+metadata/_custom_type_script = "uid://cv2fm87dhr44a"
+
+[node name="UI" type="CanvasLayer"]
+
+[node name="ScreenRoot" type="Control" parent="."]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("2_wrkmn")
+
+[node name="HUDRoot" type="Control" parent="ScreenRoot"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="TopLeft" type="Control" parent="ScreenRoot/HUDRoot"]
+layout_mode = 1
+anchors_preset = 0
+offset_left = 14.0
+offset_top = 18.0
+offset_right = 414.0
+offset_bottom = 218.0
+
+[node name="DiceHUD" type="Control" parent="ScreenRoot/HUDRoot/TopLeft"]
+layout_mode = 1
+anchors_preset = 0
+offset_right = 200.0
+offset_bottom = 40.0
+
+[node name="DicePanel" type="PanelContainer" parent="ScreenRoot/HUDRoot/TopLeft/DiceHUD"]
+layout_mode = 0
+offset_right = 40.0
+offset_bottom = 40.0
+theme_override_styles/panel = SubResource("StyleBoxFlat_q5jec")
+script = ExtResource("8_ea65l")
+header_font_size = 25
+font_override = ExtResource("9_fhn5e")
+divider_thickness = 4
+
+[node name="VBoxContainer" type="VBoxContainer" parent="ScreenRoot/HUDRoot/TopLeft/DiceHUD/DicePanel"]
+layout_mode = 2
+theme_override_constants/separation = 6
+alignment = 1
+
+[node name="DiceLabel" type="Label" parent="ScreenRoot/HUDRoot/TopLeft/DiceHUD/DicePanel/VBoxContainer"]
+layout_mode = 2
+theme_override_fonts/font = ExtResource("9_fhn5e")
+theme_override_font_sizes/font_size = 30
+
+[node name="TopCenter" type="Control" parent="ScreenRoot/HUDRoot"]
+layout_mode = 1
+anchors_preset = 5
+anchor_left = 0.5
+anchor_right = 0.5
+offset_top = 18.0
+offset_bottom = 268.0
+grow_horizontal = 2
+script = ExtResource("6_mfq64")
+hud_height = 150.0
+bottom_extra_padding = 12.0
+show_icon_socket = false
+cast_bar_height = 34.0
+bar_gap = 12.0
+title_font = ExtResource("9_fhn5e")
+bar_font = ExtResource("5_28fq0")
+boss_name_font_size = 28
+bar_text_font_size = 16
+
+[node name="BossStack" type="VBoxContainer" parent="ScreenRoot/HUDRoot/TopCenter"]
+visible = false
+layout_mode = 0
+offset_left = 1280.0
+offset_top = 122.0
+offset_right = 1280.0
+offset_bottom = 128.0
+theme_override_constants/separation = 6
+
+[node name="BossHealthUI" type="Control" parent="ScreenRoot/HUDRoot/TopCenter/BossStack"]
+visible = false
+layout_mode = 2
+mouse_filter = 2
+script = ExtResource("2_8pieq")
+
+[node name="BossPercentLabel" type="Label" parent="ScreenRoot/HUDRoot/TopCenter/BossStack/BossHealthUI"]
+visible = false
+layout_mode = 0
+offset_right = 40.0
+offset_bottom = 23.0
+theme_override_font_sizes/font_size = 18
+horizontal_alignment = 1
+
+[node name="BossBar" type="ProgressBar" parent="ScreenRoot/HUDRoot/TopCenter/BossStack/BossHealthUI"]
+visible = false
+custom_minimum_size = Vector2(700, 40)
+layout_mode = 0
+offset_top = 67.0
+offset_right = 700.0
+offset_bottom = 107.0
+theme_override_styles/background = SubResource("StyleBoxFlat_65rtq")
+theme_override_styles/fill = SubResource("StyleBoxFlat_126pr")
+
+[node name="BossNameLabel" type="Label" parent="ScreenRoot/HUDRoot/TopCenter/BossStack/BossHealthUI"]
+visible = false
+custom_minimum_size = Vector2(0, -16)
+layout_mode = 1
+anchors_preset = 5
+anchor_left = 0.5
+anchor_right = 0.5
+offset_left = -237.0
+offset_right = 237.0
+offset_bottom = 60.0
+grow_horizontal = 2
+theme_override_fonts/font = ExtResource("2_wkfse")
+theme_override_font_sizes/font_size = 50
+text = "Warden of Ascent"
+uppercase = true
+
+[node name="BossCastBar" type="Control" parent="ScreenRoot/HUDRoot/TopCenter/BossStack"]
+visible = false
+layout_mode = 2
+script = ExtResource("7_q6505")
+
+[node name="SpellLabel" type="Label" parent="ScreenRoot/HUDRoot/TopCenter/BossStack/BossCastBar"]
+visible = false
+custom_minimum_size = Vector2(0, -16)
+layout_mode = 1
+anchors_preset = 5
+anchor_left = 0.5
+anchor_right = 0.5
+offset_left = -282.24
+offset_top = -19.0
+offset_right = 279.76
+offset_bottom = 41.0
+grow_horizontal = 2
+theme_override_fonts/font = ExtResource("2_wkfse")
+theme_override_font_sizes/font_size = 45
+horizontal_alignment = 1
+uppercase = true
+
+[node name="Bar" type="ProgressBar" parent="ScreenRoot/HUDRoot/TopCenter/BossStack/BossCastBar"]
+visible = false
+custom_minimum_size = Vector2(600, 40)
+layout_mode = 0
+offset_top = 49.105
+offset_right = 600.0
+offset_bottom = 89.104996
+theme_override_styles/background = SubResource("StyleBoxFlat_ea65l")
+theme_override_styles/fill = SubResource("StyleBoxFlat_fhn5e")
+max_value = 1.0
+show_percentage = false
+
+[node name="TopRight" type="Control" parent="ScreenRoot/HUDRoot"]
+layout_mode = 1
+anchors_preset = 1
+anchor_left = 1.0
+anchor_right = 1.0
+offset_left = -422.0
+offset_top = 18.0
+offset_right = -22.0
+offset_bottom = 218.0
+grow_horizontal = 0
+
+[node name="Pad" type="MarginContainer" parent="ScreenRoot/HUDRoot/TopRight"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="StatusPanel" type="PanelContainer" parent="ScreenRoot/HUDRoot/TopRight/Pad"]
+layout_mode = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_bcuxr")
+script = ExtResource("9_gu145")
+panel_width_px = 180
+vbox_spacing_px = 12
+header_font_size = 25
+footer_font_size = 25
+header_letter_spacing = 10
+footer_letter_spacing = 10
+font_override = ExtResource("9_fhn5e")
+divider_thickness = 4
+dot_size_px = 32
+complete_font_size = 20
+
+[node name="VBoxContainer" type="VBoxContainer" parent="ScreenRoot/HUDRoot/TopRight/Pad/StatusPanel"]
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="FloorLabel" type="Label" parent="ScreenRoot/HUDRoot/TopRight/Pad/StatusPanel/VBoxContainer"]
+layout_mode = 2
+
+[node name="EnemiesLabel" type="Label" parent="ScreenRoot/HUDRoot/TopRight/Pad/StatusPanel/VBoxContainer"]
+layout_mode = 2
+
+[node name="BottomRight" type="Control" parent="ScreenRoot/HUDRoot"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="PlayerHUDCluster" type="Control" parent="ScreenRoot/HUDRoot/BottomRight"]
+layout_mode = 1
+anchors_preset = 3
+anchor_left = 1.0
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = -562.8889
+offset_top = -237.98611
+offset_right = -22.76389
+offset_bottom = -22.76389
+grow_horizontal = 0
+grow_vertical = 0
+mouse_filter = 2
+script = ExtResource("10_m01xj")
+style = SubResource("Resource_f7i3j")
+element_gap_px = 4.0
+cluster_width_px = 400.0
+ultimate_height_px = 62.0
+health_height_px = 74.0
+abilities_height_px = 64.0
+dodge_gap_px = 2.0
+
+[node name="PlayerHUDWiring" type="Node" parent="ScreenRoot/HUDRoot"]
+script = ExtResource("12_gu145")
+hud_cluster_path = NodePath("../BottomRight/PlayerHUDCluster")
+debug = false
+
+[node name="EncounterHUDWiring" type="Node" parent="ScreenRoot/HUDRoot"]
+script = ExtResource("13_28fq0")
+
+[node name="DeathOverlay" type="Control" parent="."]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+
+[node name="Fade" type="ColorRect" parent="DeathOverlay"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0, 0, 0, 0)
+
+[node name="YouDied" type="Label" parent="DeathOverlay"]
+modulate = Color(1, 1, 1, 0)
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_colors/font_color = Color(0.53333336, 0.03137255, 0.03137255, 1)
+theme_override_font_sizes/font_size = 120
+text = "YOU DIED"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="PressEnter" type="Label" parent="DeathOverlay"]
+modulate = Color(1, 1, 1, 0)
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_top = 200.0
+offset_bottom = 200.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_colors/font_color = Color(0.53333336, 0.03137255, 0.03137255, 1)
+theme_override_font_sizes/font_size = 80
+text = "Press Enter to retry"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="RunSummaryPanel" parent="DeathOverlay" instance=ExtResource("14_5tdvf")]
+layout_mode = 0
+style = SubResource("Resource_5tdvf")
+
+[node name="DeathManager" type="Node" parent="."]
+script = ExtResource("4_iiyyf")
+debug_death = false
+style = SubResource("Resource_4vhuy")
+
+[node name="HealthBarsController" type="Node" parent="."]
+script = ExtResource("3_126pr")
+boss_health_ui_path = NodePath("../ScreenRoot/HUDRoot/TopCenter/BossStack/BossHealthUI")
+player_hud_cluster_path = NodePath("../ScreenRoot/HUDRoot/BottomRight/PlayerHUDCluster")
+
+[node name="VictoryUI" type="CanvasLayer" parent="."]
+layer = 20
+script = ExtResource("16_m01xj")
+style = SubResource("Resource_m01xj")
+
+[node name="Overlay" type="ColorRect" parent="VictoryUI"]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0.15967038, 0.15967038, 0.15967035, 0.25490198)
+
+[node name="Root" type="Control" parent="VictoryUI"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="PanelTitle" type="Label" parent="VictoryUI/Root"]
+layout_mode = 0
+offset_left = 1275.0
+offset_top = 700.0
+offset_right = 1276.0
+offset_bottom = 723.0
+
+[node name="PanelRange" type="Label" parent="VictoryUI/Root"]
+layout_mode = 0
+offset_left = 1280.0
+offset_top = 700.0
+offset_right = 1281.0
+offset_bottom = 723.0
+
+[node name="CardA" parent="VictoryUI/Root" instance=ExtResource("17_ii5g7")]
+layout_mode = 0
+
+[node name="CardB" parent="VictoryUI/Root" instance=ExtResource("17_ii5g7")]
+layout_mode = 0
+
+[node name="CardC" parent="VictoryUI/Root" instance=ExtResource("17_ii5g7")]
+layout_mode = 0
+
+[node name="CardD" parent="VictoryUI/Root" instance=ExtResource("17_ii5g7")]
+layout_mode = 0
+
+[node name="CardE" parent="VictoryUI/Root" instance=ExtResource("17_ii5g7")]
+layout_mode = 0
+
+[node name="CardF" parent="VictoryUI/Root" instance=ExtResource("17_ii5g7")]
+layout_mode = 0
+
+[node name="CardG" parent="VictoryUI/Root" instance=ExtResource("17_ii5g7")]
+layout_mode = 0
+
+[node name="RunSummaryPanel" parent="VictoryUI/Root" instance=ExtResource("14_5tdvf")]
+layout_mode = 0
+
+[node name="ActiveModsPanel" type="Panel" parent="VictoryUI/Root"]
+visible = false
+layout_mode = 0
+offset_right = 40.0
+offset_bottom = 40.0
+
+[node name="Margin" type="MarginContainer" parent="VictoryUI/Root/ActiveModsPanel"]
+visible = false
+layout_mode = 0
+offset_right = 40.0
+offset_bottom = 40.0
+
+[node name="ActiveModsText" type="RichTextLabel" parent="VictoryUI/Root/ActiveModsPanel/Margin"]
+visible = false
+custom_minimum_size = Vector2(0, 160)
+layout_mode = 2
+scroll_active = false
+
+[node name="PauseMenu" parent="." instance=ExtResource("19_f7i3j")]
+settings_menu_scene = ExtResource("20_settings")
+style = SubResource("Resource_5tdvf")
+
+[editable path="DeathOverlay/RunSummaryPanel"]
+[editable path="VictoryUI/Root/CardA"]
+[editable path="VictoryUI/Root/CardB"]
+[editable path="VictoryUI/Root/CardC"]
+[editable path="VictoryUI/Root/CardD"]
+[editable path="VictoryUI/Root/CardE"]

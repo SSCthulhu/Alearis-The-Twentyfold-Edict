@@ -1,0 +1,8 @@
+[gd_scene load_steps=2 format=3 uid="uid://b10vib3arf7ph"]
+
+[ext_resource type="PackedScene" uid="uid://crptfvnjigdho" path="res://assets/weapons/enemy/Skeleton_Scythe.gltf" id="1_scythe"]
+
+
+[node name="Skeleton_Scythe" type="Node3D"]
+
+[node name="skeleton_scythe" parent="." instance=ExtResource("1_scythe")]

@@ -1,0 +1,202 @@
+[gd_scene load_steps=37 format=3 uid="uid://xgj3hosnqhuf"]
+
+[ext_resource type="PackedScene" uid="uid://bve2pe4bo6ww3" path="res://assets/characters/Rogue_Hooded.glb" id="1_1wq32"]
+[ext_resource type="PackedScene" uid="uid://cc4ifnexjmqa7" path="res://assets/weapons/player/dagger.gltf" id="2_qnjie"]
+[ext_resource type="Animation" uid="uid://r0l31ghctmrd" path="res://animations_source/animations/MAnim/DualWieldCombo.res" id="3_pi5ap"]
+[ext_resource type="Animation" uid="uid://b6wky3lydawrp" path="res://animations_source/animations/QAnim/Roll.res" id="4_jolgq"]
+[ext_resource type="Animation" uid="uid://u5taeoejr0n6" path="res://animations_source/animations/MAnim/SwordandShieldPowerup.res" id="4_lr2a7"]
+[ext_resource type="Animation" uid="uid://c3obobdb40ab6" path="res://animations_source/animations/QAnim/Sprint.res" id="5_lr2a7"]
+[ext_resource type="Animation" uid="uid://b7umctbjjk18c" path="res://animations_source/animations/QAnim/Sword_Attack.res" id="6_ep5ok"]
+[ext_resource type="Animation" uid="uid://cixmcbeyve6gu" path="res://animations_source/animations/QAnim/Sword_Idle.res" id="7_s7yq7"]
+[ext_resource type="Animation" uid="uid://eiwljv0rvdpa" path="res://animations_source/animations/QAnim/Walk.res" id="8_x8480"]
+[ext_resource type="Animation" uid="uid://bounigdpgtoqs" path="res://animations_source/animations/QAnim/A_TPose.res" id="9_c0hma"]
+[ext_resource type="Animation" uid="uid://b76d3wlk6v5pl" path="res://animations_source/animations/QAnim/Death01.res" id="10_l7vre"]
+[ext_resource type="Animation" uid="uid://cgd5ku5n81t47" path="res://animations_source/animations/QAnim/Hit_Chest.res" id="11_xvlff"]
+[ext_resource type="Animation" uid="uid://d2hqcxvik0fcd" path="res://animations_source/animations/QAnim/Hit_Head.res" id="12_nawak"]
+[ext_resource type="Animation" uid="uid://dqnn3f0yr0p54" path="res://animations_source/animations/QAnim/Idle.res" id="13_wdl25"]
+[ext_resource type="Animation" uid="uid://8xx50nqrgqma" path="res://animations_source/animations/QAnim/Idle_Torch.res" id="14_hpj3p"]
+[ext_resource type="Animation" uid="uid://caa8ve66snrgs" path="res://animations_source/animations/QAnim/Interact.res" id="15_orq4p"]
+[ext_resource type="Animation" uid="uid://dj7r3ybwp7a1p" path="res://animations_source/animations/QAnim/Jog_Fwd.res" id="16_p1tba"]
+[ext_resource type="Animation" uid="uid://dqpgithgdpwlk" path="res://animations_source/animations/QAnim/Jump.res" id="17_dpd2r"]
+[ext_resource type="Animation" uid="uid://bco1prnw4rhp4" path="res://animations_source/animations/QAnim/Jump_Land.res" id="18_m7j1l"]
+[ext_resource type="Animation" uid="uid://dlbulkr6fvrai" path="res://animations_source/animations/QAnim/Jump_Start.res" id="19_qh5pc"]
+[ext_resource type="Animation" uid="uid://osy041keqs0t" path="res://animations_source/animations/QAnim/PickUp_Table.res" id="20_3t2qu"]
+[ext_resource type="Animation" uid="uid://cxilp4xlu2f87" path="res://animations_source/animations/QAnim/Chest_Open.res" id="21_fnvqt"]
+[ext_resource type="Animation" uid="uid://cr3am7gk4g6l3" path="res://animations_source/animations/QAnim/NinjaJump_Idle.res" id="22_d355p"]
+[ext_resource type="Animation" uid="uid://bhimi1n7m5y82" path="res://animations_source/animations/QAnim/NinjaJump_Land.res" id="23_xnyn5"]
+[ext_resource type="Animation" uid="uid://cbcm2lbmn5eox" path="res://animations_source/animations/QAnim/NinjaJump_Start.res" id="24_bb0vp"]
+[ext_resource type="Animation" uid="uid://oe0mi4qtspur" path="res://animations_source/animations/QAnim/Sword_Dash_RM.res" id="25_uw57l"]
+[ext_resource type="Animation" uid="uid://5epbhxcwuh1h" path="res://animations_source/animations/QAnim/Sword_Regular_A.res" id="26_8olbm"]
+[ext_resource type="Animation" uid="uid://drr4bmcadkcl4" path="res://animations_source/animations/QAnim/Sword_Regular_B.res" id="27_w7teo"]
+[ext_resource type="Animation" uid="uid://n3ajrolx0kei" path="res://animations_source/animations/QAnim/Sword_Regular_C.res" id="28_61g2k"]
+[ext_resource type="Animation" uid="uid://ckueb7p6iv8nu" path="res://animations_source/animations/QAnim/Sword_Regular_Combo.res" id="29_j1grl"]
+[ext_resource type="Animation" uid="uid://d2jdcd66xdwny" path="res://animations_source/animations/QAnim/Walk_Carry.res" id="30_8asn5"]
+[ext_resource type="Animation" uid="uid://bdvhovtqesrd8" path="res://animations_source/animations/QAnim/Sword_Dash_NoRM.res" id="31_dash_nrm"]
+[ext_resource type="Animation" uid="uid://cw5d4xof8pymg" path="res://animations_source/animations/QAnim/Sword_Regular_A_Rec.res" id="32_jolgq"]
+[ext_resource type="Animation" uid="uid://8ihok4kf7c4b" path="res://animations_source/animations/QAnim/Sword_Regular_B_Rec.res" id="33_lr2a7"]
+
+[sub_resource type="AnimationLibrary" id="AnimationLibrary_k6uvh"]
+_data = {
+&"DualWieldCombo": ExtResource("3_pi5ap"),
+&"SwordandShieldPowerup": ExtResource("4_lr2a7")
+}
+
+[sub_resource type="AnimationLibrary" id="AnimationLibrary_kx4nm"]
+_data = {
+&"A_TPose": ExtResource("9_c0hma"),
+&"Chest_Open": ExtResource("21_fnvqt"),
+&"Death01": ExtResource("10_l7vre"),
+&"Hit_Chest": ExtResource("11_xvlff"),
+&"Hit_Head": ExtResource("12_nawak"),
+&"Idle": ExtResource("13_wdl25"),
+&"Idle_Torch": ExtResource("14_hpj3p"),
+&"Interact": ExtResource("15_orq4p"),
+&"Jog_Fwd": ExtResource("16_p1tba"),
+&"Jump": ExtResource("17_dpd2r"),
+&"Jump_Land": ExtResource("18_m7j1l"),
+&"Jump_Start": ExtResource("19_qh5pc"),
+&"NinjaJump_Idle": ExtResource("22_d355p"),
+&"NinjaJump_Land": ExtResource("23_xnyn5"),
+&"NinjaJump_Start": ExtResource("24_bb0vp"),
+&"PickUp_Table": ExtResource("20_3t2qu"),
+&"Roll": ExtResource("4_jolgq"),
+&"Sprint": ExtResource("5_lr2a7"),
+&"Sword_Attack": ExtResource("6_ep5ok"),
+&"Sword_Dash_NoRM": ExtResource("31_dash_nrm"),
+&"Sword_Dash_RM": ExtResource("25_uw57l"),
+&"Sword_Idle": ExtResource("7_s7yq7"),
+&"Sword_Regular_A": ExtResource("26_8olbm"),
+&"Sword_Regular_A_Rec": ExtResource("32_jolgq"),
+&"Sword_Regular_B": ExtResource("27_w7teo"),
+&"Sword_Regular_B_Rec": ExtResource("33_lr2a7"),
+&"Sword_Regular_C": ExtResource("28_61g2k"),
+&"Sword_Regular_Combo": ExtResource("29_j1grl"),
+&"Walk": ExtResource("8_x8480"),
+&"Walk_Carry": ExtResource("30_8asn5")
+}
+
+[node name="Rogue_Hooded" instance=ExtResource("1_1wq32")]
+
+[node name="GeneralSkeleton" parent="Rig_Medium" index="0"]
+bones/1/position = Vector3(0, 0.40566343, -0.022170564)
+bones/1/rotation = Quaternion(2.682209e-07, 0, 0, 1)
+bones/3/rotation = Quaternion(-8.568167e-08, 0, 0, 1)
+bones/4/rotation = Quaternion(-4.4703484e-08, 0, 0, 1)
+bones/5/rotation = Quaternion(-1.4901161e-08, 0, 0, 1)
+bones/6/rotation = Quaternion(2.9802322e-07, 0, 0, 1)
+bones/10/rotation = Quaternion(0.5, 0.49999988, 0.5, -0.5000001)
+bones/11/rotation = Quaternion(0, 1, 5.9604638e-08, -5.9604638e-08)
+bones/12/rotation = Quaternion(-1.1590383e-07, -0.70710695, -1.0536709e-08, 0.7071066)
+bones/13/rotation = Quaternion(-1.8751639e-07, 0.70710707, 1.07511596e-07, 0.7071065)
+bones/14/rotation = Quaternion(-0.2141867, 0.67388695, 0.21418685, 0.67388755)
+bones/15/rotation = Quaternion(-1.3411045e-07, -5.9604645e-08, -5.9604645e-08, 1)
+bones/16/rotation = Quaternion(1.4901161e-08, 7.4505806e-08, 2.9802322e-08, 1)
+bones/17/rotation = Quaternion(3.5762793e-07, -3.725291e-07, 5.960465e-08, 1)
+bones/18/rotation = Quaternion(0, -1.1920929e-07, 5.9604645e-08, 1)
+bones/19/rotation = Quaternion(0, 0, 5.9604645e-08, 1)
+bones/20/rotation = Quaternion(3.1292439e-07, -2.3841858e-07, 5.9604645e-08, 1)
+bones/21/rotation = Quaternion(-2.9802322e-08, -1.1920929e-07, 2.9802322e-08, 1)
+bones/22/rotation = Quaternion(0, -5.960466e-08, -2.980233e-08, 1)
+bones/23/rotation = Quaternion(2.8312203e-07, -4.4703478e-07, 5.9604638e-08, 1)
+bones/24/rotation = Quaternion(2.9802322e-08, -8.940697e-08, 8.940697e-08, 1)
+bones/25/rotation = Quaternion(0, 0, -5.9604645e-08, 1)
+bones/26/rotation = Quaternion(3.4272674e-07, -2.831221e-07, 2.9802326e-08, 1)
+bones/27/rotation = Quaternion(0, -1.0430813e-07, 5.9604645e-08, 1)
+bones/29/rotation = Quaternion(0.5, -0.49999988, -0.5, -0.5000001)
+bones/30/rotation = Quaternion(1.0430813e-07, 1, 5.9604645e-08, 0)
+bones/31/rotation = Quaternion(-1.1590383e-07, 0.707107, -7.375698e-08, 0.70710665)
+bones/32/rotation = Quaternion(-1.8728218e-07, -0.7071071, -1.07745805e-07, 0.7071064)
+bones/33/rotation = Quaternion(-0.21418665, -0.67388695, -0.21418674, 0.67388755)
+bones/34/rotation = Quaternion(-1.4901163e-08, 1.192093e-07, -8.940698e-08, 1)
+bones/35/rotation = Quaternion(1.192093e-07, -1.192093e-07, 8.940698e-08, 1)
+bones/36/rotation = Quaternion(3.8743025e-07, 3.8743025e-07, -8.940698e-08, 1)
+bones/37/rotation = Quaternion(-2.9802322e-08, 1.1920929e-07, -2.9802322e-08, 1)
+bones/38/rotation = Quaternion(0, -1.4901161e-08, -1.4901161e-08, 1)
+bones/39/rotation = Quaternion(4.0233135e-07, 2.2351742e-07, -5.9604645e-08, 1)
+bones/40/rotation = Quaternion(-2.9802322e-08, 1.1920929e-07, -2.9802322e-08, 1)
+bones/41/rotation = Quaternion(1.4901165e-08, 1.4901165e-08, 4.4703494e-08, 1)
+bones/42/rotation = Quaternion(3.874302e-07, 3.2782555e-07, -8.940697e-08, 1)
+bones/43/rotation = Quaternion(-1.4901161e-08, 1.0430813e-07, -2.9802322e-08, 1)
+bones/44/rotation = Quaternion(0, 5.9604645e-08, 0, 1)
+bones/45/rotation = Quaternion(3.8743025e-07, 3.2782557e-07, -8.940698e-08, 1)
+bones/46/rotation = Quaternion(-1.4901161e-08, 1.3411045e-07, -7.4505806e-08, 1)
+bones/48/rotation = Quaternion(0, 2.115965e-06, 1, 0)
+bones/49/rotation = Quaternion(4.9359192e-09, 1, -3.77046e-06, 6.3276623e-10)
+bones/50/rotation = Quaternion(2.933546e-09, 0.7071056, -0.7071081, -3.4891932e-09)
+bones/51/rotation = Quaternion(4.409676e-08, 1, 5.9604645e-08, 1.9452786e-08)
+bones/52/rotation = Quaternion(-6.510947e-11, 2.115965e-06, 1, -9.305792e-09)
+bones/53/rotation = Quaternion(5.283706e-09, 1, -3.8300645e-06, 2.704666e-10)
+bones/54/rotation = Quaternion(-3.0341927e-09, 0.70710546, -0.7071081, 3.198829e-09)
+bones/55/rotation = Quaternion(4.4117336e-08, 1, 5.9604645e-08, 1.9473367e-08)
+
+[node name="OriginalSkeleton" parent="Rig_Medium/GeneralSkeleton/RetargetModifier3D" index="0"]
+bones/1/position = Vector3(5.285874e-09, 0.40566343, -0.022170564)
+bones/1/rotation = Quaternion(2.682209e-07, -1.19209275e-07, 3.197442e-14, 1)
+bones/2/position = Vector3(0.17094506, 0.11358726, 1.3038516e-08)
+bones/2/rotation = Quaternion(0.999849, -7.132769e-08, -1.2042582e-08, 0.017375307)
+bones/2/scale = Vector3(1, 0.9999999, 1.0000012)
+bones/3/position = Vector3(0, 0.22707745, -8.381903e-09)
+bones/3/rotation = Quaternion(0.1062289, 6.837436e-08, -6.880148e-08, 0.9943417)
+bones/3/scale = Vector3(1, 1.0000004, 1)
+bones/4/position = Vector3(0, 0.14943703, -7.450581e-09)
+bones/4/rotation = Quaternion(-0.45524067, 1.7891933e-08, -3.8588546e-08, 0.89036846)
+bones/4/scale = Vector3(1, 1.0000007, 0.9999988)
+bones/5/position = Vector3(-2.9802322e-08, 0.16565004, 2.2351742e-08)
+bones/5/rotation = Quaternion(-4.32379e-10, 0.9203549, -0.39108416, 5.8673493e-08)
+bones/5/scale = Vector3(1, 0.99999684, 1.0000037)
+bones/6/position = Vector3(-0.17094506, 0.11358726, 1.3038516e-08)
+bones/6/rotation = Quaternion(0.999849, 8.356893e-08, -3.149967e-08, 0.017375307)
+bones/6/scale = Vector3(1, 0.9999999, 1.0000012)
+bones/7/position = Vector3(-1.4901161e-08, 0.22707745, -8.381903e-09)
+bones/7/rotation = Quaternion(0.10622896, -6.8543386e-08, 7.905919e-08, 0.9943417)
+bones/7/scale = Vector3(1, 1.0000002, 1)
+bones/8/position = Vector3(1.4901161e-08, 0.14943707, -7.450581e-09)
+bones/8/rotation = Quaternion(-0.4552407, 1.6459104e-07, 6.4343624e-09, 0.89036846)
+bones/8/scale = Vector3(1, 1.0000007, 0.99999875)
+bones/9/position = Vector3(-1.4901161e-08, 0.16565003, -7.450581e-09)
+bones/9/rotation = Quaternion(-2.6999409e-08, 0.9203549, -0.39108416, 6.5174696e-08)
+bones/9/scale = Vector3(1, 0.99999666, 1.0000037)
+bones/10/rotation = Quaternion(3.0092655e-36, 7.1054274e-15, -4.2351647e-22, 1)
+bones/11/rotation = Quaternion(-8.568167e-08, -8.4703285e-22, -1.2176099e-21, 1)
+bones/12/position = Vector3(4.4998625e-22, 0.2687965, -3.1664968e-08)
+bones/12/rotation = Quaternion(2.3841855e-07, 8.0779347e-28, 3.3881318e-21, 1)
+bones/13/position = Vector3(0.21200737, 0.13413209, 5.9604645e-08)
+bones/13/rotation = Quaternion(-0.5141214, -0.48546767, -0.4854677, 0.514122)
+bones/13/scale = Vector3(0.9999994, 0.9999994, 0.9999998)
+bones/14/position = Vector3(2.142042e-08, 0.24189728, -1.1920929e-07)
+bones/14/rotation = Quaternion(8.247264e-08, -2.891796e-07, -0.055285443, 0.9984706)
+bones/14/scale = Vector3(1, 0.99999976, 0.9999998)
+bones/15/position = Vector3(1.8626451e-08, 0.26004386, 1.1920929e-07)
+bones/15/rotation = Quaternion(1.9747507e-07, 4.2233555e-07, 0.02665816, 0.9996446)
+bones/15/scale = Vector3(1.0000001, 1.0000001, 0.9999998)
+bones/18/position = Vector3(-0.21200737, 0.13413209, 5.9604645e-08)
+bones/18/rotation = Quaternion(-0.5141214, 0.4854676, 0.48546767, 0.51412207)
+bones/18/scale = Vector3(0.99999934, 0.99999934, 0.9999998)
+bones/19/position = Vector3(-2.7939677e-09, 0.24189731, -1.1920929e-07)
+bones/19/rotation = Quaternion(1.3854319e-07, 3.4899455e-07, 0.055285487, 0.9984706)
+bones/19/scale = Vector3(1.0000001, 0.99999976, 0.9999999)
+bones/20/position = Vector3(-1.4901161e-08, 0.2600439, 0)
+bones/20/rotation = Quaternion(1.9429847e-07, -5.4150263e-07, -0.026658162, 0.99964464)
+bones/20/scale = Vector3(1.0000001, 1.0000001, 0.99999994)
+
+[node name="LeftHand" type="BoneAttachment3D" parent="Rig_Medium/GeneralSkeleton" index="1"]
+transform = Transform3D(-5.303766e-07, 1, 6.854532e-07, 9.90927e-07, 6.8545364e-07, -0.9999999, -0.9999999, -5.30376e-07, -9.909273e-07, 0.7131815, 1.1067612, -0.02217036)
+bone_name = "LeftHand"
+bone_idx = 13
+
+[node name="dagger2" parent="Rig_Medium/GeneralSkeleton/LeftHand" index="0" instance=ExtResource("2_qnjie")]
+transform = Transform3D(-0.50000006, -0.8660254, 0, -0.8660254, 0.50000006, 8.742278e-08, -7.5710346e-08, 4.3711392e-08, -1, 0, 0.135, 0)
+
+[node name="RightHand" type="BoneAttachment3D" parent="Rig_Medium/GeneralSkeleton" index="2"]
+transform = Transform3D(-6.191214e-07, -1, -8.046625e-07, -9.909272e-07, 8.0466305e-07, -1, 1, -6.1912067e-07, -9.909276e-07, -0.7131815, 1.1067612, -0.022170432)
+bone_name = "RightHand"
+bone_idx = 32
+
+[node name="dagger2" parent="Rig_Medium/GeneralSkeleton/RightHand" index="0" instance=ExtResource("2_qnjie")]
+transform = Transform3D(0.6556594, 0.7542498, -0.034899496, -0.75470954, 0.656059, 0, 0.02289613, 0.026338981, 0.99939084, 0, 0.135, 0)
+
+[node name="AnimationPlayer" type="AnimationPlayer" parent="." index="1"]
+libraries = {
+&"MAnim": SubResource("AnimationLibrary_k6uvh"),
+&"QAnim": SubResource("AnimationLibrary_kx4nm")
+}

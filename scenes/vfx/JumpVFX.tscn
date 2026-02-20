@@ -1,0 +1,152 @@
+[gd_scene load_steps=20 format=3 uid="uid://bx03ta06yus5i"]
+
+[ext_resource type="Texture2D" uid="uid://buf7djaoljvhi" path="res://assets/VFX/Wind VFX Spritesheets/Jump_Wind_White_v1_spritesheet.png" id="1_5qsss"]
+
+[sub_resource type="GDScript" id="GDScript_jump"]
+script/source = "extends Node2D
+
+@onready var sprite: AnimatedSprite2D = $AnimatedSprite2D
+
+func _ready() -> void:
+	if sprite != null:
+		sprite.play(&\"jump\")
+		# Auto-destroy when animation finishes
+		sprite.animation_finished.connect(_on_animation_finished)
+
+func _on_animation_finished() -> void:
+	queue_free()
+
+func set_facing(direction: int) -> void:
+	\"\"\"Set facing direction: -1=left, 1=right\"\"\"
+	if sprite != null:
+		sprite.flip_h = (direction < 0)
+"
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_pssvp"]
+atlas = ExtResource("1_5qsss")
+region = Rect2(0, 0, 512, 512)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_hen2k"]
+atlas = ExtResource("1_5qsss")
+region = Rect2(512, 0, 512, 512)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_1emgm"]
+atlas = ExtResource("1_5qsss")
+region = Rect2(1024, 0, 512, 512)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_5e7bn"]
+atlas = ExtResource("1_5qsss")
+region = Rect2(1536, 0, 512, 512)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_dl8xt"]
+atlas = ExtResource("1_5qsss")
+region = Rect2(0, 512, 512, 512)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_w74uo"]
+atlas = ExtResource("1_5qsss")
+region = Rect2(512, 512, 512, 512)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_1wym3"]
+atlas = ExtResource("1_5qsss")
+region = Rect2(1024, 512, 512, 512)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_hypsw"]
+atlas = ExtResource("1_5qsss")
+region = Rect2(1536, 512, 512, 512)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_5fo1r"]
+atlas = ExtResource("1_5qsss")
+region = Rect2(0, 1024, 512, 512)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_88l5i"]
+atlas = ExtResource("1_5qsss")
+region = Rect2(512, 1024, 512, 512)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_jilj8"]
+atlas = ExtResource("1_5qsss")
+region = Rect2(1024, 1024, 512, 512)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_0jbvb"]
+atlas = ExtResource("1_5qsss")
+region = Rect2(1536, 1024, 512, 512)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_asf0c"]
+atlas = ExtResource("1_5qsss")
+region = Rect2(0, 1536, 512, 512)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_5xih1"]
+atlas = ExtResource("1_5qsss")
+region = Rect2(512, 1536, 512, 512)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_eb7al"]
+atlas = ExtResource("1_5qsss")
+region = Rect2(1024, 1536, 512, 512)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_by5m4"]
+atlas = ExtResource("1_5qsss")
+region = Rect2(1536, 1536, 512, 512)
+
+[sub_resource type="SpriteFrames" id="SpriteFrames_jump"]
+animations = [{
+"frames": [{
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_pssvp")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_hen2k")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_1emgm")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_5e7bn")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_dl8xt")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_w74uo")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_1wym3")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_hypsw")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_5fo1r")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_88l5i")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_jilj8")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_0jbvb")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_asf0c")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_5xih1")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_eb7al")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_by5m4")
+}],
+"loop": false,
+"name": &"jump",
+"speed": 10.0
+}]
+
+[node name="JumpVFX" type="Node2D"]
+script = SubResource("GDScript_jump")
+
+[node name="AnimatedSprite2D" type="AnimatedSprite2D" parent="."]
+sprite_frames = SubResource("SpriteFrames_jump")
+animation = &"jump"
+frame = 15
+frame_progress = 1.0

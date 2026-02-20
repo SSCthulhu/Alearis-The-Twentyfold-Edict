@@ -1,0 +1,13 @@
+[gd_resource type="Resource" script_class="RelicData" load_steps=2 format=3 uid="uid://coqmh6pqu34ga"]
+
+[ext_resource type="Script" uid="uid://dwyhl0a0pqlnn" path="res://scripts/systems/RelicData.gd" id="1_esspl"]
+
+[resource]
+script = ExtResource("1_esspl")
+id = &"c4_tempered_guard"
+display_name = "Tempered Guard"
+band = 0
+tags = Array[StringName]([&"defense", &"defensive_cd", &"utility"])
+description_lines = Array[String](["Defensive CD lasts +2s."])
+effect_id = &"relic_tempered_guard"
+metadata/_custom_type_script = "uid://dwyhl0a0pqlnn"

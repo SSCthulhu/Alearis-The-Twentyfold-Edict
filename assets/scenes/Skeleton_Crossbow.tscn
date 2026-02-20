@@ -1,0 +1,7 @@
+[gd_scene load_steps=2 format=3 uid="uid://c0xb0w123456"]
+
+[ext_resource type="PackedScene" uid="uid://bqkgvdx3gakbn" path="res://assets/weapons/enemy/Skeleton_Crossbow.gltf" id="1_crossbow"]
+
+[node name="Skeleton_Crossbow" type="Node3D"]
+
+[node name="skeleton_crossbow" parent="." instance=ExtResource("1_crossbow")]

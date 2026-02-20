@@ -1,0 +1,17 @@
+[gd_scene load_steps=4 format=3 uid="uid://bxxf4cqiyjotx"]
+
+[ext_resource type="Script" uid="uid://diiemeb57nyjr" path="res://scripts/hazard/OrbFallingRock.gd" id="1_7ubyo"]
+[ext_resource type="Texture2D" uid="uid://cwp4tyq7brs48" path="res://art/Worlds/Tropical/Props/stone/rock 1.png" id="2_bp0oj"]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_axtc4"]
+size = Vector2(10, 20)
+
+[node name="OrbFallingRock" type="Area2D"]
+script = ExtResource("1_7ubyo")
+
+[node name="Sprite2D" type="Sprite2D" parent="."]
+texture = ExtResource("2_bp0oj")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="."]
+position = Vector2(5, 10)
+shape = SubResource("RectangleShape2D_axtc4")

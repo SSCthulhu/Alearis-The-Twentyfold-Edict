@@ -1,0 +1,231 @@
+[gd_scene load_steps=23 format=3 uid="uid://b74opc0nq4dwk"]
+
+[ext_resource type="Script" uid="uid://0kp5sod776f1" path="res://scripts/ui/MainMenu.gd" id="1_vjtqc"]
+[ext_resource type="AudioStream" uid="uid://mskou5evt4tn" path="res://music/Main Menu/Press Play, Child.mp3" id="2_6jbdy"]
+[ext_resource type="Texture2D" uid="uid://bffs34fs26lol" path="res://art/particles/smoke_07_a.png" id="2_iwbf0"]
+[ext_resource type="Texture2D" uid="uid://wfchdbamjw6" path="res://art/dice/D20_Gold.png" id="3_xpiny"]
+[ext_resource type="Script" uid="uid://bm7whkbq33y6o" path="res://scripts/systems/3DDice.gd" id="4_bhu4a"]
+[ext_resource type="FontFile" uid="uid://e15yw1qs1xwi" path="res://fonts/RobotoSerif-ExtraBold.ttf" id="4_e2per"]
+[ext_resource type="PackedScene" uid="uid://dsettings001" path="res://scenes/ui/SettingsMenu.tscn" id="5_settings"]
+
+[sub_resource type="Gradient" id="Gradient_iwbf0"]
+offsets = PackedFloat32Array(0, 0.39141414, 1)
+colors = PackedColorArray(0, 0, 0, 1, 1, 1, 1, 1, 0, 0, 0, 1)
+
+[sub_resource type="GradientTexture1D" id="GradientTexture1D_2ysvc"]
+gradient = SubResource("Gradient_iwbf0")
+
+[sub_resource type="Curve" id="Curve_xpiny"]
+_data = [Vector2(0.09907834, 0.10369563), 0.0, 0.0, 0, 0, Vector2(1, 1), 0.0, 0.0, 0, 0]
+point_count = 2
+
+[sub_resource type="CurveTexture" id="CurveTexture_bhu4a"]
+curve = SubResource("Curve_xpiny")
+
+[sub_resource type="ParticleProcessMaterial" id="ParticleProcessMaterial_iwbf0"]
+particle_flag_disable_z = true
+emission_shape_offset = Vector3(-100, 0, 0)
+emission_shape_scale = Vector3(1000, 1000, 1)
+emission_shape = 3
+emission_box_extents = Vector3(1, 1, 1)
+angle_min = 1.0728835e-05
+angle_max = 360.00003
+spread = 10.0
+initial_velocity_min = 2.0
+initial_velocity_max = 5.0
+angular_velocity_min = -1.6093254e-05
+angular_velocity_max = 9.999984
+gravity = Vector3(10, 0, 0)
+scale_min = 3.0
+scale_max = 5.0
+scale_curve = SubResource("CurveTexture_bhu4a")
+color_ramp = SubResource("GradientTexture1D_2ysvc")
+
+[sub_resource type="FontVariation" id="FontVariation_bhu4a"]
+base_font = ExtResource("4_e2per")
+spacing_top = -20
+spacing_bottom = -40
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_bhu4a"]
+bg_color = Color(0.6, 0.6, 0.6, 0)
+border_width_left = 8
+border_width_top = 8
+border_width_right = 8
+border_width_bottom = 8
+border_color = Color(0.85882354, 0.72156864, 0.32941177, 1)
+
+[sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_6jbdy"]
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_e2per"]
+bg_color = Color(0.6, 0.6, 0.6, 0)
+border_width_left = 8
+border_width_top = 8
+border_width_right = 8
+border_width_bottom = 8
+border_color = Color(0.85882354, 0.72156864, 0.32941177, 1)
+shadow_color = Color(0.85882354, 0.72156864, 0.32941177, 0)
+shadow_size = 5
+
+[sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_2ysvc"]
+
+[sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_xpiny"]
+
+[sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_e2per"]
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_7mi0g"]
+bg_color = Color(0.6, 0.6, 0.6, 0)
+border_width_left = 8
+border_width_top = 8
+border_width_right = 8
+border_width_bottom = 8
+border_color = Color(0.85882354, 0.72156864, 0.32941177, 1)
+
+[sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_nqjyj"]
+
+[sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_7vr37"]
+
+[node name="MainMenu" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+script = ExtResource("1_vjtqc")
+settings_menu_scene = ExtResource("5_settings")
+
+[node name="CenterContainer" type="CenterContainer" parent="." node_paths=PackedStringArray("game_title_label", "d20_sprite", "start_button", "settings_button", "quit_button")]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+script = ExtResource("4_bhu4a")
+game_title_label = NodePath("VBoxContainer/RichTextLabel")
+d20_sprite = NodePath("VBoxContainer/Sprite2D")
+start_button = NodePath("VBoxContainer/VBoxContainer2/StartButton")
+settings_button = NodePath("VBoxContainer/VBoxContainer2/SettingsButton")
+quit_button = NodePath("VBoxContainer/VBoxContainer2/QuitButton")
+
+[node name="VBoxContainer" type="VBoxContainer" parent="CenterContainer"]
+layout_mode = 2
+mouse_filter = 2
+theme_override_constants/separation = 10
+
+[node name="GPUParticles2D2" type="GPUParticles2D" parent="CenterContainer/VBoxContainer"]
+modulate = Color(1, 1, 1, 0.09803922)
+z_index = -1
+position = Vector2(-1386, 595)
+scale = Vector2(0.4789305, -1.079549)
+amount = 20
+amount_ratio = 0.2
+texture = ExtResource("2_iwbf0")
+lifetime = 30.0
+preprocess = 8.0
+randomness = 1.0
+visibility_rect = Rect2(-100, -100, 4000, 200)
+process_material = SubResource("ParticleProcessMaterial_iwbf0")
+
+[node name="RichTextLabel" type="RichTextLabel" parent="CenterContainer/VBoxContainer"]
+modulate = Color(1, 1, 1, 0)
+custom_minimum_size = Vector2(2000, 500)
+layout_mode = 2
+size_flags_vertical = 3
+mouse_filter = 2
+theme_override_constants/line_separation = -50
+theme_override_fonts/normal_font = SubResource("FontVariation_bhu4a")
+theme_override_font_sizes/normal_font_size = 200
+bbcode_enabled = true
+text = "[center]Aleatoris
+[font_size=100]The Twentyfold Edict[/font_size][/center]
+"
+horizontal_alignment = 1
+
+[node name="Sprite2D" type="TextureRect" parent="CenterContainer/VBoxContainer"]
+modulate = Color(1, 1, 1, 0)
+layout_mode = 2
+mouse_filter = 2
+texture = ExtResource("3_xpiny")
+stretch_mode = 5
+
+[node name="GPUParticles2D" type="GPUParticles2D" parent="CenterContainer/VBoxContainer"]
+top_level = true
+z_index = 25
+z_as_relative = false
+position = Vector2(-850, 715)
+scale = Vector2(0.4789305, -1.079549)
+amount = 20
+texture = ExtResource("2_iwbf0")
+lifetime = 30.0
+preprocess = 8.0
+randomness = 1.0
+visibility_rect = Rect2(-100, -100, 4000, 200)
+process_material = SubResource("ParticleProcessMaterial_iwbf0")
+
+[node name="VBoxContainer2" type="VBoxContainer" parent="CenterContainer/VBoxContainer"]
+layout_mode = 2
+mouse_filter = 2
+theme_override_constants/separation = 40
+
+[node name="StartButton" type="Button" parent="CenterContainer/VBoxContainer/VBoxContainer2"]
+modulate = Color(1, 1, 1, 0)
+custom_minimum_size = Vector2(600, 0)
+layout_mode = 2
+size_flags_horizontal = 4
+theme_override_font_sizes/font_size = 80
+theme_override_styles/normal = SubResource("StyleBoxFlat_bhu4a")
+theme_override_styles/pressed = SubResource("StyleBoxEmpty_6jbdy")
+theme_override_styles/hover = SubResource("StyleBoxFlat_e2per")
+theme_override_styles/disabled = SubResource("StyleBoxEmpty_2ysvc")
+theme_override_styles/focus = SubResource("StyleBoxEmpty_xpiny")
+text = "Start Game"
+icon_alignment = 1
+
+[node name="SettingsButton" type="Button" parent="CenterContainer/VBoxContainer/VBoxContainer2"]
+modulate = Color(1, 1, 1, 0)
+custom_minimum_size = Vector2(600, 0)
+layout_mode = 2
+size_flags_horizontal = 4
+theme_override_font_sizes/font_size = 80
+theme_override_styles/normal = SubResource("StyleBoxFlat_bhu4a")
+theme_override_styles/pressed = SubResource("StyleBoxEmpty_6jbdy")
+theme_override_styles/hover = SubResource("StyleBoxFlat_e2per")
+theme_override_styles/disabled = SubResource("StyleBoxEmpty_2ysvc")
+theme_override_styles/focus = SubResource("StyleBoxEmpty_xpiny")
+text = "Settings"
+icon_alignment = 1
+
+[node name="QuitButton" type="Button" parent="CenterContainer/VBoxContainer/VBoxContainer2"]
+modulate = Color(1, 1, 1, 0)
+custom_minimum_size = Vector2(600, 0)
+layout_mode = 2
+size_flags_horizontal = 4
+theme_override_font_sizes/font_size = 80
+theme_override_styles/normal = SubResource("StyleBoxFlat_bhu4a")
+theme_override_styles/pressed = SubResource("StyleBoxEmpty_e2per")
+theme_override_styles/hover = SubResource("StyleBoxFlat_7mi0g")
+theme_override_styles/disabled = SubResource("StyleBoxEmpty_nqjyj")
+theme_override_styles/focus = SubResource("StyleBoxEmpty_7vr37")
+text = "Quit Game"
+
+[node name="UI" type="Control" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+
+[node name="MainMenuMusic" type="AudioStreamPlayer" parent="."]
+stream = ExtResource("2_6jbdy")
+volume_db = -7.0
+autoplay = true
+bus = &"Music"
+
+[connection signal="pressed" from="CenterContainer/VBoxContainer/VBoxContainer2/StartButton" to="." method="_on_start_button_pressed"]
+[connection signal="pressed" from="CenterContainer/VBoxContainer/VBoxContainer2/SettingsButton" to="." method="_on_settings_button_pressed"]
+[connection signal="pressed" from="CenterContainer/VBoxContainer/VBoxContainer2/QuitButton" to="." method="_on_quit_button_pressed"]

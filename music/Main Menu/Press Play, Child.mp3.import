@@ -1,0 +1,19 @@
+[remap]
+
+importer="mp3"
+type="AudioStreamMP3"
+uid="uid://mskou5evt4tn"
+path="res://.godot/imported/Press Play, Child.mp3-ee903d657b201ff081ef071a95665574.mp3str"
+
+[deps]
+
+source_file="res://music/Main Menu/Press Play, Child.mp3"
+dest_files=["res://.godot/imported/Press Play, Child.mp3-ee903d657b201ff081ef071a95665574.mp3str"]
+
+[params]
+
+loop=true
+loop_offset=0
+bpm=0
+beat_count=0
+bar_beats=4

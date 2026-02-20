@@ -1,0 +1,15 @@
+[gd_scene load_steps=3 format=3 uid="uid://4hct8hv0xqa"]
+
+[ext_resource type="Script" uid="uid://ci11xxuvqkasg" path="res://scripts/enemies/EnemyMeleeHitbox.gd" id="1_ay3pb"]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_8tcvg"]
+
+[node name="EnemyMeleeHitbox" type="Node2D"]
+script = ExtResource("1_ay3pb")
+
+[node name="HurtArea" type="Area2D" parent="."]
+collision_layer = 0
+collision_mask = 2
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="HurtArea"]
+shape = SubResource("RectangleShape2D_8tcvg")

@@ -1,0 +1,29 @@
+[gd_scene load_steps=3 format=3 uid="uid://c7h4vkqn8p0k6"]
+
+[ext_resource type="Script" path="res://scripts/boss/BossProjectile.gd" id="1_boss_proj"]
+[ext_resource type="Texture2D" path="res://art/particles/Slash_03_a.png" id="2_slash"]
+
+[sub_resource type="CapsuleShape2D" id="CapsuleShape2D_boss_proj"]
+radius = 50.0
+height = 200.0
+
+[node name="BossProjectile" type="Area2D"]
+collision_layer = 0
+collision_mask = 2
+script = ExtResource("1_boss_proj")
+speed = 400.0
+lifetime = 3.5
+damage = 15
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="."]
+scale = Vector2(0.3, 0.3)
+shape = SubResource("CapsuleShape2D_boss_proj")
+
+[node name="Sprite2D" type="Sprite2D" parent="."]
+scale = Vector2(0.3, 0.3)
+texture = ExtResource("2_slash")
+
+[node name="Glow" type="Sprite2D" parent="."]
+modulate = Color(1, 1, 1, 0.4)
+scale = Vector2(0.35, 0.35)
+texture = ExtResource("2_slash")

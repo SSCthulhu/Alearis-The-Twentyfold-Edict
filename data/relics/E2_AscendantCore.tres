@@ -1,0 +1,14 @@
+[gd_resource type="Resource" script_class="RelicData" load_steps=2 format=3 uid="uid://csowoxasvecep"]
+
+[ext_resource type="Script" uid="uid://dwyhl0a0pqlnn" path="res://scripts/systems/RelicData.gd" id="1_symjc"]
+
+[resource]
+script = ExtResource("1_symjc")
+id = &"e2_ascendant_core"
+display_name = "Ascendant Core"
+rarity = 2
+band = 2
+tags = Array[StringName]([&"boss", &"orb", &"window", &"risk"])
+description_lines = Array[String](["Socketing orb extends DPS window +4s."])
+effect_id = &"relic_ascendant_core"
+metadata/_custom_type_script = "uid://dwyhl0a0pqlnn"

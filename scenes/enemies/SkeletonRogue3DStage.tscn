@@ -1,0 +1,21 @@
+[gd_scene load_steps=2 format=3 uid="uid://r0gu3st4g3"]
+
+[ext_resource type="PackedScene" path="res://assets/scenes/skeleton_rogue.tscn" id="1_rogue"]
+
+[node name="SkeletonRogue3DStage" type="Node3D"]
+
+[node name="FacingPivot" type="Node3D" parent="."]
+
+[node name="Skeleton_Rogue" parent="FacingPivot" instance=ExtResource("1_rogue")]
+
+[node name="Camera3D" type="Camera3D" parent="."]
+transform = Transform3D(0.9998157, 0, 0.019197444, 0, 1, 0, -0.019197444, 0, 0.9998157, 0, 1.25, 3)
+projection = 1
+size = 3.6
+near = 0.1
+far = 50.0
+
+[node name="DirectionalLight3D" type="DirectionalLight3D" parent="."]
+transform = Transform3D(0.9998157, -0.013983302, 0.013278641, 0.019197444, 0.731269, -0.6818965, 0, 0.6819984, 0.7313537, 0, 2.5, 1.5)
+light_energy = 0.8
+shadow_enabled = true

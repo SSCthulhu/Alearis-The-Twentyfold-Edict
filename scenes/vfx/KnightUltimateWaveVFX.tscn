@@ -1,0 +1,137 @@
+[gd_scene load_steps=20 format=3 uid="uid://divivl4tf47ai"]
+
+[ext_resource type="Texture2D" uid="uid://06uc1d300xq4" path="res://assets/VFX/Lightning VFX Spritesheets/Blue Lightning Strike v3_D_Bolts Thick_spritesheet.png" id="1_wave"]
+[ext_resource type="Script" uid="uid://tqyjbbnudem5" path="res://scripts/vfx/KnightUltimateWaveVFX.gd" id="2_script"]
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_wave_0"]
+atlas = ExtResource("1_wave")
+region = Rect2(0, 0, 512, 512)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_wave_1"]
+atlas = ExtResource("1_wave")
+region = Rect2(512, 0, 512, 512)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_wave_2"]
+atlas = ExtResource("1_wave")
+region = Rect2(1024, 0, 512, 512)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_wave_3"]
+atlas = ExtResource("1_wave")
+region = Rect2(1536, 0, 512, 512)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_wave_4"]
+atlas = ExtResource("1_wave")
+region = Rect2(0, 512, 512, 512)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_wave_5"]
+atlas = ExtResource("1_wave")
+region = Rect2(512, 512, 512, 512)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_wave_6"]
+atlas = ExtResource("1_wave")
+region = Rect2(1024, 512, 512, 512)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_wave_7"]
+atlas = ExtResource("1_wave")
+region = Rect2(1536, 512, 512, 512)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_wave_8"]
+atlas = ExtResource("1_wave")
+region = Rect2(0, 1024, 512, 512)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_wave_9"]
+atlas = ExtResource("1_wave")
+region = Rect2(512, 1024, 512, 512)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_wave_10"]
+atlas = ExtResource("1_wave")
+region = Rect2(1024, 1024, 512, 512)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_wave_11"]
+atlas = ExtResource("1_wave")
+region = Rect2(1536, 1024, 512, 512)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_wave_12"]
+atlas = ExtResource("1_wave")
+region = Rect2(0, 1536, 512, 512)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_wave_13"]
+atlas = ExtResource("1_wave")
+region = Rect2(512, 1536, 512, 512)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_wave_14"]
+atlas = ExtResource("1_wave")
+region = Rect2(1024, 1536, 512, 512)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_wave_15"]
+atlas = ExtResource("1_wave")
+region = Rect2(1536, 1536, 512, 512)
+
+[sub_resource type="SpriteFrames" id="SpriteFrames_wave"]
+animations = [{
+"frames": [{
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_wave_0")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_wave_1")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_wave_2")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_wave_3")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_wave_4")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_wave_5")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_wave_6")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_wave_7")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_wave_8")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_wave_9")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_wave_10")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_wave_11")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_wave_12")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_wave_13")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_wave_14")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_wave_15")
+}],
+"loop": false,
+"name": &"knight_wave",
+"speed": 30.0
+}]
+
+[node name="KnightUltimateWaveVFX" type="Node2D"]
+z_index = 5
+rotation = 1.5708
+script = ExtResource("2_script")
+
+[node name="AnimatedSprite2D" type="AnimatedSprite2D" parent="."]
+scale = Vector2(5, 5)
+sprite_frames = SubResource("SpriteFrames_wave")
+animation = &"knight_wave"
+autoplay = "knight_wave"
+
+[connection signal="animation_finished" from="AnimatedSprite2D" to="." method="queue_free"]

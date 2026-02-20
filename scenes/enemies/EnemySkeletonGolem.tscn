@@ -1,0 +1,123 @@
+[gd_scene load_steps=16 format=3 uid="uid://deotiruix5irf"]
+
+[ext_resource type="Script" uid="uid://cvgfg5i2q5hty" path="res://scripts/enemies/EnemySkeletonGolem.gd" id="1_golem"]
+[ext_resource type="PackedScene" uid="uid://bvgni0b2cndxi" path="res://scenes/ui/DamageNumber.tscn" id="2_damage"]
+[ext_resource type="PackedScene" path="res://scenes/enemies/SkeletonGolem3DView.tscn" id="3_golem3d"]
+[ext_resource type="PackedScene" uid="uid://4hct8hv0xqa" path="res://scenes/enemies/EnemyMeleeHitbox.tscn" id="3_hitbox"]
+[ext_resource type="Script" uid="uid://b0nfn5rqrixak" path="res://scripts/boss/Hurtbox.gd" id="3_hurtbox"]
+[ext_resource type="Script" uid="uid://ct6vabs6fcwub" path="res://scripts/enemies/EnemyHealth.gd" id="4_health"]
+[ext_resource type="PackedScene" uid="uid://cvlobx6k68egu" path="res://scenes/vfx/EnemyHitVFX.tscn" id="6_mfpmr"]
+[ext_resource type="PackedScene" path="res://scenes/vfx/EnemyCritVFX.tscn" id="7_8lxfj"]
+[ext_resource type="Script" uid="uid://dnkb2ub8ghbd8" path="res://scripts/enemies/EnemyRunScaler.gd" id="7_scaler"]
+[ext_resource type="Script" uid="uid://xq6026rltx5k" path="res://scripts/enemies/EnemyStatusEffects.gd" id="8_statusfx"]
+[ext_resource type="Script" uid="uid://bxkstno4wqyqf" path="res://scripts/ui/DamageNumberEmitter.gd" id="13_emitter"]
+
+[sub_resource type="CapsuleShape2D" id="CapsuleShape2D_golem_body"]
+radius = 80.0
+height = 240.0
+
+[sub_resource type="CapsuleShape2D" id="CapsuleShape2D_golem_hurt"]
+radius = 80.0
+height = 240.0
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_golem_hp"]
+bg_color = Color(0.8, 0.1, 0.1, 1)
+border_width_left = 3
+border_width_top = 3
+border_width_right = 3
+border_width_bottom = 3
+border_color = Color(0, 0, 0, 1)
+corner_radius_top_left = 10
+corner_radius_top_right = 10
+corner_radius_bottom_right = 10
+corner_radius_bottom_left = 10
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_golem_cast"]
+bg_color = Color(1, 0.5, 0, 1)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0, 0, 0, 1)
+corner_radius_top_left = 8
+corner_radius_top_right = 8
+corner_radius_bottom_right = 8
+corner_radius_bottom_left = 8
+
+[node name="EnemySkeletonGolem" type="CharacterBody2D"]
+z_index = 5
+collision_layer = 4
+script = ExtResource("1_golem")
+slam_radius = 1500.0
+melee_damage_range = 200.0
+melee_forward_bias_px = 120.0
+melee_width_px = 180.0
+melee_spawn_forward_px = 80.0
+edge_aggro_lockout_time = 0.35
+aggro_range = 1200.0
+lose_aggro_range = 1440.0
+patrol_distance = 200.0
+standoff_deadzone = 20.0
+sprite_faces_right = true
+strikezone_scene = ExtResource("3_hitbox")
+attack_cooldown = 2.5
+attack_hit_time = 0.6
+same_platform_y_tolerance = 24.0
+same_platform_floor_y_tolerance = 16.0
+anim_attack = &""
+
+[node name="Enemy3DView" parent="." instance=ExtResource("3_golem3d")]
+position = Vector2(0, -5)
+viewport_size = Vector2i(4096, 3072)
+screen_pixels = Vector2i(1536, 768)
+
+[node name="BodyCollision" type="CollisionShape2D" parent="."]
+position = Vector2(0, -15)
+shape = SubResource("CapsuleShape2D_golem_body")
+
+[node name="Hurtbox" type="Area2D" parent="." groups=["enemies"]]
+script = ExtResource("3_hurtbox")
+receiver_path = NodePath("../Health")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Hurtbox"]
+position = Vector2(0, -15)
+shape = SubResource("CapsuleShape2D_golem_hurt")
+
+[node name="Health" type="Node" parent="."]
+script = ExtResource("4_health")
+max_hp = 150
+melee_only = true
+melee_damage_range = 200.0
+hit_vfx_scene = ExtResource("6_mfpmr")
+crit_vfx_scene = ExtResource("7_8lxfj")
+
+[node name="StatusEffects" type="Node" parent="."]
+script = ExtResource("8_statusfx")
+
+[node name="HealthBar" type="ProgressBar" parent="."]
+custom_minimum_size = Vector2(0, 16)
+offset_left = -60.0
+offset_top = -245.0
+offset_right = 60.0
+offset_bottom = -237.0
+theme_override_styles/fill = SubResource("StyleBoxFlat_golem_hp")
+max_value = 200.0
+show_percentage = false
+
+[node name="CastBar" type="ProgressBar" parent="."]
+modulate = Color(1, 0.9, 0.2, 1)
+custom_minimum_size = Vector2(0, 12)
+offset_left = -60.0
+offset_top = -257.0
+offset_right = 60.0
+offset_bottom = -251.0
+theme_override_styles/fill = SubResource("StyleBoxFlat_golem_cast")
+max_value = 1.0
+show_percentage = false
+
+[node name="RunScaler" type="Node" parent="."]
+script = ExtResource("7_scaler")
+
+[node name="DamageNumberEmitter" type="Node" parent="."]
+script = ExtResource("13_emitter")
+damage_number_scene = ExtResource("2_damage")

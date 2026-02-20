@@ -1,0 +1,13 @@
+[gd_resource type="Resource" script_class="BossProjectilePattern" load_steps=2 format=3 uid="uid://cpqbx2ygrl8cp"]
+
+[ext_resource type="Script" uid="uid://jo1e152jjcof" path="res://scripts/boss/BossProjectilePattern.gd" id="1_pattern"]
+
+[resource]
+script = ExtResource("1_pattern")
+pattern_name = "Plasma Wave"
+pattern_type = 4
+projectile_count = 20
+projectile_speed = 280.0
+projectile_color = Color(0, 1, 0.6, 1)
+wave_delay = 0.4
+sequential_delay = 0.1

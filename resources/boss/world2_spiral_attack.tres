@@ -1,0 +1,16 @@
+[gd_resource type="Resource" script_class="BossProjectilePattern" load_steps=2 format=3 uid="uid://cko0nsvr6py50"]
+
+[ext_resource type="Script" uid="uid://jo1e152jjcof" path="res://scripts/boss/BossProjectilePattern.gd" id="1_pattern"]
+
+[resource]
+script = ExtResource("1_pattern")
+pattern_name = "Spiral Tempest"
+pattern_type = 3
+animation_name = "KAnim/Melee_Dualwield_SlashCombo"
+projectile_count = 24
+projectile_speed = 250.0
+projectile_damage = 12
+projectile_color = Color(0.8, 0.2, 1, 1)
+spiral_rotations = 3.0
+spiral_duration = 2.0
+sequential_delay = 0.05

@@ -1,0 +1,39 @@
+[gd_scene load_steps=5 format=3 uid="uid://cjq63cfdkencl"]
+
+[ext_resource type="Script" uid="uid://d2kq0jyh1b4xw" path="res://scripts/systems/CharacterPreview.gd" id="1_rsjqu"]
+[ext_resource type="PackedScene" uid="uid://81e0m5ka63t1" path="res://assets/scenes/knight.tscn" id="2_g5qau"]
+[ext_resource type="PackedScene" uid="uid://xgj3hosnqhuf" path="res://assets/scenes/rogue.tscn" id="3_g5qau"]
+[ext_resource type="PackedScene" uid="uid://cqgtso0cso5rv" path="res://assets/characters/Mage.glb" id="4_1wb2n"]
+
+[node name="CharacterPreview" type="SubViewportContainer"]
+custom_minimum_size = Vector2(1400, 1400)
+script = ExtResource("1_rsjqu")
+knight_model = ExtResource("2_g5qau")
+rogue_model = ExtResource("3_g5qau")
+wizard_model = ExtResource("4_1wb2n")
+knight_preview_anim = "QAnim/Idle_Shield"
+rogue_preview_anim = "QAnim/Sword_Idle"
+wizard_preview_anim = "MAnim/Idle_B"
+knight_rotation = 45.0
+rogue_rotation = 0.0
+wizard_rotation = 0.0
+knight_anim_speed = 0.5
+rogue_anim_speed = 1.0
+wizard_anim_speed = 1.0
+
+[node name="SubViewport" type="SubViewport" parent="."]
+transparent_bg = true
+handle_input_locally = false
+size = Vector2i(1400, 1400)
+render_target_update_mode = 4
+
+[node name="Camera3D" type="Camera3D" parent="SubViewport"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1, 3)
+current = true
+fov = 100.0
+near = 0.001
+
+[node name="DirectionalLight3D" type="DirectionalLight3D" parent="SubViewport"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 2)
+
+[node name="ModelAnchor" type="Node3D" parent="SubViewport"]

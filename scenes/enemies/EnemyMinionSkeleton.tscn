@@ -1,0 +1,86 @@
+[gd_scene load_steps=15 format=3 uid="uid://bx1y203a4b5c6"]
+
+[ext_resource type="Script" uid="uid://r0bh2ecqc7nx" path="res://scripts/enemies/EnemyMinionSkeleton.gd" id="1_minion"]
+[ext_resource type="PackedScene" uid="uid://bvgni0b2cndxi" path="res://scenes/ui/DamageNumber.tscn" id="2_dmgnum"]
+[ext_resource type="PackedScene" uid="uid://4hct8hv0xqa" path="res://scenes/enemies/EnemyMeleeHitbox.tscn" id="3_hitbox"]
+[ext_resource type="Script" uid="uid://b0nfn5rqrixak" path="res://scripts/boss/Hurtbox.gd" id="3_hurtbox"]
+[ext_resource type="PackedScene" uid="uid://dcd57uq8tyb3" path="res://scenes/enemies/Minion3DView.tscn" id="3_view"]
+[ext_resource type="Script" uid="uid://ct6vabs6fcwub" path="res://scripts/enemies/EnemyHealth.gd" id="4_health"]
+[ext_resource type="PackedScene" uid="uid://cvlobx6k68egu" path="res://scenes/vfx/EnemyHitVFX.tscn" id="6_6x8uy"]
+[ext_resource type="PackedScene" path="res://scenes/vfx/EnemyCritVFX.tscn" id="7_4eopw"]
+[ext_resource type="Script" uid="uid://dnkb2ub8ghbd8" path="res://scripts/enemies/EnemyRunScaler.gd" id="7_scaler"]
+[ext_resource type="Script" uid="uid://xq6026rltx5k" path="res://scripts/enemies/EnemyStatusEffects.gd" id="8_statusfx"]
+[ext_resource type="Script" uid="uid://bxkstno4wqyqf" path="res://scripts/ui/DamageNumberEmitter.gd" id="13_emitter"]
+
+[sub_resource type="CapsuleShape2D" id="CapsuleShape2D_minion_body"]
+radius = 55.0
+height = 168.0
+
+[sub_resource type="CapsuleShape2D" id="CapsuleShape2D_minion_hurt"]
+radius = 55.0
+height = 168.0
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_minion_hp"]
+bg_color = Color(0.7529412, 0.22352941, 0.16862746, 1)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0, 0, 0, 1)
+corner_radius_top_left = 10
+corner_radius_top_right = 10
+corner_radius_bottom_right = 10
+corner_radius_bottom_left = 10
+
+[node name="EnemyMinionSkeleton" type="CharacterBody2D"]
+z_index = 5
+collision_layer = 4
+script = ExtResource("1_minion")
+sprite_faces_right = true
+strikezone_scene = ExtResource("3_hitbox")
+same_platform_y_tolerance = 24.0
+same_platform_floor_y_tolerance = 16.0
+anim_attack = &"Player/Melee_Unarmed_Attack_Punch_A"
+anim_idle = &"Player/Melee_Unarmed_Idle"
+
+[node name="Enemy3DView" parent="." instance=ExtResource("3_view")]
+position = Vector2(0, -10)
+viewport_size = Vector2i(1024, 512)
+screen_pixels = Vector2i(512, 256)
+
+[node name="BodyCollision" type="CollisionShape2D" parent="."]
+position = Vector2(0, -10.075)
+shape = SubResource("CapsuleShape2D_minion_body")
+
+[node name="Hurtbox" type="Area2D" parent="." groups=["enemies"]]
+script = ExtResource("3_hurtbox")
+receiver_path = NodePath("../Health")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Hurtbox"]
+position = Vector2(0, -10.075)
+shape = SubResource("CapsuleShape2D_minion_hurt")
+
+[node name="Health" type="Node" parent="."]
+script = ExtResource("4_health")
+hit_vfx_scene = ExtResource("6_6x8uy")
+crit_vfx_scene = ExtResource("7_4eopw")
+
+[node name="StatusEffects" type="Node" parent="."]
+script = ExtResource("8_statusfx")
+
+[node name="HealthBar" type="ProgressBar" parent="."]
+custom_minimum_size = Vector2(0, 12)
+offset_left = -39.47
+offset_top = -113.33
+offset_right = 40.53
+offset_bottom = -107.33
+theme_override_styles/fill = SubResource("StyleBoxFlat_minion_hp")
+max_value = 20.0
+show_percentage = false
+
+[node name="RunScaler" type="Node" parent="."]
+script = ExtResource("7_scaler")
+
+[node name="DamageNumberEmitter" type="Node" parent="."]
+script = ExtResource("13_emitter")
+damage_number_scene = ExtResource("2_dmgnum")

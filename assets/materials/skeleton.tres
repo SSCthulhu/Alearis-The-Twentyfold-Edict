@@ -1,0 +1,8 @@
+[gd_resource type="StandardMaterial3D" load_steps=2 format=3 uid="uid://dm72a7lfc2ecw"]
+
+[ext_resource type="Texture2D" uid="uid://cwfvkgb041bwo" path="res://assets/characters/enemy/Necromancer_skeleton_texture_A.png" id="1_v2vd2"]
+
+[resource]
+resource_name = "skeleton"
+albedo_texture = ExtResource("1_v2vd2")
+roughness = 0.5

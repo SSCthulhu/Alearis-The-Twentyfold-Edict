@@ -1,0 +1,12 @@
+[gd_resource type="Resource" script_class="RelicData" load_steps=2 format=3 uid="uid://otow1i35esse"]
+
+[ext_resource type="Script" uid="uid://dwyhl0a0pqlnn" path="res://scripts/systems/RelicData.gd" id="1_fbmun"]
+
+[resource]
+script = ExtResource("1_fbmun")
+id = &"c5_arc_battery"
+display_name = "Arc Battery"
+tags = Array[StringName]([&"ultimate", &"resource"])
+description_lines = Array[String](["-15% Ultimate Cooldown"])
+effect_id = &"relic_arc_battery"
+metadata/_custom_type_script = "uid://dwyhl0a0pqlnn"

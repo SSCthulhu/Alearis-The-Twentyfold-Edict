@@ -1,0 +1,81 @@
+[gd_scene load_steps=13 format=3 uid="uid://ryf38u2cv7m1"]
+
+[ext_resource type="PackedScene" uid="uid://blh5tuvka150b" path="res://assets/characters/enemy/Necromancer.glb" id="1_necro"]
+[ext_resource type="Animation" uid="uid://jnnj7rdox64k" path="res://animations_source/animations/Melee_2H_Attack_Chop.res" id="2_attack"]
+[ext_resource type="PackedScene" path="res://assets/scenes/Skeleton_Scythe.tscn" id="2_scythe"]
+[ext_resource type="Animation" uid="uid://c0s20b7xam6bw" path="res://animations_source/animations/Hit_B.res" id="3_hit"]
+[ext_resource type="Animation" uid="uid://cokroj1jd88rt" path="res://animations_source/animations/Skeletons_Death.res" id="4_death"]
+[ext_resource type="Animation" uid="uid://bmxlx46d8vmkt" path="res://animations_source/animations/Skeletons_Idle.res" id="5_idle"]
+[ext_resource type="Animation" uid="uid://35mulkhck2bw" path="res://animations_source/animations/Skeletons_Taunt.res" id="6_taunt"]
+[ext_resource type="Animation" uid="uid://dtikefg11yti5" path="res://animations_source/animations/Skeletons_Walking.res" id="7_walk"]
+[ext_resource type="Animation" path="res://animations_source/animations/Jump_Start.res" id="8_jump_start"]
+[ext_resource type="Animation" path="res://animations_source/animations/Jump_Idle.res" id="9_jump_idle"]
+[ext_resource type="Animation" path="res://animations_source/animations/Jump_Land.res" id="10_jump_land"]
+[ext_resource type="Animation" path="res://animations_source/animations/Ranged_Magic_Summon.res" id="11_summon"]
+[ext_resource type="Animation" path="res://animations_source/animations/Ranged_Magic_Spellcasting.res" id="12_cast"]
+[ext_resource type="Animation" path="res://animations_source/animations/Ranged_Magic_Shoot.res" id="13_shoot"]
+
+[sub_resource type="AnimationLibrary" id="AnimationLibrary_necro"]
+_data = {
+&"Hit_B": ExtResource("3_hit"),
+&"Jump_Idle": ExtResource("9_jump_idle"),
+&"Jump_Land": ExtResource("10_jump_land"),
+&"Jump_Start": ExtResource("8_jump_start"),
+&"Melee_2H_Attack_Chop": ExtResource("2_attack"),
+&"Ranged_Magic_Shoot": ExtResource("13_shoot"),
+&"Ranged_Magic_Spellcasting": ExtResource("12_cast"),
+&"Ranged_Magic_Summon": ExtResource("11_summon"),
+&"Skeletons_Death": ExtResource("4_death"),
+&"Skeletons_Idle": ExtResource("5_idle"),
+&"Skeletons_Taunt": ExtResource("6_taunt"),
+&"Skeletons_Walking": ExtResource("7_walk")
+}
+
+[node name="Necromancer" instance=ExtResource("1_necro")]
+
+[node name="Skeleton3D" parent="Rig_Medium" index="0"]
+bones/0/rotation = Quaternion(0, 1.19209275e-07, 0, 1)
+bones/1/position = Vector3(0.008410764, 0.3780459, 1.2184853e-10)
+bones/1/rotation = Quaternion(0, -1.19209275e-07, 0, 1)
+bones/2/position = Vector3(0.17094505, 0.11358726, 1.3923275e-08)
+bones/2/rotation = Quaternion(0.9896691, 0.0951891, -0.06763894, 0.08318184)
+bones/3/rotation = Quaternion(0.3502381, 7.0133574e-08, -2.5250796e-07, 0.93666077)
+bones/4/rotation = Quaternion(-0.5930991, -0.10822545, 0.07641541, 0.79415447)
+bones/5/rotation = Quaternion(-9.914049e-05, 0.9201817, -0.3914917, 2.2558044e-05)
+bones/6/rotation = Quaternion(-0.06059946, -0.13028213, -0.007978078, 0.9895911)
+bones/7/rotation = Quaternion(-2.220446e-16, -3.57567e-09, -2.8574743e-10, 1)
+bones/8/rotation = Quaternion(0.085426524, 0.1304414, 0.0047045117, 0.9877577)
+bones/9/position = Vector3(0.24804358, 0.110857, 0.0825816)
+bones/9/rotation = Quaternion(-0.57771325, -0.24936377, -0.7347097, 0.25350922)
+bones/10/rotation = Quaternion(2.6541164e-08, -8.511227e-08, -0.55024576, 0.8350028)
+bones/11/rotation = Quaternion(7.250843e-09, 9.200791e-09, 0.026658095, 0.99964464)
+bones/11/scale = Vector3(0.99999994, 1, 1.0000001)
+bones/12/rotation = Quaternion(-0.19524252, -0.6725355, -0.05316524, 0.7118637)
+bones/13/position = Vector3(5.138565e-10, 0.096125156, -0.057500064)
+bones/13/rotation = Quaternion(-6.2219208e-09, 4.3147916e-09, -0.7071068, 0.7071067)
+bones/14/position = Vector3(-0.17668214, 0.11170339, 0.0891542)
+bones/14/rotation = Quaternion(-0.2483192, 0.34150413, 0.84217364, 0.3353446)
+bones/15/rotation = Quaternion(1.682303e-08, 4.6801173e-08, 0.5730907, 0.8194921)
+bones/16/rotation = Quaternion(7.300499e-09, -7.3388096e-09, -0.0266581, 0.99964464)
+bones/16/scale = Vector3(1.0000001, 1, 1)
+bones/17/rotation = Quaternion(-0.23458411, 0.22342964, -0.11361777, 0.93922335)
+bones/18/position = Vector3(-5.138494e-10, 0.096125126, -0.057499945)
+bones/18/rotation = Quaternion(0.1557105, -0.1894554, 0.67028934, 0.7004093)
+bones/19/position = Vector3(-0.17094506, 0.11358726, 1.3923272e-08)
+bones/19/rotation = Quaternion(0.9911832, -0.039242405, -0.011746347, 0.12600763)
+bones/20/rotation = Quaternion(0.38903534, -6.293628e-08, 2.6850154e-07, 0.92122287)
+bones/21/rotation = Quaternion(-0.6028573, 0.11208666, -0.028075736, 0.7894374)
+bones/22/rotation = Quaternion(-2.5550069e-05, 0.9201651, -0.39153072, 5.9520553e-06)
+
+[node name="Socket_RightHand" type="BoneAttachment3D" parent="Rig_Medium/Skeleton3D" index="7"]
+transform = Transform3D(-0.73247397, 0.13333322, -0.6676103, -0.43059766, -0.8502996, 0.30261415, -0.5273204, 0.5091281, 0.68023545, -0.32851034, 0.79044896, 0.3389265)
+bone_name = "hand.r"
+bone_idx = 17
+
+[node name="Skeleton_Scythe" parent="Rig_Medium/Skeleton3D/Socket_RightHand" index="0" instance=ExtResource("2_scythe")]
+transform = Transform3D(-0.10877341, -0.9815903, 0.15699975, -0.7006578, 0.1877407, 0.6883546, -0.7051574, -0.03512843, -0.70818007, 0, 0, 0)
+
+[node name="AnimationPlayer" type="AnimationPlayer" parent="." index="1"]
+libraries = {
+&"Player": SubResource("AnimationLibrary_necro")
+}

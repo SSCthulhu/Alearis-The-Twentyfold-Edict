@@ -1,0 +1,13 @@
+[gd_resource type="Resource" script_class="RelicData" load_steps=2 format=3 uid="uid://sweog37gbypm"]
+
+[ext_resource type="Script" uid="uid://dwyhl0a0pqlnn" path="res://scripts/systems/RelicData.gd" id="1_7yqnp"]
+
+[resource]
+script = ExtResource("1_7yqnp")
+id = &"c11_vital_thread"
+display_name = "Vital Thread"
+band = 0
+tags = Array[StringName]([&"survival", &"max_hp"])
+description_lines = Array[String](["+12% max HP."])
+effect_id = &"relic_vital_thread"
+metadata/_custom_type_script = "uid://dwyhl0a0pqlnn"

@@ -1,0 +1,64 @@
+[gd_scene load_steps=15 format=3 uid="uid://b6qbnom4vba8g"]
+
+[ext_resource type="Script" uid="uid://cdidei78kcag4" path="res://scripts/boss/BossController.gd" id="1_trtv8"]
+[ext_resource type="Script" uid="uid://b0nfn5rqrixak" path="res://scripts/boss/Hurtbox.gd" id="2_0jdgh"]
+[ext_resource type="PackedScene" uid="uid://bvgni0b2cndxi" path="res://scenes/ui/DamageNumber.tscn" id="3_cog1j"]
+[ext_resource type="PackedScene" uid="uid://cvlobx6k68egu" path="res://scenes/vfx/EnemyHitVFX.tscn" id="4_a3e3y"]
+[ext_resource type="Script" uid="uid://bh1vf0remp5r4" path="res://scripts/boss/BossHealth.gd" id="4_pm08e"]
+[ext_resource type="PackedScene" uid="uid://d186dmo00kqu5" path="res://scenes/vfx/EnemyCritVFX.tscn" id="5_e4sse"]
+[ext_resource type="Script" uid="uid://bxkstno4wqyqf" path="res://scripts/ui/DamageNumberEmitter.gd" id="7_yn033"]
+[ext_resource type="Script" uid="uid://ck6ywaqc1jaq2" path="res://scripts/boss/BossProjectileAttack.gd" id="9_5k8db"]
+[ext_resource type="PackedScene" uid="uid://c7h4vkqn8p0k6" path="res://scenes/boss/BossProjectile.tscn" id="10_l1iww"]
+[ext_resource type="Script" uid="uid://jo1e152jjcof" path="res://scripts/boss/BossProjectilePattern.gd" id="11_pattern"]
+[ext_resource type="Resource" uid="uid://cns5cnyssf610" path="res://resources/boss/world1_horizontal_wave.tres" id="12_wave"]
+[ext_resource type="Resource" uid="uid://djoc8kk86rww4" path="res://resources/boss/world1_radial_burst.tres" id="13_burst"]
+[ext_resource type="PackedScene" uid="uid://bnacyicqqd64r" path="res://scenes/boss/FrostGolem3DView.tscn" id="14_62ceh"]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_gvkpj"]
+size = Vector2(185.4844, 330.0312)
+
+[node name="Boss" type="StaticBody2D" groups=["boss"]]
+script = ExtResource("1_trtv8")
+max_hp = 1000
+visual_path = NodePath("FrostGolem3DView")
+boss_name = "Kallos"
+boss_3d_visual_path = NodePath("FrostGolem3DView")
+idle_animation = "KAnim/Melee_Unarmed_Idle"
+
+[node name="Hurtbox" type="Area2D" parent="."]
+script = ExtResource("2_0jdgh")
+receiver_path = NodePath("../BossHealth")
+require_group = &""
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Hurtbox"]
+position = Vector2(0, 0)
+shape = SubResource("RectangleShape2D_gvkpj")
+
+[node name="BossHealth" type="Node" parent="."]
+script = ExtResource("4_pm08e")
+max_hp = 2500
+hit_vfx_scene = ExtResource("4_a3e3y")
+crit_vfx_scene = ExtResource("5_e4sse")
+spawn_hit_vfx = true
+
+[node name="DamageNumberEmitter" type="Node" parent="."]
+script = ExtResource("7_yn033")
+damage_number_scene = ExtResource("3_cog1j")
+health_path = NodePath("../BossHealth")
+
+[node name="DamageNumberEmitter2" type="Node" parent="."]
+script = ExtResource("7_yn033")
+damage_number_scene = ExtResource("3_cog1j")
+health_path = NodePath("../BossHealth")
+
+[node name="ProjectileSpawnPoint" type="Node2D" parent="."]
+position = Vector2(0, -100)
+
+[node name="BossProjectileAttack" type="Node" parent="."]
+script = ExtResource("9_5k8db")
+projectile_scene = ExtResource("10_l1iww")
+attack_patterns = Array[ExtResource("11_pattern")]([ExtResource("12_wave"), ExtResource("13_burst")])
+boss_visual_path = NodePath("../FrostGolem3DView")
+
+[node name="FrostGolem3DView" parent="." instance=ExtResource("14_62ceh")]
+position = Vector2(0, 0)

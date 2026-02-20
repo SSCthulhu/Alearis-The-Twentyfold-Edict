@@ -1,0 +1,82 @@
+[gd_scene load_steps=14 format=3 uid="uid://coe318xl6d2lg"]
+
+[ext_resource type="PackedScene" uid="uid://bc6e2jwd7vbvx" path="res://assets/characters/enemy/Skeleton_Mage.glb" id="1_mage"]
+[ext_resource type="Animation" uid="uid://c0s20b7xam6bw" path="res://animations_source/animations/Hit_B.res" id="2_hit"]
+[ext_resource type="PackedScene" path="res://assets/scenes/Skeleton_Staff.tscn" id="2_staff"]
+[ext_resource type="Animation" uid="uid://cokroj1jd88rt" path="res://animations_source/animations/Skeletons_Death.res" id="3_death"]
+[ext_resource type="Animation" uid="uid://bmxlx46d8vmkt" path="res://animations_source/animations/Skeletons_Idle.res" id="4_idle"]
+[ext_resource type="Animation" uid="uid://35mulkhck2bw" path="res://animations_source/animations/Skeletons_Taunt.res" id="5_taunt"]
+[ext_resource type="Animation" uid="uid://dtikefg11yti5" path="res://animations_source/animations/Skeletons_Walking.res" id="6_walk"]
+[ext_resource type="Animation" uid="uid://1j5cvxn2hwdm" path="res://animations_source/animations/Jump_Start.res" id="7_jump_start"]
+[ext_resource type="Animation" uid="uid://b0xr5lkpor12a" path="res://animations_source/animations/Jump_Idle.res" id="8_jump_idle"]
+[ext_resource type="Animation" uid="uid://tw54v3m63a8q" path="res://animations_source/animations/Jump_Land.res" id="9_jump_land"]
+[ext_resource type="Animation" uid="uid://ddrgj8i4qnrw" path="res://animations_source/animations/Ranged_Magic_Spellcasting.res" id="10_cast"]
+[ext_resource type="Animation" uid="uid://d1mio2qo3gjx0" path="res://animations_source/animations/Ranged_Magic_Shoot.res" id="11_shoot"]
+
+[sub_resource type="AnimationLibrary" id="AnimationLibrary_mage"]
+_data = {
+&"Hit_B": ExtResource("2_hit"),
+&"Jump_Idle": ExtResource("8_jump_idle"),
+&"Jump_Land": ExtResource("9_jump_land"),
+&"Jump_Start": ExtResource("7_jump_start"),
+&"Ranged_Magic_Shoot": ExtResource("11_shoot"),
+&"Ranged_Magic_Spellcasting": ExtResource("10_cast"),
+&"Skeletons_Death": ExtResource("3_death"),
+&"Skeletons_Idle": ExtResource("4_idle"),
+&"Skeletons_Taunt": ExtResource("5_taunt"),
+&"Skeletons_Walking": ExtResource("6_walk")
+}
+
+[node name="Skeleton_Mage" instance=ExtResource("1_mage")]
+
+[node name="Skeleton3D" parent="Rig_Medium" index="0"]
+bones/0/position = Vector3(-1.4210855e-14, 0, -0.7080524)
+bones/1/position = Vector3(2.7001283e-07, 0.057474405, -1.132516)
+bones/1/rotation = Quaternion(-0.20128584, 0.16953748, -0.035396274, 0.96409976)
+bones/2/position = Vector3(-0.52844167, -0.82312125, 1.672473)
+bones/2/rotation = Quaternion(0.5193577, -0.84855753, -0.06497396, 0.07743565)
+bones/2/scale = Vector3(0.9999998, 0.9999999, 1.0000012)
+bones/3/rotation = Quaternion(0.7141633, -6.2854774e-08, 5.4106647e-07, 0.6999791)
+bones/4/rotation = Quaternion(-0.42176706, -0.13973148, -0.55218583, 0.7054634)
+bones/5/rotation = Quaternion(0.08970184, 0.94500273, -0.23444335, -0.20966588)
+bones/6/position = Vector3(0.17094506, 0.11358723, 1.1235642e-08)
+bones/6/rotation = Quaternion(0.710874, 0.21566981, 0.46012828, 0.4862373)
+bones/7/rotation = Quaternion(0.0020689743, 3.8408718e-08, 3.2258822e-09, 0.9999979)
+bones/8/rotation = Quaternion(0.007020357, -0.69015163, -0.071986616, 0.7200412)
+bones/9/rotation = Quaternion(0.030668259, 0.9716926, -0.23173906, -0.034202863)
+bones/10/rotation = Quaternion(-0.4598732, -0.11514558, -0.10150578, 0.8746169)
+bones/10/scale = Vector3(1, 1, 1.0000001)
+bones/11/rotation = Quaternion(-0.014178304, 1.3038927e-08, -0.0012272791, 0.99989873)
+bones/12/position = Vector3(-0.21200737, 0.13413244, 2.4517949e-08)
+bones/12/rotation = Quaternion(-0.6097938, 0.05871377, 0.52231556, 0.5932037)
+bones/13/rotation = Quaternion(1.0270084e-08, 3.8258733e-08, 0.4749364, 0.88002026)
+bones/14/rotation = Quaternion(-2.2391923e-08, -2.82037e-09, -0.026658095, 0.99964464)
+bones/15/rotation = Quaternion(-0.21952336, 0.12574261, -0.6295077, 0.73465526)
+bones/16/position = Vector3(2.3790471e-07, 0.096125126, -0.057499886)
+bones/16/rotation = Quaternion(-0.048418418, 0.27514437, 0.6409678, 0.7149207)
+bones/17/rotation = Quaternion(-0.025356315, -0.18597811, 0.029391637, 0.9817869)
+bones/17/scale = Vector3(1, 1, 0.9999999)
+bones/18/position = Vector3(0.84943664, 0.96133363, -0.27965483)
+bones/18/rotation = Quaternion(-0.43324566, -0.13477537, -0.8659963, 0.21020047)
+bones/18/scale = Vector3(0.9999995, 0.9999988, 0.9999999)
+bones/19/rotation = Quaternion(-1.1045736e-08, -3.8261387e-08, -0.15635714, 0.98770064)
+bones/20/rotation = Quaternion(1.5297277e-12, 1.5542408e-09, 0.026658101, 0.99964464)
+bones/21/rotation = Quaternion(0.019604623, -0.04633851, 0.00608603, 0.99871486)
+bones/22/position = Vector3(-0.25038856, 0.2918995, 0.35582137)
+bones/22/rotation = Quaternion(0.75684416, -0.42245162, -0.38522452, 0.31673884)
+
+[node name="head" parent="Rig_Medium/Skeleton3D" index="0"]
+transform = Transform3D(0.9569984, -0.053337432, -0.2851473, 0.28907958, 0.09325486, 0.95275205, -0.024225917, -0.99421257, 0.10466359, 1.1705238e-07, 0.34012842, -2.552197)
+
+[node name="Socket_RightHand" type="BoneAttachment3D" parent="Rig_Medium/Skeleton3D" index="7"]
+transform = Transform3D(0.6217345, -0.14615014, -0.76947045, -0.2657389, -0.9635228, -0.03171009, -0.7367682, 0.22419369, -0.63789386, -0.63725364, 0.24601412, -2.1514285)
+bone_name = "hand.r"
+bone_idx = 15
+
+[node name="Skeleton_Staff" parent="Rig_Medium/Skeleton3D/Socket_RightHand" index="0" instance=ExtResource("2_staff")]
+transform = Transform3D(0.28714213, -0.8089903, 0.51291716, -0.7006578, 0.18774073, 0.68835455, -0.65316755, -0.557035, -0.51291716, 0, 0, 0)
+
+[node name="AnimationPlayer" type="AnimationPlayer" parent="." index="1"]
+libraries = {
+&"Player": SubResource("AnimationLibrary_mage")
+}

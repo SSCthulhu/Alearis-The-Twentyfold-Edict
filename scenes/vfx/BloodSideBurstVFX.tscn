@@ -1,0 +1,152 @@
+[gd_scene load_steps=19 format=3 uid="uid://blood_side_burst_vfx"]
+
+[ext_resource type="Texture2D" uid="uid://cld6iuc2wsquh" path="res://assets/VFX/Water VFX Spritesheets/Blood_Side_Burst_v1_spritesheet.png" id="1_blood"]
+
+[sub_resource type="GDScript" id="GDScript_blood"]
+script/source = "extends Node2D
+
+@onready var sprite: AnimatedSprite2D = $AnimatedSprite2D
+
+func _ready() -> void:
+	if sprite != null:
+		sprite.play(&\"blood_burst\")
+		# Auto-destroy when animation finishes
+		sprite.animation_finished.connect(_on_animation_finished)
+
+func _on_animation_finished() -> void:
+	queue_free()
+
+func set_facing(direction: int) -> void:
+	\"\"\"Set facing direction: -1=left (flipped), 1=right (default)\"\"\"
+	if sprite != null:
+		sprite.flip_h = (direction < 0)
+"
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_blood01"]
+atlas = ExtResource("1_blood")
+region = Rect2(0, 0, 512, 512)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_blood02"]
+atlas = ExtResource("1_blood")
+region = Rect2(512, 0, 512, 512)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_blood03"]
+atlas = ExtResource("1_blood")
+region = Rect2(1024, 0, 512, 512)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_blood04"]
+atlas = ExtResource("1_blood")
+region = Rect2(1536, 0, 512, 512)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_blood05"]
+atlas = ExtResource("1_blood")
+region = Rect2(0, 512, 512, 512)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_blood06"]
+atlas = ExtResource("1_blood")
+region = Rect2(512, 512, 512, 512)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_blood07"]
+atlas = ExtResource("1_blood")
+region = Rect2(1024, 512, 512, 512)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_blood08"]
+atlas = ExtResource("1_blood")
+region = Rect2(1536, 512, 512, 512)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_blood09"]
+atlas = ExtResource("1_blood")
+region = Rect2(0, 1024, 512, 512)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_blood10"]
+atlas = ExtResource("1_blood")
+region = Rect2(512, 1024, 512, 512)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_blood11"]
+atlas = ExtResource("1_blood")
+region = Rect2(1024, 1024, 512, 512)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_blood12"]
+atlas = ExtResource("1_blood")
+region = Rect2(1536, 1024, 512, 512)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_blood13"]
+atlas = ExtResource("1_blood")
+region = Rect2(0, 1536, 512, 512)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_blood14"]
+atlas = ExtResource("1_blood")
+region = Rect2(512, 1536, 512, 512)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_blood15"]
+atlas = ExtResource("1_blood")
+region = Rect2(1024, 1536, 512, 512)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_blood16"]
+atlas = ExtResource("1_blood")
+region = Rect2(1536, 1536, 512, 512)
+
+[sub_resource type="SpriteFrames" id="SpriteFrames_blood"]
+animations = [{
+"frames": [{
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_blood01")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_blood02")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_blood03")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_blood04")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_blood05")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_blood06")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_blood07")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_blood08")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_blood09")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_blood10")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_blood11")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_blood12")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_blood13")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_blood14")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_blood15")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_blood16")
+}],
+"loop": false,
+"name": &"blood_burst",
+"speed": 25.0
+}]
+
+[node name="BloodSideBurstVFX" type="Node2D"]
+script = SubResource("GDScript_blood")
+
+[node name="AnimatedSprite2D" type="AnimatedSprite2D" parent="."]
+scale = Vector2(1.2, 1.2)
+sprite_frames = SubResource("SpriteFrames_blood")
+animation = &"blood_burst"
+autoplay = ""

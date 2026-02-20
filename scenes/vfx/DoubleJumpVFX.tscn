@@ -1,0 +1,92 @@
+[gd_scene load_steps=12 format=3 uid="uid://dhu1ri3h1b672"]
+
+[ext_resource type="Texture2D" uid="uid://cnx7ux6lulx0a" path="res://assets/VFX/Wind VFX Spritesheets/Dash_Wind_White_v7_spritesheet.png" id="1_djump"]
+
+[sub_resource type="GDScript" id="GDScript_djump"]
+script/source = "extends Node2D
+
+@onready var sprite: AnimatedSprite2D = $AnimatedSprite2D
+
+func _ready() -> void:
+	if sprite != null:
+		sprite.play(&\"double_jump\")
+		# Auto-destroy when animation finishes
+		sprite.animation_finished.connect(_on_animation_finished)
+
+func _on_animation_finished() -> void:
+	queue_free()
+"
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_djump09"]
+atlas = ExtResource("1_djump")
+region = Rect2(0, 512, 512, 512)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_djump10"]
+atlas = ExtResource("1_djump")
+region = Rect2(512, 512, 512, 512)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_djump11"]
+atlas = ExtResource("1_djump")
+region = Rect2(1024, 512, 512, 512)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_djump12"]
+atlas = ExtResource("1_djump")
+region = Rect2(1536, 512, 512, 512)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_djump13"]
+atlas = ExtResource("1_djump")
+region = Rect2(2048, 512, 512, 512)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_djump14"]
+atlas = ExtResource("1_djump")
+region = Rect2(2560, 512, 512, 512)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_djump15"]
+atlas = ExtResource("1_djump")
+region = Rect2(3072, 512, 512, 512)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_djump16"]
+atlas = ExtResource("1_djump")
+region = Rect2(3584, 512, 512, 512)
+
+[sub_resource type="SpriteFrames" id="SpriteFrames_djump"]
+animations = [{
+"frames": [{
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_djump09")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_djump10")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_djump11")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_djump12")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_djump13")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_djump14")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_djump15")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_djump16")
+}],
+"loop": false,
+"name": &"double_jump",
+"speed": 15.0
+}]
+
+[node name="DoubleJumpVFX" type="Node2D"]
+rotation = 4.712389
+script = SubResource("GDScript_djump")
+
+[node name="AnimatedSprite2D" type="AnimatedSprite2D" parent="."]
+sprite_frames = SubResource("SpriteFrames_djump")
+animation = &"double_jump"
+frame = 7
+frame_progress = 1.0

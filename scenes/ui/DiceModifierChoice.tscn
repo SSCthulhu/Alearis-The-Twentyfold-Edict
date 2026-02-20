@@ -1,0 +1,87 @@
+[gd_scene load_steps=5 format=3 uid="uid://cxsb0sxvfl0t"]
+
+[ext_resource type="Script" uid="uid://dqlepd04es6pd" path="res://scripts/ui/DiceModifierChoice.gd" id="1_qy4rf"]
+[ext_resource type="Script" uid="uid://cv2fm87dhr44a" path="res://scripts/ui/HUDStyle.gd" id="2_ymjie"]
+[ext_resource type="PackedScene" uid="uid://cfqkvud5nn8ce" path="res://scripts/ui/ModifierCard.tscn" id="3_1lm18"]
+
+[sub_resource type="Resource" id="Resource_ymjie"]
+script = ExtResource("2_ymjie")
+metadata/_custom_type_script = "uid://cv2fm87dhr44a"
+
+[node name="DiceModifierChoice" type="CanvasLayer"]
+visible = false
+script = ExtResource("1_qy4rf")
+card_block_top_inset_px = 2.0
+header_title_boost_px = 20
+header_range_boost_px = 12
+style = SubResource("Resource_ymjie")
+
+[node name="Overlay" type="ColorRect" parent="."]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0, 0, 0, 0.1764706)
+
+[node name="Root" type="Control" parent="."]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="PanelTitle" type="Label" parent="Root"]
+layout_mode = 0
+offset_right = 40.0
+offset_bottom = 23.0
+
+[node name="PanelRange" type="Label" parent="Root"]
+layout_mode = 0
+offset_right = 40.0
+offset_bottom = 23.0
+
+[node name="CardA" parent="Root" instance=ExtResource("3_1lm18")]
+layout_mode = 1
+size_flags_horizontal = 3
+
+[node name="CardB" parent="Root" instance=ExtResource("3_1lm18")]
+layout_mode = 1
+size_flags_horizontal = 3
+
+[node name="CardC" parent="Root" instance=ExtResource("3_1lm18")]
+layout_mode = 1
+size_flags_horizontal = 3
+
+[node name="CardD" parent="Root" instance=ExtResource("3_1lm18")]
+layout_mode = 1
+size_flags_horizontal = 3
+
+[node name="CardE" parent="Root" instance=ExtResource("3_1lm18")]
+layout_mode = 1
+size_flags_horizontal = 3
+
+[node name="ActiveModsPanel" type="Panel" parent="Root"]
+layout_mode = 0
+offset_right = 40.0
+offset_bottom = 40.0
+
+[node name="Margin" type="MarginContainer" parent="Root/ActiveModsPanel"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="ActiveModsText" type="RichTextLabel" parent="Root/ActiveModsPanel/Margin"]
+layout_mode = 2
+mouse_filter = 2
+bbcode_enabled = true
+
+[editable path="Root/CardA"]
+[editable path="Root/CardB"]
+[editable path="Root/CardC"]
+[editable path="Root/CardD"]
+[editable path="Root/CardE"]

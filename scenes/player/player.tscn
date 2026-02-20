@@ -1,0 +1,244 @@
+[gd_scene load_steps=58 format=3 uid="uid://c72m65e63bs0o"]
+
+[ext_resource type="Script" uid="uid://cb8s2agujn7vn" path="res://scripts/player/PlayerControllerV3.gd" id="1_6cv16"]
+[ext_resource type="Script" uid="uid://bjdpgg3i6rwbw" path="res://scripts/player/PlayerCombat.gd" id="2_dovo2"]
+[ext_resource type="PackedScene" uid="uid://b3j8kx5mh4pqr" path="res://scenes/ui/InteractionPrompt.tscn" id="2_interact"]
+[ext_resource type="PackedScene" uid="uid://bgu6qrhlbhbhh" path="res://scenes/player/AttackHitbox.tscn" id="3_gmlin"]
+[ext_resource type="Script" uid="uid://bhdjl2hy0iryy" path="res://scripts/player/PlayerHealth.gd" id="4_lvxji"]
+[ext_resource type="Script" uid="uid://clp25xio1xp21" path="res://scripts/player/ChargeCarrier.gd" id="5_p47bc"]
+[ext_resource type="Script" uid="uid://clxple18wyhyt" path="res://scripts/player/PlayerDebuffs.gd" id="6_75vfm"]
+[ext_resource type="Script" uid="uid://cpddgrgj2xpdy" path="res://scripts/player/PlayerBuffs.gd" id="7_0owmy"]
+[ext_resource type="PackedScene" uid="uid://djiyhvjw4fj03" path="res://scenes/player/Player3DView.tscn" id="12_ioxgp"]
+[ext_resource type="Script" uid="uid://bywauebqqndxv" path="res://scripts/player/PerfectDodgeDetector.gd" id="18_lgqa7"]
+[ext_resource type="Script" uid="uid://dqufuk2vfu7f6" path="res://scripts/systems/RelicEffectsPlayer.gd" id="20_8ydkj"]
+[ext_resource type="Script" uid="uid://cgq6ciw5aggb0" path="res://scripts/player/PerfectDodgeVFX.gd" id="21_3j4b4"]
+[ext_resource type="PackedScene" uid="uid://dunjuoex0ylf5" path="res://scenes/player/PerfectDodgeToast.tscn" id="22_yj68g"]
+[ext_resource type="Script" uid="uid://de3kbwdognol2" path="res://scripts/player/AirDashVFX.gd" id="23_airdash"]
+[ext_resource type="Script" uid="uid://ljw1b6f52c2c" path="res://scripts/player/DashVFX.gd" id="23_dash"]
+[ext_resource type="Script" uid="uid://c5t4njg0bc0at" path="res://scripts/player/DefensiveVFX.gd" id="23_defensive"]
+[ext_resource type="Script" uid="uid://g0xy654wukxm" path="res://scripts/player/DoubleJumpVFX.gd" id="23_djump"]
+[ext_resource type="Script" uid="uid://da4cyhfjskc62" path="res://scripts/player/HeavyAttackVFX.gd" id="23_heavy"]
+[ext_resource type="Script" uid="uid://b73yw27wgswt7" path="res://scripts/player/JumpVFX.gd" id="23_jump"]
+[ext_resource type="Script" uid="uid://hwjrlfbnxdta" path="res://scripts/player/KnightHeavyAttackVFX.gd" id="23_knightheavy"]
+[ext_resource type="Script" uid="uid://5vjgyo4ibc0x" path="res://scripts/player/KnightLightAttackVFX.gd" id="23_knightlight"]
+[ext_resource type="Script" uid="uid://bmmi2a3fncu2q" path="res://scripts/player/KnightDefensiveShieldVFX.gd" id="23_knightshield"]
+[ext_resource type="Script" uid="uid://f2svd7vd1mbi" path="res://scripts/player/KnightUltimateVFX.gd" id="23_knightult"]
+[ext_resource type="Script" uid="uid://c7k8021fvufxs" path="res://scripts/player/LandingVFX.gd" id="23_landing"]
+[ext_resource type="Script" uid="uid://yx83sror2kyq" path="res://scripts/player/LightAttackVFX.gd" id="23_lightattack"]
+[ext_resource type="Script" uid="uid://dmkjrro8xydl5" path="res://scripts/player/ProjectileHitVFX.gd" id="23_projectilehit"]
+[ext_resource type="Script" uid="uid://b1e7xgu2c46qt" path="res://scripts/player/RogueDefensiveAuraVFX.gd" id="23_rogueaura"]
+[ext_resource type="Script" uid="uid://baocs4ci2vqhs" path="res://scripts/player/RogueDefensiveSmokeVFX.gd" id="23_roguesmoke"]
+[ext_resource type="Script" uid="uid://ca68ajvlndsw5" path="res://scripts/player/RollVFX.gd" id="23_roll"]
+[ext_resource type="Script" uid="uid://c0egra4gv5vxt" path="res://scripts/player/UltimateAttackVFX.gd" id="23_ultimate"]
+[ext_resource type="PackedScene" path="res://scenes/vfx/AirDashVFX.tscn" id="24_airdash"]
+[ext_resource type="PackedScene" uid="uid://b0iwe5n6ls0qr" path="res://scenes/vfx/BloodExplosionVFX.tscn" id="24_bloodexplosion"]
+[ext_resource type="Script" uid="uid://cccwf047rq4xn" path="res://scripts/player/PlayerCameraController.gd" id="24_cnsyf"]
+[ext_resource type="PackedScene" path="res://scenes/vfx/DashVFX.tscn" id="24_dash"]
+[ext_resource type="PackedScene" uid="uid://1h0j40n2rmdj" path="res://scenes/vfx/DefensiveVFX.tscn" id="24_defensive"]
+[ext_resource type="PackedScene" uid="uid://dhu1ri3h1b672" path="res://scenes/vfx/DoubleJumpVFX.tscn" id="24_djump"]
+[ext_resource type="PackedScene" uid="uid://cvlobx6k68egu" path="res://scenes/vfx/EnemyHitVFX.tscn" id="24_enemyhit"]
+[ext_resource type="PackedScene" uid="uid://cew6vwqafhtg7" path="res://scenes/vfx/FireExplosionVFX.tscn" id="24_fireexplosion"]
+[ext_resource type="PackedScene" uid="uid://cr8j40n2rmdj" path="res://scenes/vfx/HeavyAttackVFX.tscn" id="24_heavy"]
+[ext_resource type="PackedScene" uid="uid://bx03ta06yus5i" path="res://scenes/vfx/JumpVFX.tscn" id="24_jump"]
+[ext_resource type="PackedScene" uid="uid://cmnn6pfu7npto" path="res://scenes/vfx/KnightHeavyAttackVFX.tscn" id="24_knightheavy"]
+[ext_resource type="PackedScene" uid="uid://cyyysp4yxooff" path="res://scenes/vfx/KnightLightAttackVFX.tscn" id="24_knightlight"]
+[ext_resource type="PackedScene" uid="uid://brnq1nj3eii6m" path="res://scenes/vfx/KnightUltimateEnemyHitVFX.tscn" id="24_knightultenemyhit"]
+[ext_resource type="PackedScene" uid="uid://duk5vfpjwn7gm" path="res://scenes/vfx/KnightUltimatePlayerVFX.tscn" id="24_knightultplayer"]
+[ext_resource type="PackedScene" path="res://scenes/vfx/KnightUltimateShockBurstVFX.tscn" id="24_knightultshockburst"]
+[ext_resource type="PackedScene" uid="uid://dpfsk3mxn7h8j" path="res://scenes/vfx/LandingVFX.tscn" id="24_landing"]
+[ext_resource type="PackedScene" uid="uid://davndbjaaplny" path="res://scenes/vfx/LightAttackVFX.tscn" id="24_lightattack"]
+[ext_resource type="PackedScene" path="res://scenes/vfx/RogueDefensiveAuraVFX.tscn" id="24_rogueaura"]
+[ext_resource type="PackedScene" uid="uid://d2csifw2q37ed" path="res://scenes/vfx/RogueDefensiveSmokeVFX.tscn" id="24_roguesmoke"]
+[ext_resource type="PackedScene" uid="uid://curvvtugp6xoj" path="res://scenes/vfx/RollVFX.tscn" id="24_roll"]
+[ext_resource type="PackedScene" path="res://scenes/vfx/KnightShieldActiveVFX.tscn" id="24_shieldactive"]
+[ext_resource type="PackedScene" path="res://scenes/vfx/KnightShieldOffVFX.tscn" id="24_shieldoff"]
+[ext_resource type="PackedScene" path="res://scenes/vfx/KnightShieldOnVFX.tscn" id="24_shieldon"]
+[ext_resource type="PackedScene" path="res://scenes/vfx/UltimateAttackVFX.tscn" id="24_ultimate"]
+[ext_resource type="PackedScene" path="res://scenes/vfx/BloodSideBurstVFX.tscn" id="50_gmu8b"]
+
+[sub_resource type="CapsuleShape2D" id="CapsuleShape2D_dovo2"]
+radius = 10.1
+height = 35.0
+
+[sub_resource type="CapsuleShape2D" id="CapsuleShape2D_kvlxm"]
+radius = 10.1
+height = 38.8
+
+[node name="Player" type="CharacterBody2D" groups=["player"]]
+z_index = 5
+scale = Vector2(2, 2)
+collision_layer = 2
+script = ExtResource("1_6cv16")
+enable_god_mode_input = false
+enable_bigd_input = false
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="."]
+scale = Vector2(2, 2)
+shape = SubResource("CapsuleShape2D_dovo2")
+
+[node name="Visual" type="Node2D" parent="."]
+
+[node name="HoldPoint" type="Marker2D" parent="Visual"]
+position = Vector2(26.529999, -0.13999939)
+
+[node name="HeadPoint" type="Marker2D" parent="Visual"]
+position = Vector2(0, -39)
+
+[node name="Body3DView" parent="Visual" instance=ExtResource("12_ioxgp")]
+viewport_size = Vector2i(1024, 1024)
+
+[node name="InteractArea" type="Area2D" parent="."]
+collision_layer = 2
+collision_mask = 9
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="InteractArea"]
+scale = Vector2(2, 2)
+shape = SubResource("CapsuleShape2D_kvlxm")
+
+[node name="InteractionPrompt" parent="." instance=ExtResource("2_interact")]
+offset_left = -49.5
+offset_top = -107.5
+offset_right = 50.5
+offset_bottom = -27.5
+prompt_offset_x = -50.0
+prompt_offset_y = -100.0
+
+[node name="Combat" type="Node" parent="."]
+script = ExtResource("2_dovo2")
+hitbox_scene = ExtResource("3_gmlin")
+
+[node name="Health" type="Node" parent="."]
+script = ExtResource("4_lvxji")
+debug_damage = true
+
+[node name="ChargeCarrier" type="Node" parent="."]
+script = ExtResource("5_p47bc")
+player_health_path = NodePath("../Health")
+debuffs_path = NodePath("../Debuffs")
+manual_drop_damage = 0
+
+[node name="Debuffs" type="Node" parent="."]
+script = ExtResource("6_75vfm")
+
+[node name="Buffs" type="Node" parent="."]
+script = ExtResource("7_0owmy")
+
+[node name="PerfectDodgeDetector" type="Node" parent="."]
+script = ExtResource("18_lgqa7")
+perfect_window = 0.14
+
+[node name="Camera2D" type="Camera2D" parent="."]
+offset = Vector2(0, -450)
+limit_left = -1550
+limit_top = -4800
+limit_right = 1550
+limit_bottom = 2000
+position_smoothing_enabled = true
+position_smoothing_speed = 6.0
+rotation_smoothing_enabled = true
+drag_left_margin = 0.0
+drag_top_margin = 0.0
+drag_right_margin = 0.0
+drag_bottom_margin = 0.0
+editor_draw_limits = true
+editor_draw_drag_margin = true
+
+[node name="RelicEffectsPlayer" type="Node" parent="."]
+script = ExtResource("20_8ydkj")
+time_slip_debug = false
+execution_loop_debug = false
+shock_charm_splash_damage = 5
+debug_logs = false
+
+[node name="PerfectDodgeVFX" type="Node" parent="."]
+script = ExtResource("21_3j4b4")
+toast_scene = ExtResource("22_yj68g")
+head_offset_px = 65.0
+
+[node name="LandingVFX" type="Node" parent="."]
+script = ExtResource("23_landing")
+landing_vfx_scene = ExtResource("24_landing")
+feet_offset_y = 75.0
+
+[node name="DefensiveVFX" type="Node" parent="."]
+script = ExtResource("23_defensive")
+defensive_vfx_scene = ExtResource("24_defensive")
+
+[node name="HeavyAttackVFX" type="Node" parent="."]
+script = ExtResource("23_heavy")
+heavy_attack_vfx_scene = ExtResource("24_heavy")
+debug_logs = true
+
+[node name="KnightHeavyAttackVFX" type="Node" parent="."]
+script = ExtResource("23_knightheavy")
+knight_heavy_vfx_scene = ExtResource("24_knightheavy")
+
+[node name="KnightLightAttackVFX" type="Node" parent="."]
+script = ExtResource("23_knightlight")
+knight_light_vfx_scene = ExtResource("24_knightlight")
+
+[node name="KnightDefensiveShieldVFX" type="Node" parent="."]
+script = ExtResource("23_knightshield")
+shield_on_vfx_scene = ExtResource("24_shieldon")
+shield_active_vfx_scene = ExtResource("24_shieldactive")
+shield_off_vfx_scene = ExtResource("24_shieldoff")
+
+[node name="LightAttackVFX" type="Node" parent="."]
+script = ExtResource("23_lightattack")
+light_attack_vfx_scene = ExtResource("24_lightattack")
+
+[node name="UltimateAttackVFX" type="Node" parent="."]
+script = ExtResource("23_ultimate")
+vfx_scene = ExtResource("24_ultimate")
+
+[node name="RogueDefensiveSmokeVFX" type="Node" parent="."]
+script = ExtResource("23_roguesmoke")
+vfx_scene = ExtResource("24_roguesmoke")
+
+[node name="RogueDefensiveAuraVFX" type="Node" parent="."]
+script = ExtResource("23_rogueaura")
+vfx_scene = ExtResource("24_rogueaura")
+
+[node name="RollVFX" type="Node" parent="."]
+script = ExtResource("23_roll")
+vfx_scene = ExtResource("24_roll")
+
+[node name="ProjectileHitVFX" type="Node" parent="."]
+script = ExtResource("23_projectilehit")
+fire_explosion_scene = ExtResource("24_fireexplosion")
+blood_explosion_scene = ExtResource("24_bloodexplosion")
+blood_side_burst_scene = ExtResource("50_gmu8b")
+blood_side_offset_x = 120.0
+
+[node name="KnightUltimateVFX" type="Node" parent="."]
+script = ExtResource("23_knightult")
+player_vfx_scene = ExtResource("24_knightultplayer")
+player_defensive_vfx_scene = ExtResource("24_defensive")
+enemy_lightning_vfx_scene = ExtResource("24_knightultenemyhit")
+enemy_impact_vfx_scene = ExtResource("24_enemyhit")
+enemy_shock_burst_vfx_scene = ExtResource("24_knightultshockburst")
+
+[node name="DashVFX" type="Node" parent="."]
+script = ExtResource("23_dash")
+dash_vfx_scene = ExtResource("24_dash")
+offset_y = 50.0
+
+[node name="AirDashVFX" type="Node" parent="."]
+script = ExtResource("23_airdash")
+air_dash_vfx_scene = ExtResource("24_airdash")
+
+[node name="JumpVFX" type="Node" parent="."]
+script = ExtResource("23_jump")
+jump_vfx_scene = ExtResource("24_jump")
+offset_y = 10.0
+
+[node name="DoubleJumpVFX" type="Node" parent="."]
+script = ExtResource("23_djump")
+double_jump_vfx_scene = ExtResource("24_djump")
+offset_y = 280.0
+
+[node name="PlayerCameraController" type="Node2D" parent="."]
+script = ExtResource("24_cnsyf")
+max_zoom = 5.0
+
+[editable path="Visual/Body3DView"]

@@ -1,0 +1,12 @@
+[gd_resource type="Resource" script_class="BossProjectilePattern" load_steps=2 format=3 uid="uid://dkg8h5rmw7xvq"]
+
+[ext_resource type="Script" uid="uid://jo1e152jjcof" path="res://scripts/boss/BossProjectilePattern.gd" id="1_pattern"]
+
+[resource]
+script = ExtResource("1_pattern")
+pattern_name = "Electric Barrage"
+pattern_type = 7
+projectile_count = 32
+projectile_speed = 320.0
+projectile_color = Color(0.2, 0.8, 1, 1)
+sequential_delay = 0.08

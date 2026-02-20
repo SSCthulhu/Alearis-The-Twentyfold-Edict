@@ -1,0 +1,104 @@
+[gd_scene load_steps=33 format=3 uid="uid://btdlb87v1k0dj"]
+
+[ext_resource type="PackedScene" uid="uid://bnbmsesec2wld" path="res://assets/characters/enemy/BlackKnight.glb" id="1_knight"]
+[ext_resource type="PackedScene" uid="uid://bedr13gm0hw0a" path="res://assets/weapons/enemy/BlackKnight_Sword_Large.gltf" id="2_dubq2"]
+[ext_resource type="Animation" uid="uid://d1m5vx8notyv8" path="res://animations_source/animations/large_rig/Death_A.res" id="3_an3f3"]
+[ext_resource type="Animation" uid="uid://dqtncsn4ihf2i" path="res://animations_source/animations/large_rig/Death_A_Pose.res" id="4_g8pdk"]
+[ext_resource type="Animation" uid="uid://dbth8622qt80t" path="res://animations_source/animations/large_rig/Dodge_Backwards.res" id="5_k5tj0"]
+[ext_resource type="Animation" uid="uid://d1sdcglb0ej3x" path="res://animations_source/animations/large_rig/Dodge_Forward.res" id="6_vb8fc"]
+[ext_resource type="Animation" uid="uid://o2bccioi1ddu" path="res://animations_source/animations/large_rig/Dodge_Left.res" id="7_syhus"]
+[ext_resource type="Animation" uid="uid://c8qb6ienh1rr5" path="res://animations_source/animations/large_rig/Dodge_Right.res" id="8_fcfaf"]
+[ext_resource type="Animation" uid="uid://dojjh0wycbyw4" path="res://animations_source/animations/large_rig/EXPERIMENTAL_Large_Transform.res" id="9_2jojo"]
+[ext_resource type="Animation" uid="uid://3s4o1w7e1vh3" path="res://animations_source/animations/large_rig/Flexing.res" id="10_vt526"]
+[ext_resource type="Animation" uid="uid://co1hl2a7ru0qo" path="res://animations_source/animations/large_rig/Hit_A.res" id="11_8hpec"]
+[ext_resource type="Animation" uid="uid://cyovaaunq5dh6" path="res://animations_source/animations/large_rig/Idle_A.res" id="12_hlef8"]
+[ext_resource type="Animation" uid="uid://t285v84em6ri" path="res://animations_source/animations/large_rig/Idle_B.res" id="13_prurp"]
+[ext_resource type="Animation" uid="uid://c6vwo04o0y7xw" path="res://animations_source/animations/large_rig/Melee_1H_Slash.res" id="14_f0q5f"]
+[ext_resource type="Animation" uid="uid://kesthnsui80r" path="res://animations_source/animations/large_rig/Melee_1H_Stab.res" id="15_85nq5"]
+[ext_resource type="Animation" uid="uid://i56iauq13xst" path="res://animations_source/animations/large_rig/Melee_2H_Attack.res" id="16_jod07"]
+[ext_resource type="Animation" uid="uid://blrkhr4iocdgf" path="res://animations_source/animations/large_rig/Melee_2H_Idle.res" id="17_4mvkk"]
+[ext_resource type="Animation" uid="uid://dsvtlgex5bym8" path="res://animations_source/animations/large_rig/Melee_2H_Slam.res" id="18_ctae0"]
+[ext_resource type="Animation" uid="uid://jtflbotj0cxk" path="res://animations_source/animations/large_rig/Melee_Block.res" id="19_hxr0x"]
+[ext_resource type="Animation" uid="uid://b82cqbk4h1k46" path="res://animations_source/animations/large_rig/Melee_Blocking.res" id="20_65ndd"]
+[ext_resource type="Animation" uid="uid://sb0h7adeaitn" path="res://animations_source/animations/large_rig/Melee_Block_Attack.res" id="21_iju4o"]
+[ext_resource type="Animation" uid="uid://uft65yiykqoj" path="res://animations_source/animations/large_rig/Melee_Block_Hit.res" id="22_k7pli"]
+[ext_resource type="Animation" uid="uid://df0cosb6v6vbn" path="res://animations_source/animations/large_rig/Melee_Dualwield_Slash.res" id="23_tndg4"]
+[ext_resource type="Animation" uid="uid://be5wbemf3x4qb" path="res://animations_source/animations/large_rig/Melee_Dualwield_SlashCombo.res" id="24_84wxv"]
+[ext_resource type="Animation" uid="uid://rogtvhw2xf8c" path="res://animations_source/animations/large_rig/Melee_Unarmed_Idle.res" id="25_ytv48"]
+[ext_resource type="Animation" uid="uid://cucttsqyestbr" path="res://animations_source/animations/large_rig/Melee_Unarmed_Kick.res" id="26_411x5"]
+[ext_resource type="Animation" uid="uid://c0lfvxvbrkg06" path="res://animations_source/animations/large_rig/Melee_Unarmed_Punch.res" id="27_gsdvg"]
+[ext_resource type="Animation" uid="uid://8h74qo5tbi6d" path="res://animations_source/animations/large_rig/Melee_Unarmed_Smash.res" id="28_nmthd"]
+[ext_resource type="Animation" uid="uid://bcbcs8huvgriu" path="res://animations_source/animations/large_rig/Running_A.res" id="29_tbb4d"]
+[ext_resource type="Animation" uid="uid://dsbrxwfp3c7m8" path="res://animations_source/animations/large_rig/T-Pose.res" id="30_ct4xs"]
+[ext_resource type="Animation" uid="uid://60a3tgt3yxdc" path="res://animations_source/animations/large_rig/Walking_A.res" id="31_psd5h"]
+
+[sub_resource type="AnimationLibrary" id="AnimationLibrary_ctjcv"]
+_data = {
+&"Death_A": ExtResource("3_an3f3"),
+&"Death_A_Pose": ExtResource("4_g8pdk"),
+&"Dodge_Backwards": ExtResource("5_k5tj0"),
+&"Dodge_Forward": ExtResource("6_vb8fc"),
+&"Dodge_Left": ExtResource("7_syhus"),
+&"Dodge_Right": ExtResource("8_fcfaf"),
+&"EXPERIMENTAL_Large_Transform": ExtResource("9_2jojo"),
+&"Flexing": ExtResource("10_vt526"),
+&"Hit_A": ExtResource("11_8hpec"),
+&"Idle_A": ExtResource("12_hlef8"),
+&"Idle_B": ExtResource("13_prurp"),
+&"Melee_1H_Slash": ExtResource("14_f0q5f"),
+&"Melee_1H_Stab": ExtResource("15_85nq5"),
+&"Melee_2H_Attack": ExtResource("16_jod07"),
+&"Melee_2H_Idle": ExtResource("17_4mvkk"),
+&"Melee_2H_Slam": ExtResource("18_ctae0"),
+&"Melee_Block": ExtResource("19_hxr0x"),
+&"Melee_Block_Attack": ExtResource("21_iju4o"),
+&"Melee_Block_Hit": ExtResource("22_k7pli"),
+&"Melee_Blocking": ExtResource("20_65ndd"),
+&"Melee_Dualwield_Slash": ExtResource("23_tndg4"),
+&"Melee_Dualwield_SlashCombo": ExtResource("24_84wxv"),
+&"Melee_Unarmed_Idle": ExtResource("25_ytv48"),
+&"Melee_Unarmed_Kick": ExtResource("26_411x5"),
+&"Melee_Unarmed_Punch": ExtResource("27_gsdvg"),
+&"Melee_Unarmed_Smash": ExtResource("28_nmthd"),
+&"Running_A": ExtResource("29_tbb4d"),
+&"T-Pose": ExtResource("30_ct4xs"),
+&"Walking_A": ExtResource("31_psd5h")
+}
+
+[node name="BlackKnight3DStage" type="Node3D"]
+
+[node name="FacingPivot" type="Node3D" parent="."]
+
+[node name="BlackKnight" parent="FacingPivot" instance=ExtResource("1_knight")]
+
+[node name="BoneAttachment3D" type="BoneAttachment3D" parent="FacingPivot/BlackKnight/Rig_Large/Skeleton3D" index="9"]
+transform = Transform3D(-0.99999946, 3.9575104e-07, 1.2074764e-07, 8.231015e-08, -2.2241218e-07, 0.99999994, 3.2124552e-07, 0.9999996, 1.894397e-07, -2.4947143, 2.5355213, -3.4569265e-07)
+bone_name = "handslot.r"
+bone_idx = 18
+
+[node name="BlackKnight_Sword_Large2" parent="FacingPivot/BlackKnight/Rig_Large/Skeleton3D/BoneAttachment3D" instance=ExtResource("2_dubq2")]
+transform = Transform3D(1, 0, 0, 0, 0.9396926, -0.34202012, 0, 0.34202012, 0.9396926, 0, 0, 0)
+
+[node name="BoneAttachment3D2" type="BoneAttachment3D" parent="FacingPivot/BlackKnight/Rig_Large/Skeleton3D" index="10"]
+transform = Transform3D(-0.99999934, -1.4615614e-07, -1.803523e-07, -2.0473848e-07, -2.573016e-07, 0.99999994, -1.3870607e-07, 0.99999946, 2.770061e-07, 2.494714, 2.5355213, -6.482977e-07)
+bone_name = "handslot.l"
+bone_idx = 12
+
+[node name="BlackKnight_Sword_Large2" parent="FacingPivot/BlackKnight/Rig_Large/Skeleton3D/BoneAttachment3D2" instance=ExtResource("2_dubq2")]
+transform = Transform3D(1, 0, 0, 0, 0.9396926, -0.34202012, 0, 0.34202012, 0.9396926, 0, 0, 0)
+
+[node name="AnimationPlayer" type="AnimationPlayer" parent="FacingPivot/BlackKnight"]
+libraries = {
+&"KAnim": SubResource("AnimationLibrary_ctjcv")
+}
+
+[node name="Camera3D" type="Camera3D" parent="."]
+transform = Transform3D(0.9998157, 0, 0.019197444, 0, 1, 0, -0.019197444, 0, 0.9998157, 0, 2.5, 4)
+projection = 1
+size = 12.0
+near = 0.1
+far = 50.0
+
+[node name="DirectionalLight3D" type="DirectionalLight3D" parent="."]
+
+[editable path="FacingPivot/BlackKnight"]

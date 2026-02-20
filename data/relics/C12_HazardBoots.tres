@@ -1,0 +1,13 @@
+[gd_resource type="Resource" script_class="RelicData" load_steps=2 format=3 uid="uid://xx3xw17v5kex"]
+
+[ext_resource type="Script" uid="uid://dwyhl0a0pqlnn" path="res://scripts/systems/RelicData.gd" id="1_cakcn"]
+
+[resource]
+script = ExtResource("1_cakcn")
+id = &"c12_hazard_boots"
+display_name = "Hazard Boots"
+band = 0
+tags = Array[StringName]([&"pacing", &"hazard", &"safety"])
+description_lines = Array[String](["Hazard rises 10% slower (for you)."])
+effect_id = &"relic_hazard_boots"
+metadata/_custom_type_script = "uid://dwyhl0a0pqlnn"

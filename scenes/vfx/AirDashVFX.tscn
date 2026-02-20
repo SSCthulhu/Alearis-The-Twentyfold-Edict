@@ -1,0 +1,152 @@
+[gd_scene load_steps=19 format=3 uid="uid://airdash_vfx_scene"]
+
+[ext_resource type="Texture2D" uid="uid://clcdfpvakbav2" path="res://assets/VFX/Wind VFX Spritesheets/Dash_Wind_White_v3_spritesheet.png" id="1_airdash"]
+
+[sub_resource type="GDScript" id="GDScript_airdash"]
+script/source = "extends Node2D
+
+@onready var sprite: AnimatedSprite2D = $AnimatedSprite2D
+
+func _ready() -> void:
+	if sprite != null:
+		sprite.play(&\"air_dash\")
+		# Auto-destroy when animation finishes
+		sprite.animation_finished.connect(_on_animation_finished)
+
+func _on_animation_finished() -> void:
+	queue_free()
+
+func set_facing(direction: int) -> void:
+	\"\"\"Set facing direction: -1=left, 1=right\"\"\"
+	if sprite != null:
+		# Sprite faces RIGHT by default, so flip when going LEFT
+		sprite.flip_h = (direction < 0)
+"
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_airdash01"]
+atlas = ExtResource("1_airdash")
+region = Rect2(0, 0, 512, 512)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_airdash02"]
+atlas = ExtResource("1_airdash")
+region = Rect2(512, 0, 512, 512)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_airdash03"]
+atlas = ExtResource("1_airdash")
+region = Rect2(1024, 0, 512, 512)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_airdash04"]
+atlas = ExtResource("1_airdash")
+region = Rect2(1536, 0, 512, 512)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_airdash05"]
+atlas = ExtResource("1_airdash")
+region = Rect2(2048, 0, 512, 512)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_airdash06"]
+atlas = ExtResource("1_airdash")
+region = Rect2(2560, 0, 512, 512)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_airdash07"]
+atlas = ExtResource("1_airdash")
+region = Rect2(3072, 0, 512, 512)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_airdash08"]
+atlas = ExtResource("1_airdash")
+region = Rect2(3584, 0, 512, 512)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_airdash09"]
+atlas = ExtResource("1_airdash")
+region = Rect2(0, 512, 512, 512)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_airdash10"]
+atlas = ExtResource("1_airdash")
+region = Rect2(512, 512, 512, 512)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_airdash11"]
+atlas = ExtResource("1_airdash")
+region = Rect2(1024, 512, 512, 512)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_airdash12"]
+atlas = ExtResource("1_airdash")
+region = Rect2(1536, 512, 512, 512)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_airdash13"]
+atlas = ExtResource("1_airdash")
+region = Rect2(2048, 512, 512, 512)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_airdash14"]
+atlas = ExtResource("1_airdash")
+region = Rect2(2560, 512, 512, 512)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_airdash15"]
+atlas = ExtResource("1_airdash")
+region = Rect2(3072, 512, 512, 512)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_airdash16"]
+atlas = ExtResource("1_airdash")
+region = Rect2(3584, 512, 512, 512)
+
+[sub_resource type="SpriteFrames" id="SpriteFrames_airdash"]
+animations = [{
+"frames": [{
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_airdash01")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_airdash02")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_airdash03")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_airdash04")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_airdash05")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_airdash06")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_airdash07")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_airdash08")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_airdash09")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_airdash10")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_airdash11")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_airdash12")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_airdash13")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_airdash14")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_airdash15")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_airdash16")
+}],
+"loop": false,
+"name": &"air_dash",
+"speed": 30.0
+}]
+
+[node name="AirDashVFX" type="Node2D"]
+script = SubResource("GDScript_airdash")
+
+[node name="AnimatedSprite2D" type="AnimatedSprite2D" parent="."]
+sprite_frames = SubResource("SpriteFrames_airdash")
+animation = &"air_dash"
+autoplay = ""

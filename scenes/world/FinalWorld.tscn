@@ -1,0 +1,105 @@
+[gd_scene load_steps=12 format=3 uid="uid://drg6uhmnoduvw"]
+
+[ext_resource type="Script" uid="uid://cf1e5h4b5lu3u" path="res://scripts/systems/EncounterController.gd" id="1_n01b3"]
+[ext_resource type="PackedScene" uid="uid://cai81qjmmgokj" path="res://scenes/arena/AscensionCharge.tscn" id="2_rjvsk"]
+[ext_resource type="PackedScene" uid="uid://ccrejlifa6gwm" path="res://scenes/enemies/EnemyKnightAdd.tscn" id="3_okjlb"]
+[ext_resource type="PackedScene" uid="uid://deotiruix5irf" path="res://scenes/enemies/EnemySkeletonGolem.tscn" id="4_icygt"]
+[ext_resource type="PackedScene" uid="uid://c1757dykl7ner" path="res://scenes/arena/FinalArena.tscn" id="5_ismk3"]
+[ext_resource type="Script" path="res://scripts/systems/FinalWorldController.gd" id="6_fwctl"]
+[ext_resource type="PackedScene" uid="uid://cg8vl5nh3k2fy" path="res://scenes/ui/FinalVictoryScreen.tscn" id="7_fvs"]
+[ext_resource type="PackedScene" uid="uid://c72m65e63bs0o" path="res://scenes/player/player.tscn" id="17_omg0h"]
+[ext_resource type="PackedScene" uid="uid://ojpp3p46grti" path="res://scenes/arena/AscensionSocket.tscn" id="19_bwtbh"]
+[ext_resource type="PackedScene" uid="uid://da2fr6n8vi4x7" path="res://scenes/ui/UI.tscn" id="21_7bneo"]
+[ext_resource type="Resource" uid="uid://dtfg2ntfkn5oa" path="res://styles/HUDStyle.tres" id="22_bjoim"]
+
+[node name="FinalWorld" type="Node2D"]
+
+[node name="FinalWorldController" type="Node" parent="."]
+script = ExtResource("6_fwctl")
+fade_rect_path = NodePath("../UI/ScreenRoot/HUDRoot/FinalWorldFade")
+victory_screen_path = NodePath("../FinalVictoryScreen")
+debug_logs = true
+
+[node name="EncounterController" type="Node" parent="."]
+script = ExtResource("1_n01b3")
+charge_scene = ExtResource("2_rjvsk")
+world_scene_paths = Array[String](["res://scenes/world/World1.tscn", "res://scenes/world/World2.tscn", "res://scenes/world/World3.tscn"])
+rising_hazard_path = NodePath("")
+charge_stations_root_path = NodePath("")
+charge_spawns_root_path = NodePath("")
+ascension_sockets_root_path = NodePath("../AscensionSocket")
+add_scene = ExtResource("3_okjlb")
+golem_scene = ExtResource("4_icygt")
+start_on_ready = false
+
+[node name="FinalArena" parent="." instance=ExtResource("5_ismk3")]
+
+[node name="Player" parent="." instance=ExtResource("17_omg0h")]
+position = Vector2(-938, 1244)
+
+[node name="InteractArea" parent="Player" index="2"]
+position = Vector2(-11.56, 51.15)
+
+[node name="CollisionShape2D" parent="Player/InteractArea" index="0"]
+position = Vector2(11.555, -51.155)
+
+[node name="Camera2D" parent="Player" index="9"]
+limit_top = -4500
+
+[node name="PlayerCameraController" parent="Player" index="29"]
+floor_progression_path = NodePath("")
+
+
+[node name="AcensionCharge" parent="." instance=ExtResource("2_rjvsk")]
+position = Vector2(1259, 1285)
+
+[node name="AscensionSocket" type="Node2D" parent="."]
+position = Vector2(-6, 4483)
+
+[node name="AscensionSocketA" parent="AscensionSocket" instance=ExtResource("19_bwtbh")]
+position = Vector2(-303, -3995)
+scale = Vector2(1, 1)
+
+[node name="AscensionSocketB" parent="AscensionSocket" instance=ExtResource("19_bwtbh")]
+position = Vector2(311, -3995)
+scale = Vector2(1, 1)
+
+[node name="FinalVictoryScreen" parent="." instance=ExtResource("7_fvs")]
+
+[node name="UI" parent="." instance=ExtResource("21_7bneo")]
+
+[node name="PlayerHUDCluster" parent="UI/ScreenRoot/HUDRoot/BottomRight" index="0"]
+style = ExtResource("22_bjoim")
+
+[node name="PlayerHUDWiring" parent="UI/ScreenRoot/HUDRoot" index="4"]
+player_path = NodePath("../../../../Player")
+combat_path = NodePath("../../../../Player/Combat")
+
+[node name="EncounterHUDWiring" parent="UI/ScreenRoot/HUDRoot" index="5"]
+floor_controller_path = NodePath("")
+boss_path = NodePath("../../../../Boss")
+
+[node name="FinalWorldFade" type="ColorRect" parent="UI/ScreenRoot/HUDRoot"]
+visible = false
+z_index = 1000
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+color = Color(0, 0, 0, 1)
+
+[editable path="Player"]
+[editable path="Player/Visual/Body3DView"]
+[editable path="Boss"]
+[editable path="AcensionCharge"]
+[editable path="AscensionSocket/AscensionSocketA"]
+[editable path="AscensionSocket/AscensionSocketB"]
+[editable path="UI"]
+[editable path="UI/DeathOverlay/RunSummaryPanel"]
+[editable path="UI/VictoryUI/Root/CardA"]
+[editable path="UI/VictoryUI/Root/CardB"]
+[editable path="UI/VictoryUI/Root/CardC"]
+[editable path="UI/VictoryUI/Root/CardD"]
+[editable path="UI/VictoryUI/Root/CardE"]

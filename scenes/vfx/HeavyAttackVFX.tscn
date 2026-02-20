@@ -1,0 +1,152 @@
+[gd_scene load_steps=20 format=3 uid="uid://cr8j40n2rmdj"]
+
+[ext_resource type="Texture2D" uid="uid://ddc1edmw7r6f2" path="res://assets/VFX/Stab_Hand Drawn_v1 Spritesheets/Stab_Hand Drawn_v1_spritesheet.png" id="1_heavy"]
+
+[sub_resource type="GDScript" id="GDScript_heavy"]
+script/source = "extends Node2D
+
+@onready var sprite: AnimatedSprite2D = $AnimatedSprite2D
+
+func _ready() -> void:
+	if sprite != null:
+		sprite.play(&\"heavy_attack\")
+		# Auto-destroy when animation finishes
+		sprite.animation_finished.connect(_on_animation_finished)
+
+func _on_animation_finished() -> void:
+	queue_free()
+
+func set_facing(direction: int) -> void:
+	\"\"\"Set facing direction: -1=left, 1=right\"\"\"
+	if sprite != null:
+		sprite.flip_h = (direction < 0)
+"
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_heavy01"]
+atlas = ExtResource("1_heavy")
+region = Rect2(0, 0, 512, 512)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_heavy02"]
+atlas = ExtResource("1_heavy")
+region = Rect2(512, 0, 512, 512)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_heavy03"]
+atlas = ExtResource("1_heavy")
+region = Rect2(1024, 0, 512, 512)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_heavy04"]
+atlas = ExtResource("1_heavy")
+region = Rect2(1536, 0, 512, 512)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_heavy05"]
+atlas = ExtResource("1_heavy")
+region = Rect2(2048, 0, 512, 512)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_heavy06"]
+atlas = ExtResource("1_heavy")
+region = Rect2(2560, 0, 512, 512)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_heavy07"]
+atlas = ExtResource("1_heavy")
+region = Rect2(3072, 0, 512, 512)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_heavy08"]
+atlas = ExtResource("1_heavy")
+region = Rect2(3584, 0, 512, 512)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_heavy09"]
+atlas = ExtResource("1_heavy")
+region = Rect2(0, 512, 512, 512)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_heavy10"]
+atlas = ExtResource("1_heavy")
+region = Rect2(512, 512, 512, 512)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_heavy11"]
+atlas = ExtResource("1_heavy")
+region = Rect2(1024, 512, 512, 512)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_heavy12"]
+atlas = ExtResource("1_heavy")
+region = Rect2(1536, 512, 512, 512)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_heavy13"]
+atlas = ExtResource("1_heavy")
+region = Rect2(2048, 512, 512, 512)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_heavy14"]
+atlas = ExtResource("1_heavy")
+region = Rect2(2560, 512, 512, 512)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_heavy15"]
+atlas = ExtResource("1_heavy")
+region = Rect2(3072, 512, 512, 512)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_heavy16"]
+atlas = ExtResource("1_heavy")
+region = Rect2(3584, 512, 512, 512)
+
+[sub_resource type="SpriteFrames" id="SpriteFrames_heavy"]
+animations = [{
+"frames": [{
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_heavy01")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_heavy02")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_heavy03")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_heavy04")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_heavy05")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_heavy06")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_heavy07")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_heavy08")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_heavy09")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_heavy10")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_heavy11")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_heavy12")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_heavy13")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_heavy14")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_heavy15")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_heavy16")
+}],
+"loop": false,
+"name": &"heavy_attack",
+"speed": 20.0
+}]
+
+[node name="HeavyAttackVFX" type="Node2D"]
+script = SubResource("GDScript_heavy")
+
+[node name="AnimatedSprite2D" type="AnimatedSprite2D" parent="."]
+sprite_frames = SubResource("SpriteFrames_heavy")
+animation = &"heavy_attack"
+frame = 15
+frame_progress = 1.0

@@ -1,0 +1,12 @@
+[gd_resource type="Resource" script_class="BossProjectilePattern" load_steps=2 format=3 uid="uid://djoc8kk86rww4"]
+
+[ext_resource type="Script" uid="uid://jo1e152jjcof" path="res://scripts/boss/BossProjectilePattern.gd" id="1_pattern"]
+
+[resource]
+script = ExtResource("1_pattern")
+pattern_name = "Radial Burst"
+animation_name = "KAnim/Melee_Unarmed_Smash"
+projectile_count = 16
+projectile_speed = 350.0
+spawn_delay = 0.2
+sequential_delay = 0.05

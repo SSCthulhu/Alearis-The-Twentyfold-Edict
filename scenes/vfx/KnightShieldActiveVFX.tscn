@@ -1,0 +1,28 @@
+[gd_scene load_steps=4 format=3]
+
+[ext_resource type="Texture2D" path="res://assets/VFX/Essentials VFX Spritesheets/Shield_On_spritesheet.png" id="1_shield"]
+[ext_resource type="Script" path="res://scripts/vfx/KnightShieldActiveVFX.gd" id="2_script"]
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_shield_last"]
+atlas = ExtResource("1_shield")
+region = Rect2(1536, 1536, 512, 512)
+
+[sub_resource type="SpriteFrames" id="SpriteFrames_shield"]
+animations = [{
+"frames": [{
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_shield_last")
+}],
+"loop": true,
+"name": &"shield_active",
+"speed": 1.0
+}]
+
+[node name="KnightShieldActiveVFX" type="Node2D"]
+z_index = 10
+script = ExtResource("2_script")
+
+[node name="AnimatedSprite2D" type="AnimatedSprite2D" parent="."]
+sprite_frames = SubResource("SpriteFrames_shield")
+animation = &"shield_active"
+autoplay = "shield_active"

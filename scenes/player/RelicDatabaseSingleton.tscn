@@ -1,0 +1,28 @@
+[gd_scene load_steps=23 format=3 uid="uid://0vnectdvmkih"]
+
+[ext_resource type="Script" uid="uid://l5u48edhkfp8" path="res://scripts/systems/RelicDatabase.gd" id="1_xd0t7"]
+[ext_resource type="Script" uid="uid://dwyhl0a0pqlnn" path="res://scripts/systems/RelicData.gd" id="2_ehi4v"]
+[ext_resource type="Resource" uid="uid://biq6m8cms3xoy" path="res://data/relics/C1_OathofMomentum.tres" id="3_1xifl"]
+[ext_resource type="Resource" uid="uid://c6sg1n57sjl16" path="res://data/relics/C2_SiphonEdge.tres" id="4_8qo87"]
+[ext_resource type="Resource" uid="uid://d4mmkuioy0gdw" path="res://data/relics/C3_RunnersSigil.tres" id="5_1sfnl"]
+[ext_resource type="Resource" uid="uid://coqmh6pqu34ga" path="res://data/relics/C4_TemperedGuard.tres" id="6_vvojb"]
+[ext_resource type="Resource" uid="uid://otow1i35esse" path="res://data/relics/C5_ArcBattery.tres" id="7_enfsc"]
+[ext_resource type="Resource" uid="uid://diesbhpwneshx" path="res://data/relics/C6_Bleedstone.tres" id="8_5asrg"]
+[ext_resource type="Resource" uid="uid://ckdt0cgdjehed" path="res://data/relics/C7_ShockCharm.tres" id="9_32s47"]
+[ext_resource type="Resource" uid="uid://dted4jt5hhcrr" path="res://data/relics/C8_SurgeCapacitor.tres" id="10_u0cwp"]
+[ext_resource type="Resource" uid="uid://bv1wyccy70sb4" path="res://data/relics/C9_OrbConductor.tres" id="11_pfuyq"]
+[ext_resource type="Resource" uid="uid://decwmbc84od7e" path="res://data/relics/C10_QuickstepWraps.tres" id="12_w54j3"]
+[ext_resource type="Resource" uid="uid://sweog37gbypm" path="res://data/relics/C11_VitalThread.tres" id="13_m6f67"]
+[ext_resource type="Resource" uid="uid://xx3xw17v5kex" path="res://data/relics/C12_HazardBoots.tres" id="14_n63rj"]
+[ext_resource type="Resource" uid="uid://cuhv5bb7yfbav" path="res://data/relics/R1_GlassPact.tres" id="15_2xfqs"]
+[ext_resource type="Resource" uid="uid://dt2yxwsapcbvb" path="res://data/relics/R2_TimeSlip.tres" id="16_76ycr"]
+[ext_resource type="Resource" uid="uid://ndiw71gvn5v1" path="res://data/relics/R3_ExecutionLoop.tres" id="17_oxy2v"]
+[ext_resource type="Resource" uid="uid://dpepx4tqki1cg" path="res://data/relics/R4_SanctifiedBarrier.tres" id="18_0fxne"]
+[ext_resource type="Resource" uid="uid://paajfx7awhjo" path="res://data/relics/R5_BloodPrice.tres" id="19_eplvb"]
+[ext_resource type="Resource" uid="uid://kmh2ps4aai2i" path="res://data/relics/R6_OrbSurge.tres" id="20_pfxdq"]
+[ext_resource type="Resource" uid="uid://dnwmba1cuh8fi" path="res://data/relics/E1_LoadedFate.tres" id="21_xdnac"]
+[ext_resource type="Resource" uid="uid://csowoxasvecep" path="res://data/relics/E2_AscendantCore.tres" id="22_bbxpn"]
+
+[node name="RelicDatabaseSingleton" type="Node"]
+script = ExtResource("1_xd0t7")
+relics = Array[ExtResource("2_ehi4v")]([ExtResource("3_1xifl"), ExtResource("4_8qo87"), ExtResource("5_1sfnl"), ExtResource("6_vvojb"), ExtResource("7_enfsc"), ExtResource("8_5asrg"), ExtResource("9_32s47"), ExtResource("10_u0cwp"), ExtResource("11_pfuyq"), ExtResource("12_w54j3"), ExtResource("13_m6f67"), ExtResource("14_n63rj"), ExtResource("15_2xfqs"), ExtResource("16_76ycr"), ExtResource("17_oxy2v"), ExtResource("18_0fxne"), ExtResource("19_eplvb"), ExtResource("20_pfxdq"), ExtResource("21_xdnac"), ExtResource("22_bbxpn")])

@@ -1,0 +1,18 @@
+[gd_scene load_steps=2 format=3 uid="uid://bt7to7n4mc5iq"]
+
+[ext_resource type="PackedScene" uid="uid://f1806r75ig2j" path="res://assets/scenes/skeleton_golem.tscn" id="1_golem"]
+
+[node name="SkeletonGolem3DStage" type="Node3D"]
+
+[node name="FacingPivot" type="Node3D" parent="."]
+
+[node name="Skeleton_Golem" parent="FacingPivot" instance=ExtResource("1_golem")]
+
+[node name="Camera3D" type="Camera3D" parent="."]
+transform = Transform3D(0.9998157, 0, 0.019197444, 0, 1, 0, -0.019197444, 0, 0.9998157, 0, 1.5, 3)
+projection = 1
+size = 10.0
+near = 0.1
+far = 50.0
+
+[node name="DirectionalLight3D" type="DirectionalLight3D" parent="."]

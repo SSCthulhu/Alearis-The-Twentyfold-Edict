@@ -1,0 +1,29 @@
+---
+description: Policy for Godot game testing - user handles all testing
+alwaysApply: true
+---
+
+# Godot Game Testing Policy
+
+## Never Test the Game
+
+**IMPORTANT**: Do not launch, run, or test the Godot game. The user will handle all testing.
+
+### What NOT to do:
+- ❌ Do not use `user-godot-mcp-play_scene`
+- ❌ Do not use `user-godot-mcp-simulate_input`
+- ❌ Do not use `user-godot-mcp-get_running_scene_screenshot`
+- ❌ Do not attempt to control or interact with the running game
+
+### What TO do:
+- ✅ Make changes to scenes, scripts, and assets
+- ✅ Check for errors using `user-godot-mcp-get_godot_errors` (compile/syntax errors)
+- ✅ Take editor screenshots using `user-godot-mcp-get_editor_screenshot`
+- ✅ Explain what was changed and let the user test
+
+## After Making Changes
+
+After implementing features or fixes:
+1. Summarize what was changed
+2. Ask the user to test it
+3. Wait for their feedback before proceeding

@@ -1,0 +1,7 @@
+[gd_scene load_steps=2 format=3 uid="uid://qu1v3r123456"]
+
+[ext_resource type="PackedScene" uid="uid://bwl4p1012cb8g" path="res://assets/weapons/enemy/Skeleton_Quiver.gltf" id="1_quiver"]
+
+[node name="Skeleton_Quiver" type="Node3D"]
+
+[node name="skeleton_quiver" parent="." instance=ExtResource("1_quiver")]

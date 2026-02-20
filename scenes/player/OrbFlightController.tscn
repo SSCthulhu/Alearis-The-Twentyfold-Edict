@@ -1,0 +1,13 @@
+[gd_scene load_steps=4 format=3 uid="uid://8hysfqws2ayt"]
+
+[ext_resource type="Script" uid="uid://d35jfs1hypf5d" path="res://scripts/player/OrbFlightController.gd" id="1_v3h1g"]
+[ext_resource type="PackedScene" uid="uid://cl782jegm7xux" path="res://scenes/player/OrbLight.tscn" id="2_shr23"]
+[ext_resource type="PackedScene" uid="uid://bxxf4cqiyjotx" path="res://scenes/hazards/OrbFallingRock.tscn" id="3_ryq03"]
+
+[node name="OrbFlightController" type="Node2D"]
+script = ExtResource("1_v3h1g")
+orb_scene = ExtResource("2_shr23")
+rock_scene = ExtResource("3_ryq03")
+flight_speed_y = 800.0
+rock_spawn_y_offset = -1500.0
+target_spawn_path = NodePath("Arena2/Spawns/Floor3/PlayerSpawn")

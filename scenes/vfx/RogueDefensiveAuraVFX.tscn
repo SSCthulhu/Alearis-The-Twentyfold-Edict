@@ -1,0 +1,141 @@
+[gd_scene load_steps=19 format=3]
+
+[ext_resource type="Texture2D" uid="uid://dmy0yo88ponx3" path="res://assets/VFX/Wind VFX Spritesheets/Smoke_Burst_Loop_White_v7_spritesheet.png" id="1_smoke"]
+[ext_resource type="Script" path="res://scripts/vfx/RogueDefensiveAuraVFX.gd" id="2_script"]
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_aura_0"]
+atlas = ExtResource("1_smoke")
+region = Rect2(0, 0, 512, 512)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_aura_1"]
+atlas = ExtResource("1_smoke")
+region = Rect2(512, 0, 512, 512)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_aura_2"]
+atlas = ExtResource("1_smoke")
+region = Rect2(1024, 0, 512, 512)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_aura_3"]
+atlas = ExtResource("1_smoke")
+region = Rect2(1536, 0, 512, 512)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_aura_4"]
+atlas = ExtResource("1_smoke")
+region = Rect2(0, 512, 512, 512)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_aura_5"]
+atlas = ExtResource("1_smoke")
+region = Rect2(512, 512, 512, 512)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_aura_6"]
+atlas = ExtResource("1_smoke")
+region = Rect2(1024, 512, 512, 512)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_aura_7"]
+atlas = ExtResource("1_smoke")
+region = Rect2(1536, 512, 512, 512)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_aura_8"]
+atlas = ExtResource("1_smoke")
+region = Rect2(0, 1024, 512, 512)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_aura_9"]
+atlas = ExtResource("1_smoke")
+region = Rect2(512, 1024, 512, 512)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_aura_10"]
+atlas = ExtResource("1_smoke")
+region = Rect2(1024, 1024, 512, 512)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_aura_11"]
+atlas = ExtResource("1_smoke")
+region = Rect2(1536, 1024, 512, 512)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_aura_12"]
+atlas = ExtResource("1_smoke")
+region = Rect2(0, 1536, 512, 512)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_aura_13"]
+atlas = ExtResource("1_smoke")
+region = Rect2(512, 1536, 512, 512)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_aura_14"]
+atlas = ExtResource("1_smoke")
+region = Rect2(1024, 1536, 512, 512)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_aura_15"]
+atlas = ExtResource("1_smoke")
+region = Rect2(1536, 1536, 512, 512)
+
+[sub_resource type="SpriteFrames" id="SpriteFrames_aura"]
+animations = [{
+"frames": [{
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_aura_0")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_aura_1")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_aura_2")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_aura_3")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_aura_4")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_aura_5")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_aura_6")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_aura_7")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_aura_8")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_aura_9")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_aura_10")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_aura_11")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_aura_12")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_aura_13")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_aura_14")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_aura_15")
+}],
+"loop": true,
+"name": &"smoke_aura",
+"speed": 30.0
+}]
+
+[node name="RogueDefensiveAuraVFX" type="Node2D"]
+modulate = Color(1, 1, 1, 0.35)
+z_index = 5
+script = ExtResource("2_script")
+
+[node name="AnimatedSprite2D" type="AnimatedSprite2D" parent="."]
+sprite_frames = SubResource("SpriteFrames_aura")
+animation = &"smoke_aura"
+autoplay = "smoke_aura"
+
+[node name="DurationTimer" type="Timer" parent="."]
+wait_time = 10.0
+one_shot = true
+autostart = true
+
+[connection signal="timeout" from="DurationTimer" to="." method="queue_free"]

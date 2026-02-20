@@ -1,0 +1,61 @@
+[gd_scene load_steps=16 format=3 uid="uid://b2qb80dttfbcq"]
+
+[ext_resource type="Script" uid="uid://cdidei78kcag4" path="res://scripts/boss/BossController.gd" id="1_i7eio"]
+[ext_resource type="Script" uid="uid://b0nfn5rqrixak" path="res://scripts/boss/Hurtbox.gd" id="2_jps57"]
+[ext_resource type="PackedScene" uid="uid://exnu6fx10rgm" path="res://scenes/boss/Clanker3DView.tscn" id="3_r2fpk"]
+[ext_resource type="Script" uid="uid://bh1vf0remp5r4" path="res://scripts/boss/BossHealth.gd" id="4_tnhia"]
+[ext_resource type="PackedScene" uid="uid://cvlobx6k68egu" path="res://scenes/vfx/EnemyHitVFX.tscn" id="5_gxkn7"]
+[ext_resource type="PackedScene" uid="uid://d186dmo00kqu5" path="res://scenes/vfx/EnemyCritVFX.tscn" id="6_316fk"]
+[ext_resource type="Script" uid="uid://bxkstno4wqyqf" path="res://scripts/ui/DamageNumberEmitter.gd" id="7_5xngl"]
+[ext_resource type="PackedScene" uid="uid://bvgni0b2cndxi" path="res://scenes/ui/DamageNumber.tscn" id="8_ytt2g"]
+[ext_resource type="Script" uid="uid://ck6ywaqc1jaq2" path="res://scripts/boss/BossProjectileAttack.gd" id="9_tf6pd"]
+[ext_resource type="PackedScene" uid="uid://c7h4vkqn8p0k6" path="res://scenes/boss/BossProjectile.tscn" id="10_h0rcg"]
+[ext_resource type="Script" uid="uid://jo1e152jjcof" path="res://scripts/boss/BossProjectilePattern.gd" id="11_c07mp"]
+[ext_resource type="Resource" uid="uid://dkg8h5rmw7xvq" path="res://resources/boss/world3_electric_barrage.tres" id="12_wpyoo"]
+[ext_resource type="Resource" uid="uid://cpqbx2ygrl8cp" path="res://resources/boss/world3_plasma_wave.tres" id="13_5d1rd"]
+[ext_resource type="Resource" uid="uid://cnxt5cxxm8gqa" path="res://resources/boss/world3_forge_hammer.tres" id="14_ysbpy"]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_gvkpj"]
+size = Vector2(185.4844, 362)
+
+[node name="Boss" type="StaticBody2D" groups=["boss"]]
+script = ExtResource("1_i7eio")
+max_hp = 1000
+visual_path = NodePath("Clanker3DView")
+boss_name = "Boss C"
+boss_3d_visual_path = NodePath("Clanker3DView")
+
+[node name="Hurtbox" type="Area2D" parent="."]
+script = ExtResource("2_jps57")
+receiver_path = NodePath("../BossHealth")
+require_group = &""
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Hurtbox"]
+shape = SubResource("RectangleShape2D_gvkpj")
+
+[node name="Clanker3DView" parent="." instance=ExtResource("3_r2fpk")]
+
+[node name="BossHealth" type="Node" parent="."]
+script = ExtResource("4_tnhia")
+max_hp = 2500
+hit_vfx_scene = ExtResource("5_gxkn7")
+crit_vfx_scene = ExtResource("6_316fk")
+
+[node name="DamageNumberEmitter" type="Node" parent="."]
+script = ExtResource("7_5xngl")
+damage_number_scene = ExtResource("8_ytt2g")
+health_path = NodePath("../BossHealth")
+
+[node name="DamageNumberEmitter2" type="Node" parent="."]
+script = ExtResource("7_5xngl")
+damage_number_scene = ExtResource("8_ytt2g")
+health_path = NodePath("../BossHealth")
+
+[node name="ProjectileSpawnPoint" type="Node2D" parent="."]
+position = Vector2(0, -100)
+
+[node name="BossProjectileAttack" type="Node" parent="."]
+script = ExtResource("9_tf6pd")
+projectile_scene = ExtResource("10_h0rcg")
+attack_patterns = Array[ExtResource("11_c07mp")]([ExtResource("12_wpyoo"), ExtResource("13_5d1rd"), ExtResource("14_ysbpy")])
+boss_visual_path = NodePath("../Clanker3DView")

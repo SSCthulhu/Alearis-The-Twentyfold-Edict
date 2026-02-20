@@ -1,0 +1,14 @@
+[gd_resource type="Resource" script_class="BossProjectilePattern" load_steps=2 format=3 uid="uid://bni6cbki4exff"]
+
+[ext_resource type="Script" uid="uid://jo1e152jjcof" path="res://scripts/boss/BossProjectilePattern.gd" id="1_pattern"]
+
+[resource]
+script = ExtResource("1_pattern")
+pattern_name = "Cross Slash"
+pattern_type = 6
+animation_name = "KAnim/Melee_Dualwield_Slash"
+projectile_count = 16
+projectile_speed = 270.0
+projectile_damage = 12
+projectile_color = Color(1, 0.5, 0.1, 1)
+sequential_delay = 0.03

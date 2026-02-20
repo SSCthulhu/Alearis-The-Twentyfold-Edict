@@ -1,0 +1,8 @@
+[gd_scene load_steps=2 format=3 uid="uid://bkg5lc1kvh2mk"]
+
+[ext_resource type="PackedScene" uid="uid://djhc1ir02hhbi" path="res://assets/weapons/enemy/Skeleton_Blade.gltf" id="1_blade"]
+
+
+[node name="Skeleton_Blade" type="Node3D"]
+
+[node name="skeleton_blade" parent="." instance=ExtResource("1_blade")]

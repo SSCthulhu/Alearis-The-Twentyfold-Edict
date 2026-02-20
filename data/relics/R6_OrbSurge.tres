@@ -1,0 +1,13 @@
+[gd_resource type="Resource" script_class="RelicData" load_steps=2 format=3 uid="uid://kmh2ps4aai2i"]
+
+[ext_resource type="Script" uid="uid://dwyhl0a0pqlnn" path="res://scripts/systems/RelicData.gd" id="1_mis4k"]
+
+[resource]
+script = ExtResource("1_mis4k")
+id = &"r6_orb_surge"
+display_name = "Orb Surge"
+rarity = 1
+tags = Array[StringName]([&"boss", &"attack_speed", &"window", &"orb"])
+description_lines = Array[String](["While boss is vulnerable:", "+20% attack speed."])
+effect_id = &"relic_orb_surge"
+metadata/_custom_type_script = "uid://dwyhl0a0pqlnn"
