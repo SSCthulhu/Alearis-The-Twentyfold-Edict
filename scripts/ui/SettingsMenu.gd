@@ -22,8 +22,8 @@ signal back_pressed()
 @onready var _music_label: Label = $Root/SettingsPanel/VBox/AudioSection/AudioGrid/MusicValue
 @onready var _sfx_slider: HSlider = $Root/SettingsPanel/VBox/AudioSection/AudioGrid/SFXSlider
 @onready var _sfx_label: Label = $Root/SettingsPanel/VBox/AudioSection/AudioGrid/SFXValue
-@onready var _fullscreen_check: CheckBox = $Root/SettingsPanel/VBox/DisplaySection/FullscreenRow/Checkbox
-@onready var _vsync_check: CheckBox = $Root/SettingsPanel/VBox/DisplaySection/VSyncRow/Checkbox
+@onready var _fullscreen_option: OptionButton = $Root/SettingsPanel/VBox/DisplaySection/FullscreenRow/OptionButton
+@onready var _vsync_option: OptionButton = $Root/SettingsPanel/VBox/DisplaySection/VSyncRow/OptionButton
 @onready var _resolution_option: OptionButton = $Root/SettingsPanel/VBox/DisplaySection/ResolutionRow/OptionButton
 @onready var _back_button: Button = $Root/SettingsPanel/VBox/BackButton
 
@@ -77,11 +77,13 @@ func _ready() -> void:
 	if _sfx_slider != null:
 		_sfx_slider.value_changed.connect(_on_sfx_volume_changed)
 	
-	# Connect checkbox signals
-	if _fullscreen_check != null:
-		_fullscreen_check.toggled.connect(_on_fullscreen_toggled)
-	if _vsync_check != null:
-		_vsync_check.toggled.connect(_on_vsync_toggled)
+	# Connect dropdown signals
+	if _fullscreen_option != null:
+		_fullscreen_option.item_selected.connect(_on_fullscreen_selected)
+		_populate_fullscreen_dropdown()
+	if _vsync_option != null:
+		_vsync_option.item_selected.connect(_on_vsync_selected)
+		_populate_vsync_dropdown()
 	
 	# Connect resolution dropdown
 	if _resolution_option != null:
@@ -170,16 +172,38 @@ func _linear_to_db(linear: float) -> float:
 # ═══════════════════════════════════
 # Display Settings
 # ═══════════════════════════════════
-func _on_fullscreen_toggled(button_pressed: bool) -> void:
-	if button_pressed:
+func _populate_fullscreen_dropdown() -> void:
+	"""Add Enabled/Disabled options to fullscreen dropdown"""
+	if _fullscreen_option == null:
+		return
+	
+	_fullscreen_option.clear()
+	_fullscreen_option.add_item("Disabled")
+	_fullscreen_option.add_item("Enabled")
+
+
+func _populate_vsync_dropdown() -> void:
+	"""Add Enabled/Disabled options to vsync dropdown"""
+	if _vsync_option == null:
+		return
+	
+	_vsync_option.clear()
+	_vsync_option.add_item("Disabled")
+	_vsync_option.add_item("Enabled")
+
+
+func _on_fullscreen_selected(index: int) -> void:
+	"""Apply fullscreen setting from dropdown (0=Disabled, 1=Enabled)"""
+	if index == 1:
 		DisplayServer.window_set_mode(DisplayServer.WINDOW_MODE_FULLSCREEN)
 	else:
 		DisplayServer.window_set_mode(DisplayServer.WINDOW_MODE_WINDOWED)
 	_save_settings()
 
 
-func _on_vsync_toggled(button_pressed: bool) -> void:
-	if button_pressed:
+func _on_vsync_selected(index: int) -> void:
+	"""Apply vsync setting from dropdown (0=Disabled, 1=Enabled)"""
+	if index == 1:
 		DisplayServer.window_set_vsync_mode(DisplayServer.VSYNC_ENABLED)
 	else:
 		DisplayServer.window_set_vsync_mode(DisplayServer.VSYNC_DISABLED)
@@ -296,11 +320,11 @@ func _load_settings() -> void:
 			var new_res: Vector2i = _resolutions[res_index]
 			DisplayServer.window_set_size(new_res)
 	
-	# Update UI checkboxes
-	if _fullscreen_check != null:
-		_fullscreen_check.button_pressed = fullscreen
-	if _vsync_check != null:
-		_vsync_check.button_pressed = vsync
+	# Update UI dropdowns
+	if _fullscreen_option != null:
+		_fullscreen_option.selected = 1 if fullscreen else 0
+	if _vsync_option != null:
+		_vsync_option.selected = 1 if vsync else 0
 	
 	pass
 
@@ -317,8 +341,8 @@ func _apply_default_settings() -> void:
 	
 	# Default display
 	DisplayServer.window_set_vsync_mode(DisplayServer.VSYNC_ENABLED)
-	if _vsync_check != null:
-		_vsync_check.button_pressed = true
+	if _vsync_option != null:
+		_vsync_option.selected = 1  # Enabled by default
 	
 	# Default resolution (1080p)
 	if _resolution_option != null:
@@ -351,12 +375,12 @@ func _update_ui_from_current_settings() -> void:
 			_sfx_slider.value = _db_to_linear(db)
 			_sfx_label.text = str(int(_sfx_slider.value)) + "%"
 	
-	# Update display checkboxes
-	if _fullscreen_check != null:
-		_fullscreen_check.button_pressed = (DisplayServer.window_get_mode() == DisplayServer.WINDOW_MODE_FULLSCREEN)
+	# Update display dropdowns
+	if _fullscreen_option != null:
+		_fullscreen_option.selected = 1 if (DisplayServer.window_get_mode() == DisplayServer.WINDOW_MODE_FULLSCREEN) else 0
 	
-	if _vsync_check != null:
-		_vsync_check.button_pressed = (DisplayServer.window_get_vsync_mode() == DisplayServer.VSYNC_ENABLED)
+	if _vsync_option != null:
+		_vsync_option.selected = 1 if (DisplayServer.window_get_vsync_mode() == DisplayServer.VSYNC_ENABLED) else 0
 
 
 func _db_to_linear(db: float) -> float:
