@@ -7,6 +7,7 @@ extends Control
 @onready var back_button: Button = $BackButton
 @onready var play_button: Button = $PlayButton
 @onready var reset_dice_button: Button = $ResetDiceButton
+@onready var dice_range_label: Label = $DiceRangeLabel
 
 var selected_character: String = ""
 
@@ -14,6 +15,9 @@ func _ready():
 	# Verification: Ensure the preview node exists
 	if preview == null:
 		push_error("CharacterPreview node not found!")
+	
+	# Update dice range display
+	_update_dice_range_display()
 	
 	# ✨ Set pivot offsets and connect hover effects (matches MainMenu style)
 	_setup_button_hover_effects()
@@ -80,7 +84,16 @@ func _on_reset_dice_button_pressed():
 	"""Reset dice range to default 10-10"""
 	if RunStateSingleton != null:
 		RunStateSingleton.update_starting_dice_range(10)
+		_update_dice_range_display()
 		print("[CharacterSelect] Dice range reset to 10-10")
+
+
+func _update_dice_range_display():
+	"""Update the dice range label with current values"""
+	if dice_range_label != null and RunStateSingleton != null:
+		var dice_min = RunStateSingleton.starting_dice_min
+		var dice_max = RunStateSingleton.starting_dice_max
+		dice_range_label.text = "Starting Dice Range: %d-%d" % [dice_min, dice_max]
 
 
 # ✨ Button hover effects (matches MainMenu style)
