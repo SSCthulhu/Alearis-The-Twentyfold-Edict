@@ -667,8 +667,6 @@ func _door_transition_sequence() -> void:
 	_current_floor_number = 2
 	_last_floor_number = 2
 	active_floor_changed.emit(2)
-	if debug_logs:
-		print("[Floors] Forced floor number to 2 after door transition")
 
 	_set_player_visible(true)
 	_set_player_input_locked(false)
