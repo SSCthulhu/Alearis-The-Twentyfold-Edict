@@ -1,10 +1,10 @@
-# Aleatoris: The Twentyfold Edict
+# Alearis: The Twentyfold Edict
 
 A 2D vertical action-platformer roguelite built with Godot 4.x
 
 ## 🎮 About
 
-**Aleatoris: The Twentyfold Edict** is inspired by Destiny 2 raids and Rabbit & Steel, featuring:
+**Alearis: The Twentyfold Edict** is inspired by Destiny 2 raids and Rabbit & Steel, featuring:
 - Vertical multi-floor arenas with intense combat encounters
 - Dice-based risk/reward mechanics
 - Phase-based boss fights with Ascension Charge mechanics
