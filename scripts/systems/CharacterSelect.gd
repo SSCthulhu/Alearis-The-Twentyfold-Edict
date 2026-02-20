@@ -93,7 +93,7 @@ func _update_dice_range_display():
 	if dice_range_label != null and RunStateSingleton != null:
 		var dice_min = RunStateSingleton.starting_dice_min
 		var dice_max = RunStateSingleton.starting_dice_max
-		dice_range_label.text = "Starting Dice Range: %d-%d" % [dice_min, dice_max]
+		dice_range_label.text = "Current Dice Range: %d-%d" % [dice_min, dice_max]
 
 
 # ✨ Button hover effects (matches MainMenu style)

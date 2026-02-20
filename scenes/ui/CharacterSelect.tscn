@@ -100,7 +100,7 @@ grow_horizontal = 2
 theme_override_colors/font_color = Color(0.858824, 0.721569, 0.329412, 1)
 theme_override_fonts/font = ExtResource("2_2todw")
 theme_override_font_sizes/font_size = 60
-text = "Starting Dice Range: 10-10"
+text = "Current Dice Range: 10-10"
 horizontal_alignment = 1
 vertical_alignment = 1
 
