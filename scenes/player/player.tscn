@@ -69,8 +69,8 @@ z_index = 5
 scale = Vector2(2, 2)
 collision_layer = 2
 script = ExtResource("1_6cv16")
-enable_god_mode_input = false
-enable_bigd_input = false
+enable_god_mode_input = true
+enable_bigd_input = true
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="."]
 scale = Vector2(2, 2)
