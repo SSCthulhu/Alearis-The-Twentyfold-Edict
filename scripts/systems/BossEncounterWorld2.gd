@@ -497,14 +497,19 @@ func _on_victory_proceed() -> void:
 	
 	var idx: int = 0
 	if RunStateSingleton != null:
+		var current_world = RunStateSingleton.world_index
+		print("[BossEncounterWorld2] Victory proceed - current world_index: ", current_world)
 		idx = clampi(RunStateSingleton.world_index - 1, 0, world_scene_paths.size() - 1)
+		print("[BossEncounterWorld2] Array index calculated: ", idx)
 		pass
 	
 	var next_path: String = world_scene_paths[idx]
+	print("[BossEncounterWorld2] Next scene path: ", next_path)
 	pass
 	
 	# If World3 doesn't exist, repeat World2
 	if not ResourceLoader.exists(next_path):
+		print("[BossEncounterWorld2] WARNING: ", next_path, " does not exist! Falling back to World2")
 		if debug_logs:
 			pass
 		next_path = "res://scenes/world/World2.tscn"
