@@ -160,6 +160,12 @@ func _restore_encounter_state(portal_data: Node) -> void:
 		if _boss.has_method("set_attacks_enabled"):
 			_boss.set_attacks_enabled(false)
 		
+		# CRITICAL: Show the ascension socket so player can socket their charge
+		if _socket != null and _socket.has_method("set_enabled"):
+			_socket.set_enabled(true)
+			if debug_logs:
+				print("[BossEncounterWorld2] Socket enabled after return from sub-arena")
+		
 		if debug_logs:
 			pass
 	
