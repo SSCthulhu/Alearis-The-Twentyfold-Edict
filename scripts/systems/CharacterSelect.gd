@@ -27,9 +27,18 @@ func _on_rogue_hover():
 	preview.display_character("Rogue")
 
 func _on_wizard_hover():
+	# Wizard disabled in demo - show "Not Available" label
+	var not_available_label = preview.get_node_or_null("NotAvailableLabel")
+	if not_available_label != null:
+		not_available_label.visible = true
 	preview.display_character("Wizard")
 
 func _on_button_mouse_exited():
+	# Hide "Not Available" label when leaving wizard button
+	var not_available_label = preview.get_node_or_null("NotAvailableLabel")
+	if not_available_label != null:
+		not_available_label.visible = false
+	
 	# If we have a selection, keep showing that selection
 	if selected_character != "":
 		preview.display_character(selected_character)
@@ -48,8 +57,8 @@ func _on_rogue_pressed():
 	CharacterDatabase.set_selected_character("Rogue")
 
 func _on_wizard_pressed():
-	selected_character = "Wizard"
-	CharacterDatabase.set_selected_character("Wizard")
+	# Wizard disabled in demo - do nothing
+	pass
 
 # --- PLAY BUTTON LOGIC ---
 
