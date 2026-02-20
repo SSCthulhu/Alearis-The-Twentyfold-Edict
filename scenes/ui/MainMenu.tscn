@@ -139,7 +139,7 @@ theme_override_constants/line_separation = -50
 theme_override_fonts/normal_font = SubResource("FontVariation_bhu4a")
 theme_override_font_sizes/normal_font_size = 200
 bbcode_enabled = true
-text = "[center]Aleatoris
+text = "[center]Alearis
 [font_size=100]The Twentyfold Edict[/font_size][/center]
 "
 horizontal_alignment = 1

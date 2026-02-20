@@ -10,7 +10,7 @@ config_version=5
 
 [application]
 
-config/name="Aleatoris: The Twentyfold Edict"
+config/name="Alearis: The Twentyfold Edict"
 run/main_scene="uid://b74opc0nq4dwk"
 config/features=PackedStringArray("4.5", "Forward Plus")
 config/icon="res://favicon.ico"

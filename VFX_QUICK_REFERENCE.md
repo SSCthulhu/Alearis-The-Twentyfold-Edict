@@ -139,7 +139,7 @@ debug_logs = true
 ## File Structure
 
 ```
-📁 Aleatoris The Twentyfold Edict/
+📁 Alearis The Twentyfold Edict/
 ├── 📁 scenes/
 │   ├── 📁 player/
 │   │   └── player.tscn          ← Add manager nodes here!
