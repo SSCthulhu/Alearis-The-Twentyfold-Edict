@@ -89,13 +89,6 @@ const PORTAL_COLORS = {
 func _ready() -> void:
 	_rng.randomize()
 	
-	# CRITICAL: Set world_index to 2 when World2 loads (unless returning from sub-arena)
-	var portal_data = get_node_or_null("/root/PortalTransitionData")
-	if portal_data == null or not portal_data.is_returning:
-		if RunStateSingleton != null:
-			RunStateSingleton.world_index = 2
-			print("[BossEncounterWorld2] Set world_index to 2 for World2")
-	
 	_boss = get_node_or_null(boss_path)
 	if _boss == null:
 		push_error("[BossEncounterWorld2] Boss not found at: ", boss_path)
@@ -137,6 +130,12 @@ func _ready() -> void:
 	
 	# Check if we're returning from sub-arena and need to restore state
 	var portal_data = get_node_or_null("/root/PortalTransitionData")
+	
+	# CRITICAL: Set world_index to 2 when World2 loads (unless returning from sub-arena)
+	if portal_data == null or not portal_data.is_returning:
+		if RunStateSingleton != null:
+			RunStateSingleton.world_index = 2
+			print("[BossEncounterWorld2] Set world_index to 2 for World2")
 	if portal_data != null and portal_data.is_returning:
 		# CRITICAL: Wait for Boss._ready() to complete first (it sets HP=max_hp)
 		# Otherwise our restoration gets overwritten
