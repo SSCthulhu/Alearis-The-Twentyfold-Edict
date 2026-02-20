@@ -87,6 +87,7 @@ knight_rotation = 25.0
 rogue_rotation = 25.0
 wizard_rotation = 25.0
 
+<<<<<<< HEAD
 [node name="NotAvailableLabel" type="Label" parent="CharacterPreview"]
 visible = false
 layout_mode = 1
@@ -108,6 +109,22 @@ theme_override_constants/shadow_offset_y = 3
 theme_override_fonts/font = ExtResource("2_2todw")
 theme_override_font_sizes/font_size = 60
 text = "NOT AVAILABLE"
+=======
+[node name="DiceRangeLabel" type="Label" parent="."]
+layout_mode = 1
+anchors_preset = 5
+anchor_left = 0.5
+anchor_right = 0.5
+offset_left = -300.0
+offset_top = 80.0
+offset_right = 300.0
+offset_bottom = 180.0
+grow_horizontal = 2
+theme_override_colors/font_color = Color(0.858824, 0.721569, 0.329412, 1)
+theme_override_fonts/font = ExtResource("2_2todw")
+theme_override_font_sizes/font_size = 60
+text = "Starting Dice Range: 10-10"
+>>>>>>> 01889f7 (Add current dice range display to Character Select screen)
 horizontal_alignment = 1
 vertical_alignment = 1
 
