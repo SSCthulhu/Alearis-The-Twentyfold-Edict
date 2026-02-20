@@ -152,8 +152,8 @@ var _roll_speed: float = 0.0
 
 # Testing/Debug inputs
 @export_group("Debug/Testing Inputs")
-@export var enable_god_mode_input: bool = true  # Disable for demo release
-@export var enable_bigd_input: bool = true  # Disable for demo release
+@export var enable_god_mode_input: bool = false  # Disabled for demo release
+@export var enable_bigd_input: bool = false  # Disabled for demo release
 @export var input_god_mode: StringName = &"god_mode_toggle"
 @export var input_bigd: StringName = &"BIGD"
 
