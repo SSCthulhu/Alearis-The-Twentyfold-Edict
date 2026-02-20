@@ -205,7 +205,8 @@ theme_override_font_sizes/font_size = 50
 text = "Fullscreen"
 vertical_alignment = 1
 
-[node name="Checkbox" type="CheckBox" parent="Root/SettingsPanel/VBox/DisplaySection/FullscreenRow"]
+[node name="OptionButton" type="OptionButton" parent="Root/SettingsPanel/VBox/DisplaySection/FullscreenRow"]
+custom_minimum_size = Vector2(400, 0)
 layout_mode = 2
 theme_override_font_sizes/font_size = 40
 
@@ -221,7 +222,8 @@ theme_override_font_sizes/font_size = 50
 text = "VSync"
 vertical_alignment = 1
 
-[node name="Checkbox" type="CheckBox" parent="Root/SettingsPanel/VBox/DisplaySection/VSyncRow"]
+[node name="OptionButton" type="OptionButton" parent="Root/SettingsPanel/VBox/DisplaySection/VSyncRow"]
+custom_minimum_size = Vector2(400, 0)
 layout_mode = 2
 theme_override_font_sizes/font_size = 40
 
