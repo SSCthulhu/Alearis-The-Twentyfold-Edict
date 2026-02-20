@@ -1342,18 +1342,6 @@ func _get_enemies_on_current_floor() -> Array[Node]:
 			if hp > 0:
 				result.append(enemy)
 	
-	# CRITICAL: Also check for sub-arena enemies (World2 portal rooms)
-	var subarena_enemies: Array[Node] = get_tree().get_nodes_in_group("subarena_enemies")
-	for enemy in subarena_enemies:
-		if enemy == null or not is_instance_valid(enemy):
-			continue
-		
-		var hp_node = enemy.get_node_or_null("Health")
-		if hp_node != null:
-			var hp = hp_node.get("hp")
-			if hp > 0 and enemy not in result:  # Avoid duplicates
-				result.append(enemy)
-	
 	pass
 	return result
 
