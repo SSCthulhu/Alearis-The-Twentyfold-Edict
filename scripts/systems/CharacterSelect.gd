@@ -40,7 +40,7 @@ func _on_wizard_hover():
 	preview.display_character("Wizard")
 
 func _on_button_mouse_exited():
-	# Hide "Not Available" label when leaving wizard button
+	# Hide "Not Available" label when leaving any button
 	var not_available_label = preview.get_node_or_null("NotAvailableLabel")
 	if not_available_label != null:
 		not_available_label.visible = false
