@@ -89,6 +89,13 @@ const PORTAL_COLORS = {
 func _ready() -> void:
 	_rng.randomize()
 	
+	# CRITICAL: Set world_index to 2 when World2 loads (unless returning from sub-arena)
+	var portal_data = get_node_or_null("/root/PortalTransitionData")
+	if portal_data == null or not portal_data.is_returning:
+		if RunStateSingleton != null:
+			RunStateSingleton.world_index = 2
+			print("[BossEncounterWorld2] Set world_index to 2 for World2")
+	
 	_boss = get_node_or_null(boss_path)
 	if _boss == null:
 		push_error("[BossEncounterWorld2] Boss not found at: ", boss_path)
