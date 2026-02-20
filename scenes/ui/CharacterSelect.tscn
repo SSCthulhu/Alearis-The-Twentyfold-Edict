@@ -298,6 +298,17 @@ text = "Reset Dice Range
 [connection signal="mouse_entered" from="CenterContainer/HBoxContainer/Wizard" to="." method="_on_wizard_hover"]
 [connection signal="mouse_exited" from="CenterContainer/HBoxContainer/Wizard" to="." method="_on_button_mouse_exited"]
 [connection signal="pressed" from="CenterContainer/HBoxContainer/Wizard" to="." method="_on_wizard_pressed"]
+[node name="ResetConfirmDialog" type="ConfirmationDialog" parent="."]
+title = "Reset Dice Range"
+initial_position = 2
+size = Vector2i(600, 200)
+ok_button_text = "Yes, Reset"
+cancel_button_text = "Cancel"
+dialog_text = "Are you sure you want to reset your dice range to 10-10?
+
+This will change your starting dice range for all future runs."
+
 [connection signal="pressed" from="BackButton" to="." method="_on_back_button_pressed"]
 [connection signal="pressed" from="PlayButton" to="." method="_on_play_button_pressed"]
 [connection signal="pressed" from="ResetDiceButton" to="." method="_on_reset_dice_button_pressed"]
+[connection signal="confirmed" from="ResetConfirmDialog" to="." method="_on_reset_confirmed"]

@@ -8,6 +8,7 @@ extends Control
 @onready var play_button: Button = $PlayButton
 @onready var reset_dice_button: Button = $ResetDiceButton
 @onready var dice_range_label: Label = $DiceRangeLabel
+@onready var reset_confirm_dialog: ConfirmationDialog = $ResetConfirmDialog
 
 var selected_character: String = ""
 
@@ -81,7 +82,13 @@ func _on_back_button_pressed():
 
 
 func _on_reset_dice_button_pressed():
-	"""Reset dice range to default 10-10"""
+	"""Show confirmation dialog before resetting dice range"""
+	if reset_confirm_dialog != null:
+		reset_confirm_dialog.popup_centered()
+
+
+func _on_reset_confirmed():
+	"""Reset dice range to default 10-10 after confirmation"""
 	if RunStateSingleton != null:
 		RunStateSingleton.update_starting_dice_range(10)
 		_update_dice_range_display()
