@@ -662,6 +662,14 @@ func _door_transition_sequence() -> void:
 	if _player != null and _door2 != null:
 		_player.global_position = _door2.global_position + floor2_spawn_offset
 
+	# CRITICAL: Force floor number to 2 after spawning at Floor2Door
+	# This ensures ultimates work immediately without waiting for _update_current_floor_from_player()
+	_current_floor_number = 2
+	_last_floor_number = 2
+	active_floor_changed.emit(2)
+	if debug_logs:
+		print("[Floors] Forced floor number to 2 after door transition")
+
 	_set_player_visible(true)
 	_set_player_input_locked(false)
 
