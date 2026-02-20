@@ -1248,6 +1248,10 @@ var _defend_animation_timer: float = 0.0
 func _start_ultimate() -> void:
 	pass
 	
+	# Trigger ultimate cooldown in PlayerCombat
+	if _combat != null:
+		_combat._start_attack(&"ultimate")
+	
 	# Get enemies using FloorProgressionController (same as RogueController)
 	var enemies: Array[Node] = _get_enemies_on_current_floor()
 	
