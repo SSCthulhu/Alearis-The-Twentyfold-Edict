@@ -87,29 +87,6 @@ knight_rotation = 25.0
 rogue_rotation = 25.0
 wizard_rotation = 25.0
 
-<<<<<<< HEAD
-[node name="NotAvailableLabel" type="Label" parent="CharacterPreview"]
-visible = false
-layout_mode = 1
-anchors_preset = 8
-anchor_left = 0.5
-anchor_top = 0.5
-anchor_right = 0.5
-anchor_bottom = 0.5
-offset_left = -200.0
-offset_top = -40.0
-offset_right = 200.0
-offset_bottom = 40.0
-grow_horizontal = 2
-grow_vertical = 2
-theme_override_colors/font_color = Color(1, 0.3, 0.3, 1)
-theme_override_colors/font_shadow_color = Color(0, 0, 0, 0.8)
-theme_override_constants/shadow_offset_x = 3
-theme_override_constants/shadow_offset_y = 3
-theme_override_fonts/font = ExtResource("2_2todw")
-theme_override_font_sizes/font_size = 60
-text = "NOT AVAILABLE"
-=======
 [node name="DiceRangeLabel" type="Label" parent="."]
 layout_mode = 1
 anchors_preset = 5
@@ -123,8 +100,7 @@ grow_horizontal = 2
 theme_override_colors/font_color = Color(0.858824, 0.721569, 0.329412, 1)
 theme_override_fonts/font = ExtResource("2_2todw")
 theme_override_font_sizes/font_size = 60
-text = "Starting Dice Range: 10-10"
->>>>>>> 01889f7 (Add current dice range display to Character Select screen)
+text = "Current Dice Range: 10-10"
 horizontal_alignment = 1
 vertical_alignment = 1
 
@@ -171,36 +147,11 @@ text = "Rogue"
 custom_minimum_size = Vector2(400, 150)
 layout_mode = 2
 size_flags_horizontal = 5
-theme_override_colors/font_color = Color(0.5, 0.5, 0.5, 0.6)
-theme_override_colors/font_disabled_color = Color(0.5, 0.5, 0.5, 0.6)
 theme_override_fonts/font = ExtResource("2_2todw")
 theme_override_font_sizes/font_size = 100
 theme_override_styles/normal = SubResource("StyleBoxFlat_2todw")
 theme_override_styles/hover = SubResource("StyleBoxFlat_fily5")
 text = "Wizard"
-disabled = true
-
-[node name="StrikethroughLabel" type="RichTextLabel" parent="CenterContainer/HBoxContainer/Wizard"]
-layout_mode = 1
-anchors_preset = 8
-anchor_left = 0.5
-anchor_top = 0.5
-anchor_right = 0.5
-anchor_bottom = 0.5
-offset_left = -200.0
-offset_top = -50.0
-offset_right = 200.0
-offset_bottom = 50.0
-grow_horizontal = 2
-grow_vertical = 2
-mouse_filter = 2
-theme_override_colors/default_color = Color(0.5, 0.5, 0.5, 0.6)
-theme_override_fonts/normal_font = ExtResource("2_2todw")
-theme_override_font_sizes/normal_font_size = 100
-bbcode_enabled = true
-text = "[center][s]Wizard[/s][/center]"
-fit_content = true
-scroll_active = false
 
 [node name="HowToPlayPanel" type="PanelContainer" parent="."]
 layout_mode = 1
