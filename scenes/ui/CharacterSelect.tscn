@@ -45,6 +45,8 @@ border_width_right = 8
 border_width_bottom = 8
 border_color = Color(0.85882354, 0.72156864, 0.32941177, 1)
 
+[sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_focus"]
+
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_howtoplay"]
 bg_color = Color(0.1, 0.1, 0.1, 0.8)
 border_width_left = 8
@@ -286,6 +288,9 @@ theme_override_fonts/font = ExtResource("2_2todw")
 theme_override_font_sizes/font_size = 40
 theme_override_styles/normal = SubResource("StyleBoxFlat_r0o0e")
 theme_override_styles/hover = SubResource("StyleBoxFlat_hjnfi")
+theme_override_styles/pressed = SubResource("StyleBoxEmpty_focus")
+theme_override_styles/disabled = SubResource("StyleBoxEmpty_focus")
+theme_override_styles/focus = SubResource("StyleBoxEmpty_focus")
 text = "Reset Dice Range
 (10-10)"
 
