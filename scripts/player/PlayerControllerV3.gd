@@ -108,6 +108,10 @@ var _combo_attack_timer: float = 0.0
 var _combo_attack_duration: float = 0.0  # Full animation duration for current attack
 var _combo_can_continue: bool = false  # Flag when animation is far enough to accept next input
 
+@export_group("Light Combo Feel")
+@export_range(0.30, 0.95, 0.01) var rogue_combo_chain_unlock_threshold: float = 0.70
+@export_range(0.30, 0.95, 0.01) var knight_combo_chain_unlock_threshold: float = 0.55
+
 # Attack movement
 var _attack_move_active: bool = false
 var _attack_move_timer: float = 0.0
@@ -1028,11 +1032,11 @@ func _process_light_attack(delta: float) -> void:
 		# Check if animation is complete enough - unlock combo continuation
 		if not _combo_can_continue and _combo_attack_duration > 0.0:
 			var progress: float = 1.0 - (_combo_attack_timer / _combo_attack_duration)
-			# Knight: 55% for all hits (heavier feel, but not locked)
-			# Rogue: 50% for all hits (most responsive)
-			var unlock_threshold: float = 0.55  # Default for Knight
+			# Require a minimum completion percentage before chaining next combo hit.
+			var unlock_threshold: float = knight_combo_chain_unlock_threshold
 			if character_data != null and character_data.character_name == "Rogue":
-				unlock_threshold = 0.5  # Rogue can chain slightly faster (50% complete)
+				unlock_threshold = rogue_combo_chain_unlock_threshold
+			unlock_threshold = clampf(unlock_threshold, 0.05, 0.99)
 			
 			if progress >= unlock_threshold:
 				_combo_can_continue = true
@@ -1041,7 +1045,7 @@ func _process_light_attack(delta: float) -> void:
 	# Check for combo continuation - ONLY if animation is far enough along
 	if Input.is_action_just_pressed(input_light_attack):
 		if _combo_can_continue and _combo_window_timer > 0.0:
-			# Animation is 70%+ done, and within buffer window - start next combo
+			# Animation has passed the per-character unlock threshold and is within buffer window.
 			_start_light_attack()
 			return
 	

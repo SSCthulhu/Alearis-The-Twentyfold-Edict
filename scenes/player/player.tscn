@@ -69,8 +69,8 @@ z_index = 5
 scale = Vector2(2, 2)
 collision_layer = 2
 script = ExtResource("1_6cv16")
-enable_god_mode_input = true
-enable_bigd_input = true
+rogue_combo_chain_unlock_threshold = 0.8
+knight_combo_chain_unlock_threshold = 0.6499999999999999
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="."]
 scale = Vector2(2, 2)

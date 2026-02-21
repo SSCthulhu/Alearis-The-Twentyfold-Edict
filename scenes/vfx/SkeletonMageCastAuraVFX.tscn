@@ -1,0 +1,33 @@
+[gd_scene load_steps=6 format=3 uid="uid://bo28w1boyr8jw"]
+
+[ext_resource type="Script" uid="uid://xpen42de73je" path="res://scripts/vfx/SkeletonMageCastAuraVFX.gd" id="1_script"]
+[ext_resource type="Texture2D" uid="uid://dte45573emxo8" path="res://assets/VFX/Fire VFX Spritesheets/Aura_Fire_v1_A_spritesheet.png" id="2_aura1"]
+[ext_resource type="Texture2D" uid="uid://dgfoqpvjaejac" path="res://assets/VFX/Fire VFX Spritesheets/Aura_Fire_v2_Loop_spritesheet.png" id="3_aura2"]
+[ext_resource type="Texture2D" uid="uid://crtryvtittxdr" path="res://assets/VFX/Fire VFX Spritesheets/Aura_Fire_v3_B_spritesheet.png" id="4_aura3b"]
+[ext_resource type="Texture2D" uid="uid://b2yqk255my8ej" path="res://assets/VFX/Fire VFX Spritesheets/Aura_Fire_v3_Loop_spritesheet.png" id="5_aura3loop"]
+
+[node name="SkeletonMageCastAuraVFX" type="Node2D"]
+script = ExtResource("1_script")
+
+[node name="AuraV1" type="Sprite2D" parent="."]
+z_index = 6
+scale = Vector2(2, 2)
+texture = ExtResource("2_aura1")
+
+[node name="AuraV2" type="Sprite2D" parent="."]
+modulate = Color(1, 1, 1, 0.85)
+z_index = -2
+scale = Vector2(2, 2)
+texture = ExtResource("3_aura2")
+
+[node name="AuraV3B" type="Sprite2D" parent="."]
+modulate = Color(1, 1, 1, 0.88)
+z_index = 7
+scale = Vector2(2, 2)
+texture = ExtResource("4_aura3b")
+
+[node name="AuraV3Loop" type="Sprite2D" parent="."]
+modulate = Color(1, 1, 1, 0.9)
+z_index = 8
+scale = Vector2(2, 2)
+texture = ExtResource("5_aura3loop")

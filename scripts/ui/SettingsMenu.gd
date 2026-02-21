@@ -258,7 +258,7 @@ func _save_settings() -> void:
 	var config := ConfigFile.new()
 	
 	# Audio
-	config.set_value("audio", "master_volume", _master_slider.value if _master_slider != null else 100.0)
+	config.set_value("audio", "master_volume", _master_slider.value if _master_slider != null else 70.0)
 	config.set_value("audio", "music_volume", _music_slider.value if _music_slider != null else 80.0)
 	config.set_value("audio", "sfx_volume", _sfx_slider.value if _sfx_slider != null else 100.0)
 	
@@ -285,7 +285,7 @@ func _load_settings() -> void:
 		return
 	
 	# Load audio settings
-	var master_vol: float = config.get_value("audio", "master_volume", 100.0)
+	var master_vol: float = config.get_value("audio", "master_volume", 70.0)
 	var music_vol: float = config.get_value("audio", "music_volume", 80.0)
 	var sfx_vol: float = config.get_value("audio", "sfx_volume", 100.0)
 	
@@ -333,7 +333,7 @@ func _apply_default_settings() -> void:
 	"""Apply default settings on first launch"""
 	# Default audio
 	if _master_slider != null:
-		_master_slider.value = 100.0
+		_master_slider.value = 70.0
 	if _music_slider != null:
 		_music_slider.value = 80.0
 	if _sfx_slider != null:

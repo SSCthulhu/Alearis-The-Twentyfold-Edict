@@ -1,6 +1,8 @@
 extends Node2D
 class_name EnemyMeleeHitbox
 
+signal damage_confirmed(target: Node, hit_position: Vector2, facing: int)
+
 @export var active_time: float = 0.16
 @export var damage: int = 5
 @export var target_group: StringName = &"player"
@@ -133,10 +135,16 @@ func _try_apply_damage(target: Node) -> void:
 	_hit_once[target] = true
 
 	var final_dmg: int = _scaled_enemy_damage(damage)
+	var hp_holder: Node = target
+	if target.has_node("Health"):
+		hp_holder = target.get_node("Health")
+	var hp_before: int = int(hp_holder.get("hp")) if (hp_holder != null and ("hp" in hp_holder)) else -1
 
 	# ✅ TIMING DEBUG: Mark damage application
 	if debug_logs:
 		pass
+
+	var attempted_damage: bool = false
 
 	# Preferred: Health node
 	if target.has_node("Health"):
@@ -150,10 +158,10 @@ func _try_apply_damage(target: Node) -> void:
 				h.call("take_damage", final_dmg, self)
 			else:
 				h.call("take_damage", final_dmg)
-			return
+			attempted_damage = true
 
 	# Fallback: direct take_damage
-	if target.has_method("take_damage"):
+	if (not attempted_damage) and target.has_method("take_damage"):
 		var argc2: int = target.get_method_argument_count("take_damage")
 		if argc2 >= 3:
 			target.call("take_damage", final_dmg, self, false)
@@ -161,6 +169,13 @@ func _try_apply_damage(target: Node) -> void:
 			target.call("take_damage", final_dmg, self)
 		else:
 			target.call("take_damage", final_dmg)
+		attempted_damage = true
+
+	if attempted_damage and hp_before >= 0:
+		var hp_after: int = int(hp_holder.get("hp")) if (hp_holder != null and ("hp" in hp_holder)) else hp_before
+		if hp_after < hp_before:
+			var hit_position: Vector2 = target.global_position if (target is Node2D) else global_position
+			damage_confirmed.emit(target, hit_position, face_dir)
 
 func _on_body_entered(body: Node) -> void:
 	# ✅ TIMING DEBUG: Mark collision detection
