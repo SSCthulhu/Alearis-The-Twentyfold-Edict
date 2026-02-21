@@ -500,7 +500,10 @@ custom_minimum_size = Vector2(0, 160)
 layout_mode = 2
 scroll_active = false
 
-[node name="PauseMenu" parent="." instance=ExtResource("19_f7i3j")]
+[node name="PauseLayer" type="CanvasLayer" parent="."]
+layer = 100
+
+[node name="PauseMenu" parent="PauseLayer" instance=ExtResource("19_f7i3j")]
 settings_menu_scene = ExtResource("20_settings")
 style = SubResource("Resource_5tdvf")
 

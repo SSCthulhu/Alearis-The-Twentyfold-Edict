@@ -32,6 +32,7 @@ signal quit_confirmed()
 var _is_open: bool = false
 var _input_enabled: bool = false
 var _settings_menu_instance: SettingsMenu = null
+var _was_paused_before_open: bool = false
 
 func _ready() -> void:
 	process_mode = Node.PROCESS_MODE_ALWAYS
@@ -117,6 +118,11 @@ func open() -> void:
 	visible = true
 	# _input_enabled stays true (set in _ready)
 	
+	# Capture previous pause state so we can restore it on close.
+	# This prevents unpausing flows that intentionally paused the tree
+	# (e.g. DiceModifierChoice while selecting a modifier).
+	_was_paused_before_open = get_tree().paused
+
 	# Pause the game
 	get_tree().paused = true
 	
@@ -136,8 +142,8 @@ func close() -> void:
 	visible = false
 	# ⚡ FIXED: Keep _input_enabled true so we can reopen the menu
 	
-	# Unpause the game
-	get_tree().paused = false
+	# Restore pause state from before opening this menu.
+	get_tree().paused = _was_paused_before_open
 	
 	resume_pressed.emit()
 

@@ -1,0 +1,14 @@
+[gd_scene load_steps=2 format=3 uid="uid://lp27g2thtmor"]
+
+[ext_resource type="SpriteFrames" uid="uid://03w3xe56si0n" path="res://resources/vfx/slam_ground_wind_frames.tres" id="1_frames"]
+
+[node name="SlamGroundWindVFX" type="Node2D"]
+z_index = 5
+scale = Vector2(1.5, 1)
+
+[node name="AnimatedSprite2D" type="AnimatedSprite2D" parent="."]
+sprite_frames = ExtResource("1_frames")
+animation = &"slam_wind"
+autoplay = "slam_wind"
+
+[connection signal="animation_finished" from="AnimatedSprite2D" to="." method="queue_free"]

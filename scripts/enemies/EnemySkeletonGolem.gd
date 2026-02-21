@@ -14,6 +14,10 @@ class_name EnemySkeletonGolem
 # Ranged immunity
 @export var melee_damage_range: float = 100.0  # Player must be within 100px to damage golem
 
+# Slam ground VFX (at impact, at feet)
+@export var slam_ground_vfx_scene: PackedScene
+@export var slam_vfx_y_offset: float = 100.0  # Offset below golem center for VFX position (adjust in inspector)
+
 # ✅ Debug control
 @export var debug_golem: bool = false  # Set to false to disable Golem debug logs
 
@@ -117,6 +121,8 @@ func _execute_slam_async() -> void:
 	_executing_slam = false  # Unlock movement
 
 func _deal_slam_damage() -> void:
+	_spawn_slam_ground_vfx()
+
 	# Find the player
 	var player: Node = get_tree().get_first_node_in_group("player")
 	if player == null or not is_instance_valid(player):
@@ -148,6 +154,24 @@ func _deal_slam_damage() -> void:
 			if debug_golem: print("[Golem] Player Health node doesn't have take_damage method!")
 	else:
 		if debug_golem: print("[Golem] Player doesn't have Health child node!")
+
+func _spawn_slam_ground_vfx() -> void:
+	if slam_ground_vfx_scene == null:
+		return
+	var root: Node = get_tree().current_scene
+	if root == null:
+		return
+	var vfx: Node2D = slam_ground_vfx_scene.instantiate() as Node2D
+	if vfx == null:
+		return
+	root.add_child(vfx)
+	# At golem feet (adjustable in inspector)
+	vfx.global_position = global_position + Vector2(0.0, slam_vfx_y_offset)
+	# Scale so X size = diameter of slam (2 * slam_radius); base frame is 512px wide
+	var base_size: float = 512.0
+	var diameter: float = 2.0 * slam_radius
+	var scale_factor: float = diameter / base_size
+	vfx.scale = Vector2(scale_factor, scale_factor)
 
 # Override attack behavior to handle dual attacks
 func _try_attack() -> void:

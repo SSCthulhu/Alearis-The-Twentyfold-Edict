@@ -128,8 +128,8 @@ dice_choice_ui_path = NodePath("../DiceModifierChoice")
 chest_spawn_fallback_path = NodePath("../Arena/ChestSpawns")
 enable_orb_flight = false
 unlock_floor_1_platforms = Array[NodePath]([NodePath("../Arena/Platform8"), NodePath("../Arena/Platform9")])
-unlock_floor_2_platforms = Array[NodePath]([NodePath("../Arena/Platform14")])
-unlock_floor_3_platforms = Array[NodePath]([NodePath("../Arena/Platform23")])
+unlock_floor_2_platforms = Array[NodePath]([])
+unlock_floor_3_platforms = Array[NodePath]([])
 unlock_floor_4_platforms = Array[NodePath]([NodePath("../Arena/Platform20"), NodePath("../Arena/Platform24")])
 
 [node name="FloorEnemySpawner" type="Node" parent="."]
@@ -139,42 +139,6 @@ golem_scene = ExtResource("3_golem")
 enable_strict_ledge_guard = true
 
 [node name="Arena" parent="." instance=ExtResource("7_ej262")]
-
-[node name="Platform4" parent="Arena" index="9"]
-position = Vector2(0, 280)
-
-[node name="Platform10" parent="Arena" index="10"]
-position = Vector2(-1400, -300)
-
-[node name="Platform11" parent="Arena" index="11"]
-position = Vector2(-500, -300)
-
-[node name="Platform13" parent="Arena" index="12"]
-position = Vector2(500, -300)
-
-[node name="Platform14" parent="Arena" index="13"]
-position = Vector2(400, -750)
-
-[node name="Platform18" parent="Arena" index="14"]
-position = Vector2(0, -2000)
-
-[node name="Platform19" parent="Arena" index="15"]
-position = Vector2(-700, -2000)
-
-[node name="Platform21" parent="Arena" index="17"]
-position = Vector2(700, -2000)
-
-[node name="Platform22" parent="Arena" index="18"]
-position = Vector2(1400, -2000)
-
-[node name="Platform23" parent="Arena" index="19"]
-position = Vector2(-1400, -1600)
-
-[node name="Platform15" parent="Arena" index="21"]
-position = Vector2(-1200, -1050)
-
-[node name="Platform12" parent="Arena" index="23"]
-position = Vector2(1400, -300)
 
 [node name="ChargeSpawnA" parent="Arena/ChargeSpawn" index="0"]
 position = Vector2(-850, -3175)
