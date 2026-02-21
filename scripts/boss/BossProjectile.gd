@@ -91,13 +91,15 @@ func _ready() -> void:
 	
 	# Don't apply color here - wait for set_color() to be called after initialization
 	# _apply_color()
-	
-	# Auto-destroy after lifetime
-	get_tree().create_timer(lifetime).timeout.connect(_destroy)
 
 func _physics_process(delta: float) -> void:
 	_time_alive += delta
-	
+
+	# Auto-destroy after lifetime (checked here so it respects pause — we don't run when paused)
+	if _time_alive >= lifetime:
+		_destroy()
+		return
+
 	# Update movement based on type
 	match movement_type:
 		MovementType.STRAIGHT:
