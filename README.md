@@ -1,6 +1,6 @@
 # Alearis: The Twentyfold Edict
 
-A 2D vertical action-platformer roguelite built with Godot 4.x
+A 2D vertical action-platformer roguelite built with Godot 4.5.1
 
 ## 🎮 About
 
