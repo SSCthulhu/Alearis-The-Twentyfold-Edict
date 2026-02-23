@@ -1,4 +1,4 @@
-[gd_scene load_steps=36 format=3 uid="uid://cos5po5s14l56"]
+[gd_scene load_steps=35 format=3 uid="uid://cos5po5s14l56"]
 
 [ext_resource type="Script" uid="uid://bwo5386w06j5j" path="res://scripts/systems/BossEncounterWorld2.gd" id="1_bossenc2"]
 [ext_resource type="PackedScene" uid="uid://b5uuaa28c07e8" path="res://scenes/boss/PortalWorld2.tscn" id="1_portalw2"]
@@ -24,7 +24,6 @@
 [ext_resource type="PackedScene" uid="uid://c73g8ryxy8vv5" path="res://scenes/boss/Boss_World2.tscn" id="13_ys2ak"]
 [ext_resource type="PackedScene" uid="uid://bxmiuknanvwv6" path="res://scenes/arena/Arena2.tscn" id="14_l6nik"]
 [ext_resource type="PackedScene" uid="uid://ojpp3p46grti" path="res://scenes/arena/AscensionSocket.tscn" id="14_r1rxt"]
-[ext_resource type="PackedScene" uid="uid://b3grgamegrqq2" path="res://scenes/hazards/RisingHazard.tscn" id="15_8wr4c"]
 [ext_resource type="Texture2D" uid="uid://dr2cl7irnnxaa" path="res://art/Worlds/Castle/background_dungeon/l1_sky.png" id="15_rvhjv"]
 [ext_resource type="PackedScene" uid="uid://cl782jegm7xux" path="res://scenes/player/OrbLight.tscn" id="15_somlc"]
 [ext_resource type="PackedScene" uid="uid://bxxf4cqiyjotx" path="res://scenes/hazards/OrbFallingRock.tscn" id="16_bytlt"]
@@ -277,7 +276,6 @@ charge_scene = ExtResource("2_rvhjv")
 [node name="FloorProgressionController" type="Node" parent="."]
 script = ExtResource("4_4onig")
 encounter_controller_path = NodePath("../BossEncounterWorld2")
-rising_hazard_path = NodePath("")
 floor_ceiling_y = PackedFloat32Array(200, -14716, -16355, -18069)
 boss_start_y = -18069.0
 chest_scene = ExtResource("5_strcc")
@@ -343,12 +341,6 @@ position = Vector2(-1068, -21133)
 scale = Vector2(1, 1)
 debug_socket = true
 
-[node name="RisingHazard" parent="." instance=ExtResource("15_8wr4c")]
-visible = false
-collision_layer = 3
-collision_mask = 3
-bottom_marker_path = NodePath("../Arena/HazardBottom")
-
 [node name="UI" parent="." instance=ExtResource("16_devdu")]
 
 [node name="PlayerHUDCluster" parent="UI/ScreenRoot/HUDRoot/BottomRight" index="0"]
@@ -367,7 +359,6 @@ floor_controller_path = NodePath("../../../../FloorProgressionController")
 boss_path = NodePath("../../../../Boss")
 
 [node name="DiceModifierChoice" parent="." instance=ExtResource("18_awieb")]
-rising_hazard_path = NodePath("")
 
 [node name="OrbFlightController" parent="." instance=ExtResource("25_bytlt")]
 target_spawn_path = NodePath("../Arena/Spawns/Floor3/PlayerSpawn")
@@ -391,7 +382,6 @@ volume_db = -5.0
 [editable path="Player/Visual/Body3DView"]
 [editable path="Boss"]
 [editable path="AscensionSocket/AscensionSocketA"]
-[editable path="RisingHazard"]
 [editable path="UI"]
 [editable path="UI/DeathOverlay/RunSummaryPanel"]
 [editable path="UI/VictoryUI/Root/CardA"]

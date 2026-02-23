@@ -15,6 +15,7 @@ scale = Vector2(2, 2)
 texture = ExtResource("2_aura1")
 
 [node name="AuraV2" type="Sprite2D" parent="."]
+visible = false
 modulate = Color(1, 1, 1, 0.85)
 z_index = -2
 scale = Vector2(2, 2)

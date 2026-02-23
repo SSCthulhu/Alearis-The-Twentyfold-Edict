@@ -1,0 +1,32 @@
+[gd_resource type="TileSet" load_steps=3 format=3 uid="uid://hk18uqr6qw6t"]
+
+[ext_resource type="Texture2D" uid="uid://dd1ef0wfqn33u" path="res://art/Worlds/Frozen/Tile Set/4.png" id="4_waury"]
+
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_bixed"]
+texture = ExtResource("4_waury")
+texture_region_size = Vector2i(76, 76)
+0:0/0 = 0
+0:0/0/physics_layer_0/polygon_0/points = PackedVector2Array(-38, 3.454544, 38, 3.454544, 38, 38, -38, 38)
+0:0/0/physics_layer_0/polygon_0/one_way = true
+1:0/0 = 0
+1:0/0/physics_layer_0/polygon_0/points = PackedVector2Array(-38, 3.454544, 38, 3.454544, 38, 38, -38, 38)
+1:0/0/physics_layer_0/polygon_0/one_way = true
+2:0/0 = 0
+2:0/0/physics_layer_0/polygon_0/points = PackedVector2Array(-35.5, 4.3888893, 35.5, 3.590908, 35.5, 39.5, -35.5, 39.5)
+2:0/0/physics_layer_0/polygon_0/one_way = true
+3:0/0 = 0
+3:0/0/physics_layer_0/polygon_0/points = PackedVector2Array(-38, 3.454544, 38, 3.454544, 38, 38, -38, 38)
+3:0/0/physics_layer_0/polygon_0/one_way = true
+0:1/0 = 0
+1:1/0 = 0
+2:1/0 = 0
+3:1/0 = 0
+0:2/0 = 0
+1:2/0 = 0
+2:2/0 = 0
+3:2/0 = 0
+
+[resource]
+tile_size = Vector2i(76, 76)
+physics_layer_0/collision_layer = 1
+sources/3 = SubResource("TileSetAtlasSource_bixed")

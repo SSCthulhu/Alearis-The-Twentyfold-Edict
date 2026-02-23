@@ -487,7 +487,7 @@ func process_state(delta: float) -> void:
 				switch_state(STATE.LIGHT_ATTACK)
 			elif Input.is_action_just_pressed(input_heavy_attack) and _can_use_heavy_attack():
 				switch_state(STATE.HEAVY_ATTACK)
-			elif Input.is_action_just_pressed(input_ultimate):
+			elif Input.is_action_just_pressed(input_ultimate) and _can_use_ultimate():
 				switch_state(STATE.ULTIMATE)
 		
 		STATE.WALK:
@@ -512,7 +512,7 @@ func process_state(delta: float) -> void:
 				switch_state(STATE.LIGHT_ATTACK)
 			elif Input.is_action_just_pressed(input_heavy_attack) and _can_use_heavy_attack():
 				switch_state(STATE.HEAVY_ATTACK)
-			elif Input.is_action_just_pressed(input_ultimate):
+			elif Input.is_action_just_pressed(input_ultimate) and _can_use_ultimate():
 				switch_state(STATE.ULTIMATE)
 		
 		STATE.SPRINT:
@@ -820,6 +820,15 @@ func _can_use_heavy_attack() -> bool:
 			pass
 	
 	return is_ready
+
+
+func _can_use_ultimate() -> bool:
+	"""Check if ultimate is off cooldown"""
+	if _combat == null:
+		return false
+	if not _combat.has_method("is_ability_ready"):
+		return false
+	return _combat.call("is_ability_ready", &"ultimate")
 
 
 func _start_roll() -> void:
@@ -1250,7 +1259,14 @@ var _ultimate_origin_pos: Vector2 = Vector2.ZERO
 var _defend_animation_timer: float = 0.0
 
 func _start_ultimate() -> void:
-	pass
+	# Safety gate: block if ultimate is still on cooldown.
+	if not _can_use_ultimate():
+		if is_on_floor():
+			var input_dir: float = Input.get_axis(input_move_left, input_move_right)
+			switch_state(STATE.WALK if input_dir != 0.0 else STATE.IDLE)
+		else:
+			switch_state(STATE.FALL)
+		return
 	
 	# Trigger ultimate cooldown in PlayerCombat
 	if _combat != null:

@@ -24,8 +24,6 @@ var _victory_ui: Node = null
 	"res://scenes/World3.tscn"
 ]
 
-@export var rising_hazard_path: NodePath = ^"../RisingHazard"
-
 @export var charge_stations_root_path: NodePath = ^"../Arena/ChargeStations"
 @export var randomize_active_station_each_ascent: bool = true
 @export var hide_inactive_stations: bool = true
@@ -64,7 +62,6 @@ var _dps_extended_this_window: bool = false # ✅ E2 gate: only extend once per 
 var _active_charge: AscensionCharge = null
 var _spawn_queued: bool = false
 
-var _hazard: RisingHazard = null
 var _rng: RandomNumberGenerator = RandomNumberGenerator.new()
 
 var _spawns: Array[Node2D] = []
@@ -132,10 +129,6 @@ func _ready() -> void:
 				_boss.died.connect(_on_boss_died)
 		else:
 			push_warning("[Encounter] Boss has no 'died' signal.")
-
-	_hazard = get_node_or_null(rising_hazard_path) as RisingHazard
-	if _hazard == null and rising_hazard_path != NodePath(""):
-		push_warning("[Encounter] RisingHazard not found. Set rising_hazard_path on EncounterController.")
 
 	if charge_scene == null:
 		push_warning("[Encounter] charge_scene not assigned. Assign AscensionCharge.tscn in Inspector.")
@@ -355,8 +348,6 @@ func notify_charge_lost(lost_charge: AscensionCharge) -> void:
 		return
 	if _active_charge == lost_charge:
 		_active_charge = null
-	if _hazard != null and not _boss_mode:
-		_hazard.retract_to_bottom()
 
 
 # -----------------------------
@@ -374,9 +365,6 @@ func _set_phase(new_phase: int) -> void:
 			# ✅ Leaving DPS -> allow extension next time
 			_dps_extended_this_window = false
 
-			if _hazard != null and not _boss_mode:
-				_hazard.retract_to_bottom()
-
 			_pick_active_spawn()
 			_pick_active_socket()
 
@@ -390,9 +378,6 @@ func _set_phase(new_phase: int) -> void:
 			_apply_boss_rules(true, false)
 
 			_cleanup_cycle_adds()
-
-			if _hazard != null and not _boss_mode:
-				_hazard.enter_dps()
 
 			_set_only_socket_enabled(_active_socket)
 			call_deferred("_disable_all_stations")
@@ -815,9 +800,6 @@ func _end_encounter_and_show_victory() -> void:
 
 	_cleanup_cycle_adds()
 	_disable_all_stations()
-
-	if _hazard != null and not _boss_mode:
-		_hazard.retract_to_bottom()
 
 	if _boss != null:
 		if _boss.has_method("set_attacks_enabled"):

@@ -9,7 +9,6 @@ signal chest_opened(floor_number: int)
 
 @export var player_path: NodePath = ^"../Player"
 @export var encounter_controller_path: NodePath = ^"../EncounterController"
-@export var rising_hazard_path: NodePath = ^"../RisingHazard"
 @export var steam_elevator_path: NodePath = ^"../Arena/Geometry/SteamElevator"
 
 @export var gate_paths: Array[NodePath] = [
@@ -186,27 +185,16 @@ var _orb_flight_completed_once: bool = false
 # -----------------------------
 # Legacy arrays (kept for compatibility)
 # -----------------------------
-@export var unlock_after_floor_1: Array[NodePath] = [
-	^"../Arena/Platform8",
-	^"../Arena/Platform9",
-]
-@export var unlock_after_floor_2: Array[NodePath] = [
-	^"../Arena/Platform14",
-]
-@export var unlock_after_floor_3: Array[NodePath] = [
-	^"../Arena/Platform23",
-]
-@export var unlock_after_floor_4: Array[NodePath] = [
-	^"../Arena/Platform20",
-	^"../Arena/Platform24",
-]
+@export var unlock_after_floor_1: Array[NodePath] = []
+@export var unlock_after_floor_2: Array[NodePath] = []
+@export var unlock_after_floor_3: Array[NodePath] = []
+@export var unlock_after_floor_4: Array[NodePath] = []
 
 # Cache original collision layers/masks so we can restore
 var _platform_collision_cache: Dictionary = {} # CollisionObject2D -> {"layer": int, "mask": int}
 
 @onready var _player: Node2D = get_node_or_null(player_path) as Node2D
 @onready var _encounter: Node = get_node_or_null(encounter_controller_path)
-@onready var _hazard: Node = get_node_or_null(rising_hazard_path)
 
 @export var floor_band_padding: float = 40.0
 
@@ -563,12 +551,14 @@ func _process(_delta: float) -> void:
 	# Floor 4 is index 3, so check if _unlocked[3] == 1
 	var floor4_unlocked: bool = (_unlocked.size() > 3 and _unlocked[3] == 1)
 	
-	# Check boss start based on progression mode
-	# World3 (horizontal mode): Boss starts via SteamElevator teleport_completed signal (after 1 second delay)
-	# World2 (vertical mode): Boss starts when player crosses Y threshold
+	# Check boss start based on progression mode.
+	# Vertical mode (World2): Y-threshold trigger.
+	# Horizontal mode:
+	# - World3 keeps SteamElevator signal-based trigger.
+	# - Worlds without a SteamElevator can use boss_start_x fallback.
 	if floor_progression_mode == 0:
-		# Vertical mode (World2): Position-based trigger
-		var boss_triggered: bool = _player.global_position.y <= boss_start_y
+		# Vertical mode (World2): Position-based trigger.
+		var boss_triggered: bool = (_player != null and _player.global_position.y <= boss_start_y)
 		
 		if not _boss_started and _player != null and boss_triggered and floor4_unlocked:
 			_boss_started = true
@@ -581,8 +571,19 @@ func _process(_delta: float) -> void:
 				pass
 				_encounter.call("begin_boss_encounter")
 				pass
-	# Horizontal mode (World3): Boss starts from _on_steam_elevator_teleport_completed()
-	# No position check needed here
+	else:
+		# Horizontal mode fallback: if there is no SteamElevator hookup, use X-threshold trigger.
+		var has_steam_elevator_trigger: bool = (_steam_elevator != null and is_instance_valid(_steam_elevator))
+		if not has_steam_elevator_trigger:
+			var boss_triggered_x: bool = (_player != null and _player.global_position.x >= boss_start_x)
+			if not _boss_started and boss_triggered_x and floor4_unlocked:
+				_boss_started = true
+				if _encounter == null:
+					pass
+				elif not _encounter.has_method("begin_boss_encounter"):
+					pass
+				else:
+					_encounter.call("begin_boss_encounter")
 
 	_update_current_floor_from_player()
 	_sync_runstate_floor()
@@ -699,13 +700,6 @@ func _on_floor_cleared(index: int) -> void:
 	_unlocked[index] = 1
 
 	_set_boss_combat_paused(true)
-
-	if _hazard != null and _hazard.has_method("set_paused_by_system"):
-		_hazard.call("set_paused_by_system", true)
-
-	if _hazard != null and _hazard.has_method("rise_to_ceiling_y"):
-		var target_y: float = _get_floor_ceiling_y(index)
-		_hazard.call("rise_to_ceiling_y", target_y, true)
 
 	_pending_gate_open[index] = 1
 	_pending_floor_to_open = index

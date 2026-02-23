@@ -24,7 +24,6 @@ debug_logs = true
 script = ExtResource("1_n01b3")
 charge_scene = ExtResource("2_rjvsk")
 world_scene_paths = Array[String](["res://scenes/world/World1.tscn", "res://scenes/world/World2.tscn", "res://scenes/world/World3.tscn"])
-rising_hazard_path = NodePath("")
 charge_stations_root_path = NodePath("")
 charge_spawns_root_path = NodePath("")
 ascension_sockets_root_path = NodePath("../AscensionSocket")
