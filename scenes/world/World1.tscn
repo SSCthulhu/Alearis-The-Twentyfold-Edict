@@ -94,6 +94,11 @@ chest_scene = ExtResource("5_mi5e1")
 dice_choice_ui_path = NodePath("../DiceModifierChoice")
 chest_spawn_fallback_path = NodePath("../Arena/ChestSpawns")
 enable_orb_flight = false
+enable_world1_ski_sequence = true
+world1_ski_speed_multiplier = 2.0
+world1_ski_end_x = 24000.0
+world1_ski_destination_path = NodePath("../Arena/Spawns/Floor2/PlayerSpawn")
+world1_ski_fade_rect_path = NodePath("../UI/ScreenRoot/HUDRoot/SkiTransitionFade")
 unlock_floor_1_platforms = Array[NodePath]([])
 unlock_floor_2_platforms = Array[NodePath]([])
 unlock_floor_3_platforms = Array[NodePath]([])
@@ -184,6 +189,15 @@ layout_mode = 3
 
 [node name="HitFlash" parent="UI/ScreenRoot/HUDRoot/PlayerDamageFeedback" index="2"]
 layout_mode = 3
+
+[node name="SkiTransitionFade" type="ColorRect" parent="UI/ScreenRoot/HUDRoot"]
+visible = false
+z_index = 100
+layout_mode = 0
+anchor_right = 1.0
+anchor_bottom = 1.0
+mouse_filter = 2
+color = Color(1, 1, 1, 0)
 
 [node name="DiceModifierChoice" parent="." instance=ExtResource("18_alxcq")]
 

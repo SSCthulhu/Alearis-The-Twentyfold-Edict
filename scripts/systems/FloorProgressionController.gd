@@ -162,6 +162,16 @@ var _orb_flight_completed_once: bool = false
 @export_group("Platform Unlocks")
 @export var hide_platforms_on_ready: bool = true
 
+# -----------------------------
+# World1 Ski Sequence
+# -----------------------------
+@export_group("World1 Ski Sequence")
+@export var enable_world1_ski_sequence: bool = false
+@export var world1_ski_speed_multiplier: float = 2.0
+@export var world1_ski_end_x: float = 24000.0
+@export var world1_ski_destination_path: NodePath = ^"../Arena/Spawns/Floor2/PlayerSpawn"
+@export var world1_ski_fade_rect_path: NodePath = ^"../UI/ScreenRoot/HUDRoot/SkiTransitionFade"
+
 @export_group("Unlock after Floor 1 + Dice Choice")
 @export var unlock_floor_1_platforms: Array[NodePath] = [] # Platform8, Platform9
 
@@ -218,6 +228,7 @@ var _chest_spawned: PackedByteArray = PackedByteArray()
 var _floor_spawned: PackedByteArray = PackedByteArray([1, 0, 0, 0])  # Floor 1 spawns on ready
 
 var _last_floor_number: int = -1
+var _world1_ski_started: bool = false
 
 # -----------------------------
 # World2 door runtime
@@ -586,6 +597,7 @@ func _process(_delta: float) -> void:
 					_encounter.call("begin_boss_encounter")
 
 	_update_current_floor_from_player()
+	_try_start_world1_ski_sequence()
 	_sync_runstate_floor()
 	_emit_floor_status_if_changed()
 
@@ -695,6 +707,44 @@ func _set_boss_combat_paused(p: bool) -> void:
 	var boss: Node = get_tree().get_first_node_in_group(&"boss")
 	if boss != null and boss.has_method("set_combat_paused"):
 		boss.call("set_combat_paused", p)
+
+func _try_start_world1_ski_sequence() -> void:
+	if not enable_world1_ski_sequence:
+		return
+	if _world1_ski_started:
+		return
+	if floor_progression_mode != 1:
+		return
+	if _player == null:
+		return
+	if not _player.has_method("start_world1_ski_sequence"):
+		push_warning("[Floors] Player missing start_world1_ski_sequence().")
+		return
+
+	# Trigger as soon as player crosses CeilingGate_F1 threshold in horizontal mode.
+	var thresholds_x: PackedFloat32Array = _get_floor_thresholds_x()
+	if thresholds_x.is_empty():
+		return
+	var trigger_x: float = float(thresholds_x[0]) - floor_band_padding
+	if _player.global_position.x < trigger_x:
+		return
+
+	var destination: Node2D = get_node_or_null(world1_ski_destination_path) as Node2D
+	if destination == null:
+		push_warning("[Floors] World1 ski destination not found: %s" % String(world1_ski_destination_path))
+		return
+	var fade_rect: ColorRect = get_node_or_null(world1_ski_fade_rect_path) as ColorRect
+	if fade_rect == null:
+		push_warning("[Floors] World1 ski fade rect not found: %s" % String(world1_ski_fade_rect_path))
+
+	_player.call(
+		"start_world1_ski_sequence",
+		world1_ski_speed_multiplier,
+		world1_ski_end_x,
+		destination,
+		fade_rect
+	)
+	_world1_ski_started = true
 
 func _on_floor_cleared(index: int) -> void:
 	_unlocked[index] = 1

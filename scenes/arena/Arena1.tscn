@@ -616,7 +616,7 @@ position = Vector2(200, -3150)
 position = Vector2(0, 1329.48)
 
 [node name="ChestSpawn_F2" type="Marker2D" parent="ChestSpawns"]
-position = Vector2(32909, 12571)
+position = Vector2(32921, 12697)
 
 [node name="ChestSpawn_F3" type="Marker2D" parent="ChestSpawns"]
 position = Vector2(43191, 12608)
