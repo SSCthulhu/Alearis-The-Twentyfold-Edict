@@ -83,6 +83,7 @@ var _health = null
 # Input Lock (Victory UI, Cutscenes, etc.)
 # -----------------------------
 var _input_locked: bool = false  # When true, disable all player input and freeze animations
+var _cutscene_motion_locked: bool = false  # When true, disable control but still allow natural falling
 
 # -----------------------------
 # Movement State
@@ -262,6 +263,21 @@ func _physics_process(delta: float) -> void:
 		velocity = Vector2.ZERO  # Stop all movement
 		move_and_slide()
 		return  # Skip all input processing and state updates
+
+	# Cutscene motion lock: no control/actions, but allow falling to ground naturally.
+	if _cutscene_motion_locked:
+		velocity.x = 0.0
+		if not is_on_floor():
+			if active_state != STATE.FALL:
+				switch_state(STATE.FALL)
+			velocity.y = move_toward(velocity.y, FALL_VELOCITY, FALL_GRAVITY * delta)
+		else:
+			if velocity.y > 0.0:
+				velocity.y = 0.0
+			if active_state != STATE.IDLE:
+				switch_state(STATE.IDLE)
+		move_and_slide()
+		return
 
 	_update_roll_charges(delta)
 	_update_timers(delta)
@@ -1650,6 +1666,29 @@ func set_input_locked(locked: bool) -> void:
 			switch_state(STATE.IDLE)
 		
 		pass
+
+
+func set_cutscene_motion_lock(locked: bool) -> void:
+	"""Disable player control while still allowing gravity/fall behavior."""
+	_cutscene_motion_locked = locked
+
+	if locked:
+		# Stop any currently playing animation immediately to avoid run/walk carry-over.
+		if _body_3d_view != null:
+			var anim_player = _body_3d_view.get("_anim_player")
+			if anim_player != null and anim_player.is_playing():
+				anim_player.stop()
+
+		# Clear horizontal movement immediately; keep vertical so air states can fall naturally.
+		velocity.x = 0.0
+
+		# Force state immediately so visuals snap to idle/fall instead of running in place.
+		switch_state(STATE.IDLE if is_on_floor() else STATE.FALL)
+	else:
+		if is_on_floor():
+			switch_state(STATE.IDLE)
+		else:
+			switch_state(STATE.FALL)
 
 
 func get_current_state() -> STATE:

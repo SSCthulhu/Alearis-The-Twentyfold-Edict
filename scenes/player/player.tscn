@@ -1,4 +1,4 @@
-[gd_scene load_steps=58 format=3 uid="uid://c72m65e63bs0o"]
+[gd_scene load_steps=60 format=3 uid="uid://c72m65e63bs0o"]
 
 [ext_resource type="Script" uid="uid://cb8s2agujn7vn" path="res://scripts/player/PlayerControllerV3.gd" id="1_6cv16"]
 [ext_resource type="Script" uid="uid://bjdpgg3i6rwbw" path="res://scripts/player/PlayerCombat.gd" id="2_dovo2"]
@@ -18,6 +18,7 @@
 [ext_resource type="Script" uid="uid://c5t4njg0bc0at" path="res://scripts/player/DefensiveVFX.gd" id="23_defensive"]
 [ext_resource type="Script" uid="uid://g0xy654wukxm" path="res://scripts/player/DoubleJumpVFX.gd" id="23_djump"]
 [ext_resource type="Script" uid="uid://da4cyhfjskc62" path="res://scripts/player/HeavyAttackVFX.gd" id="23_heavy"]
+[ext_resource type="Script" uid="uid://cc2ep3so2i6aj" path="res://scripts/player/IdleBreathVFX.gd" id="23_idlebreath"]
 [ext_resource type="Script" uid="uid://b73yw27wgswt7" path="res://scripts/player/JumpVFX.gd" id="23_jump"]
 [ext_resource type="Script" uid="uid://hwjrlfbnxdta" path="res://scripts/player/KnightHeavyAttackVFX.gd" id="23_knightheavy"]
 [ext_resource type="Script" uid="uid://5vjgyo4ibc0x" path="res://scripts/player/KnightLightAttackVFX.gd" id="23_knightlight"]
@@ -55,6 +56,7 @@
 [ext_resource type="PackedScene" path="res://scenes/vfx/KnightShieldOnVFX.tscn" id="24_shieldon"]
 [ext_resource type="PackedScene" path="res://scenes/vfx/UltimateAttackVFX.tscn" id="24_ultimate"]
 [ext_resource type="PackedScene" path="res://scenes/vfx/BloodSideBurstVFX.tscn" id="50_gmu8b"]
+[ext_resource type="Texture2D" uid="uid://cyune2lj65w08" path="res://art/particles/smoke_03_a.png" id="60_breathtx"]
 
 [sub_resource type="CapsuleShape2D" id="CapsuleShape2D_dovo2"]
 radius = 10.1
@@ -240,5 +242,41 @@ offset_y = 280.0
 [node name="PlayerCameraController" type="Node2D" parent="."]
 script = ExtResource("24_cnsyf")
 max_zoom = 5.0
+
+[node name="IdleBreathVFX" type="Node2D" parent="."]
+script = ExtResource("23_idlebreath")
+mouth_offset = Vector2(55, 15)
+interval_seconds = 0.85
+
+[node name="BreathParticles" type="CPUParticles2D" parent="IdleBreathVFX"]
+modulate = Color(1, 1, 1, 0.49019608)
+z_index = 20
+emitting = false
+amount = 14
+texture = ExtResource("60_breathtx")
+lifetime = 1.1
+one_shot = true
+explosiveness = 1.0
+randomness = 0.35
+direction = Vector2(1, -0.08)
+spread = 24.0
+gravity = Vector2(0, -8)
+initial_velocity_min = 9.0
+initial_velocity_max = 22.0
+angular_velocity_min = -8.0
+angular_velocity_max = 8.0
+orbit_velocity_min = -0.4
+orbit_velocity_max = 0.4
+linear_accel_min = -3.0
+linear_accel_max = 3.0
+radial_accel_min = -2.0
+radial_accel_max = 2.0
+tangential_accel_min = -2.0
+tangential_accel_max = 2.0
+damping_min = 5.0
+damping_max = 10.0
+scale_amount_min = 0.06
+scale_amount_max = 0.12
+color = Color(1, 1, 1, 0.68)
 
 [editable path="Visual/Body3DView"]

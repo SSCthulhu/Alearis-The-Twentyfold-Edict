@@ -162,6 +162,17 @@ var _orb_flight_completed_once: bool = false
 @export_group("Platform Unlocks")
 @export var hide_platforms_on_ready: bool = true
 
+@export_group("World1 Floor3 Transition")
+@export var enable_world1_floor3_transition: bool = false
+@export var world1_floor3_trigger_x: float = 8000.0
+@export var world1_floor3_wait_before_fade: float = 3.0
+@export var world1_floor3_fade_out_time: float = 1.0
+@export var world1_floor3_fade_in_time: float = 1.0
+@export var world1_floor3_destination_path: NodePath = ^"../Arena/Spawns/Floor3/PlayerSpawn"
+@export var world1_floor3_fade_rect_path: NodePath = ^"../UI/ScreenRoot/HUDRoot/Floor3TransitionFade"
+@export var world1_floor3_enemy_unlock_delay: float = 1.0
+@export var world1_floor3_camera_offset: Vector2 = Vector2(0.0, -450.0)
+
 @export_group("Unlock after Floor 1 + Dice Choice")
 @export var unlock_floor_1_platforms: Array[NodePath] = [] # Platform8, Platform9
 
@@ -218,6 +229,9 @@ var _chest_spawned: PackedByteArray = PackedByteArray()
 var _floor_spawned: PackedByteArray = PackedByteArray([1, 0, 0, 0])  # Floor 1 spawns on ready
 
 var _last_floor_number: int = -1
+var _world1_floor3_transition_started: bool = false
+var _world1_floor3_transition_running: bool = false
+var _world1_floor3_enemy_pause_cache: Dictionary = {}
 
 # -----------------------------
 # World2 door runtime
@@ -586,6 +600,7 @@ func _process(_delta: float) -> void:
 					_encounter.call("begin_boss_encounter")
 
 	_update_current_floor_from_player()
+	_try_start_world1_floor3_transition()
 	_sync_runstate_floor()
 	_emit_floor_status_if_changed()
 
@@ -688,8 +703,124 @@ func _set_player_input_locked(locked: bool) -> void:
 	if "input_locked" in _player:
 		_player.set("input_locked", locked)
 
+func _set_player_cutscene_motion_lock(locked: bool) -> void:
+	if _player == null:
+		return
+	if _player.has_method("set_cutscene_motion_lock"):
+		_player.call("set_cutscene_motion_lock", locked)
+		return
+	# Fallback if player script does not expose the dedicated method.
+	_set_player_input_locked(locked)
+
 func _is_floor_cleared_by_group(group_name: StringName) -> bool:
 	return get_tree().get_nodes_in_group(group_name).is_empty()
+
+func _try_start_world1_floor3_transition() -> void:
+	if not enable_world1_floor3_transition:
+		return
+	if _world1_floor3_transition_started or _world1_floor3_transition_running:
+		return
+	if _player == null:
+		return
+	if _player.global_position.x < world1_floor3_trigger_x:
+		return
+
+	_world1_floor3_transition_started = true
+	_world1_floor3_transition_running = true
+	call_deferred("_run_world1_floor3_transition")
+
+func _set_world1_floor3_enemies_paused(paused: bool) -> void:
+	if floor_enemy_groups.size() < 3:
+		return
+	var group_name: StringName = floor_enemy_groups[2]
+	var enemies: Array[Node] = get_tree().get_nodes_in_group(group_name)
+
+	if paused:
+		_world1_floor3_enemy_pause_cache.clear()
+		for e: Node in enemies:
+			if e == null or not is_instance_valid(e):
+				continue
+			_world1_floor3_enemy_pause_cache[e] = {
+				"process": e.is_processing(),
+				"physics": e.is_physics_processing()
+			}
+			e.set_process(false)
+			e.set_physics_process(false)
+			if e is CharacterBody2D:
+				(e as CharacterBody2D).velocity = Vector2.ZERO
+	else:
+		for e_obj: Variant in _world1_floor3_enemy_pause_cache.keys():
+			var e: Node = e_obj as Node
+			if e == null or not is_instance_valid(e):
+				continue
+			var cached: Variant = _world1_floor3_enemy_pause_cache.get(e, null)
+			if cached == null:
+				continue
+			e.set_process(bool(cached["process"]))
+			e.set_physics_process(bool(cached["physics"]))
+		_world1_floor3_enemy_pause_cache.clear()
+
+func _set_world1_floor3_fade_alpha(alpha: float, fade_rect: ColorRect) -> void:
+	if fade_rect == null:
+		return
+	var c: Color = fade_rect.color
+	c.a = alpha
+	fade_rect.color = c
+
+func _run_world1_floor3_transition() -> void:
+	_set_player_cutscene_motion_lock(true)
+	_set_world1_floor3_enemies_paused(true)
+
+	await get_tree().create_timer(maxf(world1_floor3_wait_before_fade, 0.0)).timeout
+
+	var fade_rect: ColorRect = get_node_or_null(world1_floor3_fade_rect_path) as ColorRect
+	if fade_rect != null:
+		fade_rect.visible = true
+		_set_world1_floor3_fade_alpha(0.0, fade_rect)
+		var tween_out: Tween = create_tween()
+		tween_out.set_pause_mode(Tween.TWEEN_PAUSE_PROCESS)
+		tween_out.tween_method(_set_world1_floor3_fade_alpha.bind(fade_rect), 0.0, 1.0, maxf(world1_floor3_fade_out_time, 0.01))
+		await tween_out.finished
+	else:
+		await get_tree().create_timer(maxf(world1_floor3_fade_out_time, 0.01)).timeout
+
+	var destination: Node2D = get_node_or_null(world1_floor3_destination_path) as Node2D
+	if destination == null:
+		push_warning("[Floors] World1 Floor3 destination not found: %s" % String(world1_floor3_destination_path))
+	else:
+		_player.global_position = destination.global_position
+
+	var cam: Camera2D = null
+	if _player != null:
+		cam = _player.get_node_or_null("Camera2D") as Camera2D
+	if cam != null:
+		cam.limit_left = 41528
+		cam.offset = world1_floor3_camera_offset
+		cam.position = Vector2.ZERO
+		var prev_smoothing: bool = cam.position_smoothing_enabled
+		cam.position_smoothing_enabled = false
+		cam.global_position = _player.global_position
+		if cam.has_method("reset_smoothing"):
+			cam.call("reset_smoothing")
+		cam.position_smoothing_enabled = prev_smoothing
+
+	if fade_rect != null:
+		var tween_in: Tween = create_tween()
+		tween_in.set_pause_mode(Tween.TWEEN_PAUSE_PROCESS)
+		tween_in.tween_method(_set_world1_floor3_fade_alpha.bind(fade_rect), 1.0, 0.0, maxf(world1_floor3_fade_in_time, 0.01))
+		await tween_in.finished
+		fade_rect.visible = false
+	else:
+		await get_tree().create_timer(maxf(world1_floor3_fade_in_time, 0.01)).timeout
+
+	_set_player_cutscene_motion_lock(false)
+	if cam != null:
+		cam.offset = world1_floor3_camera_offset
+		cam.position = Vector2.ZERO
+		cam.set_deferred("offset", world1_floor3_camera_offset)
+	await get_tree().create_timer(maxf(world1_floor3_enemy_unlock_delay, 0.0)).timeout
+	_set_world1_floor3_enemies_paused(false)
+	_world1_floor3_transition_running = false
 
 func _set_boss_combat_paused(p: bool) -> void:
 	var boss: Node = get_tree().get_first_node_in_group(&"boss")
@@ -722,10 +853,10 @@ func _on_modifier_chosen() -> void:
 		_pending_gate_open[idx] = 0
 		_pending_floor_to_open = -1
 
-		# World1 & World2 use ceiling gates normally
-		# World3 (horizontal mode): Open all gates EXCEPT Floor 3 (idx 2) - player uses cave teleport for Floor 3
+		# World1 & World2 use ceiling gates normally.
+		# Only skip Floor 3 gate in the specific World3 teleport flow.
 		var should_open_gate: bool = true
-		if floor_progression_mode == 1 and idx == 2:  # Horizontal mode + Floor 3
+		if floor_progression_mode == 1 and enable_world3_teleport and idx == 2:
 			should_open_gate = false
 			pass
 		
