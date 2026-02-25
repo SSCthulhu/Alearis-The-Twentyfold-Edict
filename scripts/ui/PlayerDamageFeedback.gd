@@ -147,6 +147,8 @@ func _apply_border_strength() -> void:
 	if mat == null:
 		return
 	var total_strength: float = clampf(_base_border_strength + _pulse_border_strength, 0.0, 1.0)
+	# Hard-hide the border unless effect is active to avoid any baseline shader bleed.
+	_low_health_rect.visible = total_strength > 0.001
 	mat.set_shader_parameter("strength", total_strength)
 	_apply_postfx_parameters(total_strength)
 

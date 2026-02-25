@@ -1,19 +1,18 @@
-[gd_scene load_steps=23 format=3 uid="uid://4viiqcwnkguk"]
+[gd_scene load_steps=22 format=3 uid="uid://4viiqcwnkguk"]
 
-[ext_resource type="Texture2D" uid="uid://bb1t0njuokf2p" path="res://art/Worlds/cave/background/filter2.png" id="1_kagm6"]
 [ext_resource type="Script" uid="uid://cf1e5h4b5lu3u" path="res://scripts/systems/EncounterController.gd" id="1_qvqnh"]
-[ext_resource type="Texture2D" uid="uid://dcdruorr6jr2i" path="res://art/Worlds/cave/background/filter.png" id="2_jrlyj"]
+[ext_resource type="Texture2D" uid="uid://bktohjhiu4ph0" path="res://art/Worlds/Frozen/Mountain/2.png" id="2_imtto"]
 [ext_resource type="PackedScene" uid="uid://cai81qjmmgokj" path="res://scenes/arena/AscensionCharge.tscn" id="2_n8wkn"]
 [ext_resource type="PackedScene" uid="uid://ccrejlifa6gwm" path="res://scenes/enemies/EnemyKnightAdd.tscn" id="3_61woi"]
+[ext_resource type="Texture2D" uid="uid://63ivall1yxf2" path="res://art/Worlds/Frozen/Mountain/1.png" id="3_ej262"]
 [ext_resource type="PackedScene" uid="uid://deotiruix5irf" path="res://scenes/enemies/EnemySkeletonGolem.tscn" id="3_golem"]
 [ext_resource type="PackedScene" uid="uid://3n3mym4g3" path="res://scenes/enemies/EnemySkeletonMage.tscn" id="3_mage"]
 [ext_resource type="PackedScene" uid="uid://bq7m3x5k8npwj" path="res://scenes/enemies/EnemyNecromancer.tscn" id="3_necro"]
 [ext_resource type="PackedScene" uid="uid://cjteqkv3dbcyl" path="res://scenes/enemies/EnemyRogueSkeleton.tscn" id="3_rogue"]
-[ext_resource type="Texture2D" uid="uid://bijrjiimh65fg" path="res://art/Worlds/cave/background/bg1 1.png" id="3_wc667"]
+[ext_resource type="Texture2D" uid="uid://c4jpyk7ridn4n" path="res://art/Worlds2/Winter/Background/Background_02.png" id="4_kagm6"]
 [ext_resource type="Script" uid="uid://kl22l7l8p1rd" path="res://scripts/systems/FloorProgressionController.gd" id="4_yjglx"]
-[ext_resource type="Texture2D" uid="uid://cxf8dpn8n53sw" path="res://art/Worlds/cave/background/bg2.png" id="5_gp4b6"]
+[ext_resource type="Texture2D" uid="uid://gn14x0w5sb8" path="res://art/Worlds/winter/Background/05 1.png" id="5_jrlyj"]
 [ext_resource type="PackedScene" uid="uid://dlbxvu5p3c25n" path="res://scenes/world/RewardChest.tscn" id="5_mi5e1"]
-[ext_resource type="Texture2D" uid="uid://1bn08fcfrknt" path="res://art/Worlds/cave/background/bg3.png" id="6_1srhu"]
 [ext_resource type="Script" uid="uid://c34rst6nb4hnx" path="res://scripts/enemies/FloorEnemySpawner.gd" id="6_imtto"]
 [ext_resource type="PackedScene" uid="uid://0hu6af2x3pya" path="res://scenes/arena/Arena1.tscn" id="7_ej262"]
 [ext_resource type="PackedScene" uid="uid://c72m65e63bs0o" path="res://scenes/player/player.tscn" id="12_gp4b6"]
@@ -28,52 +27,64 @@
 [node name="Backgrounds" type="Node2D" parent="."]
 
 [node name="Back" type="Parallax2D" parent="Backgrounds"]
-repeat_size = Vector2(1920, 0)
-repeat_times = 16
+scale = Vector2(2, 2)
+scroll_scale = Vector2(0.08, 0)
+scroll_offset = Vector2(-663, -286)
+repeat_size = Vector2(1334, 0)
+repeat_times = 3
+follow_viewport = false
 
 [node name="Filter2" type="Sprite2D" parent="Backgrounds/Back"]
-position = Vector2(-6, -234)
-texture = ExtResource("1_kagm6")
+position = Vector2(131, 121)
+texture = ExtResource("4_kagm6")
 
 [node name="Far" type="Parallax2D" parent="Backgrounds"]
 scale = Vector2(1.5, 1.5)
+scroll_scale = Vector2(0.04, 0)
 scroll_offset = Vector2(-36, -618)
-repeat_size = Vector2(2165, 0)
-repeat_times = 16
+repeat_size = Vector2(2688, 0)
+repeat_times = 3
+follow_viewport = false
 
 [node name="Bg11" type="Sprite2D" parent="Backgrounds/Far"]
 position = Vector2(-47, 1029)
-texture = ExtResource("3_wc667")
+texture = ExtResource("2_imtto")
 
 [node name="Mid" type="Parallax2D" parent="Backgrounds"]
 scale = Vector2(1.5, 1.5)
+scroll_scale = Vector2(0.06, 0)
 scroll_offset = Vector2(25, -793)
-repeat_size = Vector2(2163, 0)
-repeat_times = 16
+repeat_size = Vector2(2688, 0)
+repeat_times = 3
+follow_viewport = false
 
 [node name="Bg2" type="Sprite2D" parent="Backgrounds/Mid"]
 position = Vector2(0, 1090.667)
-texture = ExtResource("5_gp4b6")
+texture = ExtResource("3_ej262")
 
 [node name="Filter" type="Parallax2D" parent="Backgrounds"]
-scale = Vector2(1.5, 1.5)
-scroll_offset = Vector2(25, -793)
-repeat_size = Vector2(1920, 0)
-repeat_times = 16
+visible = false
+scale = Vector2(2, 2)
+scroll_scale = Vector2(0, 0)
+scroll_offset = Vector2(-1913, -1846)
+repeat_size = Vector2(1334, 0)
+repeat_times = 3
 
 [node name="Filter" type="Sprite2D" parent="Backgrounds/Filter"]
-position = Vector2(703.3334, 1153.3334)
-texture = ExtResource("2_jrlyj")
+position = Vector2(760.00006, 904)
+texture = ExtResource("4_kagm6")
 
 [node name="Near" type="Parallax2D" parent="Backgrounds"]
 scale = Vector2(1.5, 1.5)
-scroll_offset = Vector2(-44, -540)
-repeat_size = Vector2(2112, 0)
-repeat_times = 16
+scroll_scale = Vector2(0.1, 0)
+scroll_offset = Vector2(-44, -455)
+repeat_size = Vector2(1280, 0)
+repeat_times = 3
+follow_viewport = false
 
 [node name="Bg3" type="Sprite2D" parent="Backgrounds/Near"]
 position = Vector2(0, 929.333)
-texture = ExtResource("6_1srhu")
+texture = ExtResource("5_jrlyj")
 
 [node name="EncounterController" type="Node" parent="."]
 script = ExtResource("1_qvqnh")
@@ -94,19 +105,6 @@ chest_scene = ExtResource("5_mi5e1")
 dice_choice_ui_path = NodePath("../DiceModifierChoice")
 chest_spawn_fallback_path = NodePath("../Arena/ChestSpawns")
 enable_orb_flight = false
-enable_world1_ski_sequence = true
-world1_ski_speed_multiplier = 2.0
-world1_ski_end_x = 24000.0
-world1_ski_destination_path = NodePath("../Arena/Spawns/Floor2/PlayerSpawn")
-world1_ski_fade_rect_path = NodePath("../UI/ScreenRoot/HUDRoot/SkiTransitionFade")
-unlock_floor_1_platforms = Array[NodePath]([])
-unlock_floor_2_platforms = Array[NodePath]([])
-unlock_floor_3_platforms = Array[NodePath]([])
-unlock_floor_4_platforms = Array[NodePath]([])
-unlock_after_floor_1 = Array[NodePath]([])
-unlock_after_floor_2 = Array[NodePath]([])
-unlock_after_floor_3 = Array[NodePath]([])
-unlock_after_floor_4 = Array[NodePath]([])
 
 [node name="FloorEnemySpawner" type="Node" parent="."]
 script = ExtResource("6_imtto")
@@ -117,17 +115,8 @@ enable_strict_ledge_guard = true
 
 [node name="Arena" parent="." instance=ExtResource("7_ej262")]
 
-[node name="CollisionShape2D" parent="Arena/Geometry/Floor2Slope/StaticBody2D" index="0"]
-position = Vector2(4089.1475, 2342.7998)
-
 [node name="ArenaCenter" parent="Arena" index="3"]
 position = Vector2(0, -3200)
-
-[node name="P2" parent="Arena/Spawns/Floor1" index="1"]
-position = Vector2(-800, 1330)
-
-[node name="ChestSpawn_F1" parent="Arena/ChestSpawns" index="0"]
-position = Vector2(0, 1310)
 
 [node name="Player" parent="." instance=ExtResource("12_gp4b6")]
 position = Vector2(-83, 1276)
@@ -189,15 +178,6 @@ layout_mode = 3
 
 [node name="HitFlash" parent="UI/ScreenRoot/HUDRoot/PlayerDamageFeedback" index="2"]
 layout_mode = 3
-
-[node name="SkiTransitionFade" type="ColorRect" parent="UI/ScreenRoot/HUDRoot"]
-visible = false
-z_index = 100
-layout_mode = 0
-anchor_right = 1.0
-anchor_bottom = 1.0
-mouse_filter = 2
-color = Color(1, 1, 1, 0)
 
 [node name="DiceModifierChoice" parent="." instance=ExtResource("18_alxcq")]
 
