@@ -1,5 +1,6 @@
 extends Area2D
 class_name EnemyProjectile
+const VfxRenderUtil = preload("res://scripts/vfx/VfxRenderUtil.gd")
 
 @export var speed: float = 600.0
 @export var lifetime: float = 5.0
@@ -22,6 +23,7 @@ func initialize(direction: Vector2, damage: int) -> void:
 	_update_vfx_flip()
 
 func _ready() -> void:
+	VfxRenderUtil.promote(self, 220)
 	body_entered.connect(_on_body_entered)
 	area_entered.connect(_on_area_entered)
 

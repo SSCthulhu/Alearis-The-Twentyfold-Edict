@@ -1,5 +1,6 @@
 extends Node
 class_name LandingVFX
+const VfxRenderUtil = preload("res://scripts/vfx/VfxRenderUtil.gd")
 
 ## Spawns landing VFX when the player lands from a jump/fall
 ## Similar to PerfectDodgeVFX pattern
@@ -91,6 +92,7 @@ func _spawn_landing_vfx(_was_double_jump: bool, facing_direction: int) -> void:
 	var world_parent: Node = player_body.get_parent()
 	if world_parent != null:
 		world_parent.add_child(vfx)
+		VfxRenderUtil.promote(vfx, 220)
 		
 		# Position at player's feet
 		var feet_position: Vector2 = player_body.global_position

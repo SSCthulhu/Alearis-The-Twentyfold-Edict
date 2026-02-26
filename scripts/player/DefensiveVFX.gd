@@ -1,5 +1,6 @@
 extends Node
 class_name DefensiveVFX
+const VfxRenderUtil = preload("res://scripts/vfx/VfxRenderUtil.gd")
 
 ## Spawns defensive VFX when the player activates their defensive ability
 ## Both Knight and Rogue use the same visual effect
@@ -90,6 +91,7 @@ func _spawn_defensive_vfx(_character_name: String, facing_direction: int) -> voi
 	var world_parent: Node = player_body.get_parent()
 	if world_parent != null:
 		world_parent.add_child(vfx)
+		VfxRenderUtil.promote(vfx, 220)
 		
 		# Position at player's feet
 		var feet_position: Vector2 = player_body.global_position

@@ -739,6 +739,7 @@ position = Vector2(26228, -5056)
 script = ExtResource("18_ctfyx")
 charge_scene = ExtResource("18_2j4gx")
 steam_elevator_path = NodePath("../Arena/Geometry/ForgePlatform")
+forge_duration = 5.0
 debug_logs = true
 
 [node name="ReturnFromSubArenaHandler" type="Node" parent="."]

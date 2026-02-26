@@ -1,6 +1,7 @@
 extends Node
 ## Ultimate Attack VFX Manager
 ## Spawns VFX when player's ultimate attack hits an enemy
+const VfxRenderUtil = preload("res://scripts/vfx/VfxRenderUtil.gd")
 
 @export var vfx_scene: PackedScene
 @export var target_character: String = "Rogue"  # Which character this VFX is for
@@ -39,6 +40,7 @@ func _spawn_ultimate_vfx(enemy_position: Vector2, facing_direction: int) -> void
 	# Add to world (not as child of player)
 	var world = get_tree().root
 	world.add_child(vfx)
+	VfxRenderUtil.promote(vfx, 220)
 	
 	# Position at enemy location with offset
 	var vfx_position: Vector2 = enemy_position

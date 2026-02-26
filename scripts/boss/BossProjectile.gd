@@ -1,5 +1,6 @@
 extends Area2D
 class_name BossProjectile
+const VfxRenderUtil = preload("res://scripts/vfx/VfxRenderUtil.gd")
 
 ## A projectile spawned by boss attacks
 ## Can move in straight lines, curves, or custom paths
@@ -83,6 +84,7 @@ func _apply_color() -> void:
 		_glow_sprite.modulate = glow_color
 
 func _ready() -> void:
+	VfxRenderUtil.promote(self, 260)
 	body_entered.connect(_on_body_entered)
 	area_entered.connect(_on_area_entered)
 	

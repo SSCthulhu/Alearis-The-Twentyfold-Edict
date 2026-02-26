@@ -1,6 +1,7 @@
 # res://scripts/BossHealth.gd
 extends Node
 class_name BossHealth
+const VfxRenderUtil = preload("res://scripts/vfx/VfxRenderUtil.gd")
 
 signal health_changed(current: int, max_value: int)
 
@@ -114,6 +115,7 @@ func _spawn_hit_vfx(is_crit: bool = false) -> void:
 	if world_parent != null:
 		pass
 		world_parent.add_child(vfx)
+		VfxRenderUtil.promote(vfx, 240)
 		vfx.global_position = boss.global_position
 		pass
 	else:

@@ -165,6 +165,7 @@ func _spawn_slam_ground_vfx() -> void:
 	if vfx == null:
 		return
 	root.add_child(vfx)
+	VfxRenderUtil.promote(vfx, 230)
 	# At golem feet (adjustable in inspector)
 	vfx.global_position = global_position + Vector2(0.0, slam_vfx_y_offset)
 	# Scale so X size = diameter of slam (2 * slam_radius); base frame is 512px wide

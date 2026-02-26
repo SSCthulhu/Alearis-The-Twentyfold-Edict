@@ -1,4 +1,5 @@
 extends Node
+const VfxRenderUtil = preload("res://scripts/vfx/VfxRenderUtil.gd")
 
 ## Knight Heavy Attack VFX Manager
 ## Spawns heavy attack VFX when Knight uses heavy attack (AOE spin)
@@ -63,6 +64,7 @@ func _spawn_knight_heavy_vfx(_facing_direction: int) -> void:
 	
 	var world = get_tree().root
 	world.add_child(vfx)
+	VfxRenderUtil.promote(vfx, 220)
 	
 	# Position at player center
 	var vfx_position: Vector2 = player_body.global_position

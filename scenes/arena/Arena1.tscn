@@ -648,7 +648,7 @@ position = Vector2(272, 217)
 position = Vector2(1399, 252)
 
 [node name="PlayerSpawn" type="Marker2D" parent="Spawns/Floor3"]
-position = Vector2(-1021, -704)
+position = Vector2(-1021, -380)
 
 [node name="Floor4" type="Node2D" parent="Spawns"]
 position = Vector2(46720, 15048)
@@ -719,6 +719,7 @@ position = Vector2(50737, 15762)
 [node name="ChargeStation_A" type="Area2D" parent="ChargeStations"]
 position = Vector2(-1069, -3621)
 script = ExtResource("6_4ehx8")
+charge_rate = 2.0
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="ChargeStations/ChargeStation_A"]
 position = Vector2(0, 136.53)
@@ -734,6 +735,7 @@ autoplay = "default"
 [node name="ChargeStation_B" type="Area2D" parent="ChargeStations"]
 position = Vector2(1092, -3746)
 script = ExtResource("6_4ehx8")
+charge_rate = 2.0
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="ChargeStations/ChargeStation_B"]
 position = Vector2(4.5, 136.53003)

@@ -1,6 +1,7 @@
 extends Node
 ## Rogue Defensive Smoke VFX Manager
 ## Spawns smoke VFX on top of Rogue when defensive ability is activated
+const VfxRenderUtil = preload("res://scripts/vfx/VfxRenderUtil.gd")
 
 @export var vfx_scene: PackedScene
 @export var target_character: String = "Rogue"  # Only triggers for Rogue
@@ -59,6 +60,7 @@ func _spawn_smoke_vfx(facing_direction: int) -> void:
 	# Add to world (not as child of player)
 	var world = get_tree().root
 	world.add_child(vfx)
+	VfxRenderUtil.promote(vfx, 220)
 	
 	# Position at player center with offset
 	var player_body: Node2D = get_parent() as Node2D

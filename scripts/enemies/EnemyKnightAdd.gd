@@ -1,5 +1,6 @@
 extends CharacterBody2D
 class_name EnemyKnightAdd
+const VfxRenderUtil = preload("res://scripts/vfx/VfxRenderUtil.gd")
 
 @export var move_speed: float = 140.0
 @export var accel: float = 1800.0
@@ -1035,6 +1036,7 @@ func _spawn_attack_vfx(spawn_position: Vector2, direction: int) -> void:
 	var scene_root: Node = get_tree().current_scene
 	if scene_root != null:
 		scene_root.add_child(vfx)
+		VfxRenderUtil.promote(vfx, 230)
 		vfx.global_position = spawn_position
 		
 		# Set VFX facing direction

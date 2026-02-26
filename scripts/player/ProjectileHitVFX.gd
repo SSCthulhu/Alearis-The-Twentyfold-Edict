@@ -1,6 +1,7 @@
 extends Node
 ## Projectile Hit VFX Manager
 ## Spawns explosion VFX on player when hit by specific enemy projectiles
+const VfxRenderUtil = preload("res://scripts/vfx/VfxRenderUtil.gd")
 
 @export var fire_explosion_scene: PackedScene  # For SkeletonMageProjectile
 @export var blood_explosion_scene: PackedScene  # For NecromancerProjectile
@@ -83,6 +84,7 @@ func _spawn_fire_explosion(impact_position: Vector2) -> void:
 	# Add to world (not as child of player)
 	var world = get_tree().root
 	world.add_child(vfx)
+	VfxRenderUtil.promote(vfx, 220)
 	
 	# Position at impact point with offset
 	var vfx_position: Vector2 = impact_position
@@ -100,6 +102,7 @@ func _spawn_blood_explosion(impact_position: Vector2) -> void:
 	# Add to world (not as child of player)
 	var world = get_tree().root
 	world.add_child(vfx)
+	VfxRenderUtil.promote(vfx, 220)
 	
 	# Position at impact point with offset
 	var vfx_position: Vector2 = impact_position
@@ -138,6 +141,7 @@ func _spawn_blood_side_burst(source: Node) -> void:
 	# Add to world (not as child of player)
 	var world = get_tree().root
 	world.add_child(vfx)
+	VfxRenderUtil.promote(vfx, 220)
 	
 	# Position at player center with offset
 	var vfx_position: Vector2 = player_body.global_position

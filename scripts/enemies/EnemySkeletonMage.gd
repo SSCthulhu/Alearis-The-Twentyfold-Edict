@@ -188,6 +188,7 @@ func _spawn_cast_aura_vfx() -> void:
 		return
 
 	add_child(vfx)
+	VfxRenderUtil.promote(vfx, 230)
 	_cast_aura_vfx = vfx
 
 	if vfx is Node2D:

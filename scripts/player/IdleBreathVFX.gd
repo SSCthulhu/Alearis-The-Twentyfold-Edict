@@ -42,6 +42,8 @@ func _process(delta: float) -> void:
 	_timer = _next_interval()
 
 func _should_emit_breath() -> bool:
+	if not _is_world1_scene():
+		return false
 	if not _player_body.is_on_floor():
 		return false
 	if _controller == null or not _controller.has_method("get_current_state"):
@@ -85,10 +87,22 @@ func _spawn_breath_puff(world_pos: Vector2, direction: Vector2) -> void:
 	puff.emitting = true
 
 	var ttl: float = maxf(puff.lifetime * 1.25, 0.4)
-	get_tree().create_timer(ttl).timeout.connect(func() -> void:
-		if puff != null and is_instance_valid(puff):
-			puff.queue_free()
-	)
+	var puff_id: int = puff.get_instance_id()
+	get_tree().create_timer(ttl).timeout.connect(_free_puff_by_id.bind(puff_id))
 
 func _next_interval() -> float:
 	return maxf(interval_seconds, 0.1)
+
+func _is_world1_scene() -> bool:
+	var scene: Node = get_tree().current_scene
+	if scene == null:
+		return false
+	return String(scene.scene_file_path) == "res://scenes/world/World1.tscn"
+
+func _free_puff_by_id(puff_id: int) -> void:
+	var obj: Object = instance_from_id(puff_id)
+	if obj == null or not is_instance_valid(obj):
+		return
+	var node: Node = obj as Node
+	if node != null:
+		node.queue_free()

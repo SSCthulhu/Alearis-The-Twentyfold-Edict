@@ -1,6 +1,7 @@
 # res://scripts/EnemyHealth.gd
 extends Node
 class_name EnemyHealth
+const VfxRenderUtil = preload("res://scripts/vfx/VfxRenderUtil.gd")
 
 signal damaged(amount: int)                                   # legacy
 signal damaged_tagged(amount: int, tag: StringName)           # preferred
@@ -139,6 +140,7 @@ func _spawn_hit_vfx(is_crit: bool = false) -> void:
 	var world_parent: Node = enemy.get_parent()
 	if world_parent != null:
 		world_parent.add_child(vfx)
+		VfxRenderUtil.promote(vfx, 230)
 		vfx.global_position = vfx_position
 	else:
 		vfx.queue_free()

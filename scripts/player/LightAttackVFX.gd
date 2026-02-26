@@ -1,5 +1,6 @@
 extends Node
 class_name LightAttackVFX
+const VfxRenderUtil = preload("res://scripts/vfx/VfxRenderUtil.gd")
 
 ## Spawns directional light attack VFX when the Rogue performs light attacks
 ## VFX flips horizontally based on attack direction
@@ -98,6 +99,7 @@ func _spawn_light_attack_vfx(facing_direction: int) -> void:
 	var world_parent: Node = player_body.get_parent()
 	if world_parent != null:
 		world_parent.add_child(vfx)
+		VfxRenderUtil.promote(vfx, 220)
 		
 		# Position IN FRONT of the player based on facing direction
 		var vfx_position: Vector2 = player_body.global_position

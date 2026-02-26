@@ -1,6 +1,7 @@
 extends Node
 ## Rogue Defensive Aura VFX Manager
 ## Spawns continuous looping smoke aura that follows Rogue during defensive buff
+const VfxRenderUtil = preload("res://scripts/vfx/VfxRenderUtil.gd")
 
 @export var vfx_scene: PackedScene
 @export var target_character: String = "Rogue"  # Only triggers for Rogue
@@ -71,6 +72,7 @@ func _spawn_aura_vfx(facing_direction: int) -> void:
 		return
 	
 	player_body.add_child(vfx)
+	VfxRenderUtil.promote(vfx, 220)
 	
 	# Position relative to player center with offset
 	vfx.position.x = offset_x

@@ -63,6 +63,12 @@ const FALL_VELOCITY: float = 500.0
 const DASH_LENGTH: float = 100.0
 const DASH_VELOCITY: float = 600.0
 
+@export_group("Ground Adhesion")
+@export var enable_slope_ground_adhesion: bool = true
+@export var slope_floor_snap_length: float = 22.0
+@export var slope_floor_max_angle_deg: float = 50.0
+@export var slope_snap_requires_downward_motion: bool = true
+
 # -----------------------------
 # Character Data
 # -----------------------------
@@ -190,6 +196,7 @@ func _ready() -> void:
 	_load_character_data()
 	_initialize_roll_charges()
 	_drop_restore_collision_mask = collision_mask
+	floor_max_angle = deg_to_rad(slope_floor_max_angle_deg)
 	switch_state(STATE.FALL)
 
 
@@ -304,6 +311,7 @@ func _physics_process(delta: float) -> void:
 	_update_roll_charges(delta)
 	_update_timers(delta)
 	_update_combo_timers(delta)
+	_update_slope_ground_adhesion()
 	_check_grounded_dropthrough_request()
 	_check_airborne_pre_dropthrough()
 	
@@ -318,6 +326,30 @@ func _physics_process(delta: float) -> void:
 		move_and_slide()
 	_update_floor_surface_cache()
 	_check_airborne_auto_dropthrough(was_on_floor_before_move)
+
+func _update_slope_ground_adhesion() -> void:
+	if not enable_slope_ground_adhesion:
+		return
+
+	floor_max_angle = deg_to_rad(slope_floor_max_angle_deg)
+
+	var jump_pressed: bool = Input.is_action_just_pressed(input_jump)
+	var disable_snap: bool = (
+		_drop_through_timer > 0.0
+		or jump_pressed
+		or active_state == STATE.JUMP
+		or active_state == STATE.DOUBLE_JUMP
+	)
+	floor_snap_length = 0.0 if disable_snap else maxf(slope_floor_snap_length, 0.0)
+	if disable_snap:
+		return
+
+	if slope_snap_requires_downward_motion and velocity.y < 0.0:
+		return
+
+	# Keeps body glued to valid slopes when descending, while still allowing true ledge drop-offs.
+	if not is_on_floor():
+		apply_floor_snap()
 
 func _update_drop_through_timer(delta: float) -> void:
 	if _drop_through_fall_lock_timer > 0.0:

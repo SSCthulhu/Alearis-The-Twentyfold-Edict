@@ -1,5 +1,6 @@
 extends Node
 class_name HeavyAttackVFX
+const VfxRenderUtil = preload("res://scripts/vfx/VfxRenderUtil.gd")
 
 ## Spawns heavy attack VFX when Rogue uses heavy attack
 ## Only triggers for Rogue character
@@ -98,6 +99,7 @@ func _spawn_heavy_attack_vfx(_character_name: String, facing_direction: int) -> 
 	var world_parent: Node = player_body.get_parent()
 	if world_parent != null:
 		world_parent.add_child(vfx)
+		VfxRenderUtil.promote(vfx, 220)
 		
 		# Position at player center (no offset)
 		var vfx_position: Vector2 = player_body.global_position

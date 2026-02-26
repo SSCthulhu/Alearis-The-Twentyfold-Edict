@@ -81,6 +81,7 @@ func _enter_portal() -> void:
 		return
 	
 	_portal_active = false
+	_suppress_player_healing_vfx(4.0)
 	
 	if debug_logs:
 		pass
@@ -154,6 +155,13 @@ func _fade_screen(overlay: ColorRect, from_alpha: float, to_alpha: float, durati
 	var tween = create_tween()
 	tween.tween_property(overlay, "color:a", to_alpha, duration).from(from_alpha)
 	await tween.finished
+
+func _suppress_player_healing_vfx(seconds: float) -> void:
+	if _player == null:
+		return
+	var player_health: Node = _player.get_node_or_null("Health")
+	if player_health != null and player_health.has_method("suppress_healing_vfx_for"):
+		player_health.call("suppress_healing_vfx_for", seconds)
 
 
 	
