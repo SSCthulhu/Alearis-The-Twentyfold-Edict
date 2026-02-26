@@ -39,9 +39,15 @@ var _victory_ui: Node = null
 # Add-unlock mechanic
 # -----------------------------
 @export var add_scene: PackedScene
+@export var add_enemy_pool: Array[PackedScene] = []
 @export var adds_per_cycle: int = 3
 @export var glowing_add_color: Color = Color(1.0, 1.0, 0.0, 1.0)  # Yellow glow
 @export var glowing_add_light_energy: float = 1.2
+@export var add_spawn_points_root_path: NodePath = ^"../Arena/Spawns/Floor5"
+@export var randomize_add_spawn_points: bool = true
+@export var clamp_add_spawns_to_bounds: bool = true
+@export var add_spawn_min: Vector2 = Vector2(49377.0, 11750.0)
+@export var add_spawn_max: Vector2 = Vector2(52321.0, 12900.0)
 
 # -----------------------------
 # Elite (Golem) pre-boss mechanic
@@ -66,6 +72,7 @@ var _rng: RandomNumberGenerator = RandomNumberGenerator.new()
 
 var _spawns: Array[Node2D] = []
 var _active_spawn: Node2D = null
+var _add_spawn_points: Array[Node2D] = []
 
 var _sockets: Array[AscensionSocket] = []
 var _active_socket: AscensionSocket = null
@@ -137,6 +144,7 @@ func _ready() -> void:
 
 	_load_charge_stations()
 	_load_spawns_from_root()
+	_load_add_spawn_points_from_root()
 	_load_sockets_from_root_and_connect()
 	_adopt_existing_charge()
 	
@@ -416,7 +424,7 @@ func _begin_ascent_cycle() -> void:
 func _spawn_cycle_adds() -> void:
 	_cleanup_cycle_adds()
 
-	if add_scene == null:
+	if add_scene == null and add_enemy_pool.is_empty():
 		push_warning("[Encounter] add_scene is NULL; cannot spawn cycle adds.")
 		return
 	if _stations.is_empty():
@@ -436,12 +444,15 @@ func _spawn_cycle_adds() -> void:
 	# Map the glowing add to one of the available stations (0 or 1)
 	var station_idx: int = _rng.randi_range(0, station_count - 1)
 	_unlocked_station_index = station_idx
+	var spawn_nodes: Array[Node2D] = _pick_add_spawn_points(spawn_count)
 
 	for i: int in range(spawn_count):
 		# Pick station position for this add
 		# For the first 2 adds, use station positions; for the 3rd, use a nearby position
 		var spawn_pos: Vector2
-		if i < station_count:
+		if i < spawn_nodes.size() and spawn_nodes[i] != null and is_instance_valid(spawn_nodes[i]):
+			spawn_pos = spawn_nodes[i].global_position
+		elif i < station_count:
 			var st: ChargeStation = _stations[i] as ChargeStation
 			if st == null or not is_instance_valid(st):
 				continue
@@ -453,10 +464,16 @@ func _spawn_cycle_adds() -> void:
 				continue
 			spawn_pos = st.global_position + Vector2(_rng.randf_range(-200.0, 200.0), -8.0)
 
-		var add_node: Node = add_scene.instantiate()
+		spawn_pos = _clamp_add_spawn_position(spawn_pos)
+
+		var chosen_add_scene: PackedScene = _pick_add_scene()
+		if chosen_add_scene == null:
+			push_warning("[Encounter] No valid enemy scene found for cycle add spawn.")
+			continue
+		var add_node: Node = chosen_add_scene.instantiate()
 		var add2d: Node2D = add_node as Node2D
 		if add2d == null:
-			push_warning("[Encounter] add_scene root must be Node2D/CharacterBody2D.")
+			push_warning("[Encounter] Cycle add scene root must be Node2D/CharacterBody2D.")
 			add_node.queue_free()
 			continue
 
@@ -693,6 +710,23 @@ func _find_charges(n: Node, out: Array[AscensionCharge]) -> void:
 		_find_charges(child, out)
 
 # -------------------- Spawns --------------------
+func _pick_add_scene() -> PackedScene:
+	var valid_pool: Array[PackedScene] = []
+	for scn: PackedScene in add_enemy_pool:
+		if scn != null:
+			valid_pool.append(scn)
+	if not valid_pool.is_empty():
+		return valid_pool[_rng.randi_range(0, valid_pool.size() - 1)]
+	return add_scene
+
+func _clamp_add_spawn_position(pos: Vector2) -> Vector2:
+	if not clamp_add_spawns_to_bounds:
+		return pos
+	return Vector2(
+		clampf(pos.x, minf(add_spawn_min.x, add_spawn_max.x), maxf(add_spawn_min.x, add_spawn_max.x)),
+		clampf(pos.y, minf(add_spawn_min.y, add_spawn_max.y), maxf(add_spawn_min.y, add_spawn_max.y))
+	)
+
 func _load_spawns_from_root() -> void:
 	_spawns.clear()
 	_active_spawn = null
@@ -709,6 +743,37 @@ func _load_spawns_from_root() -> void:
 		var n := child as Node2D
 		if n != null:
 			_spawns.append(n)
+
+func _load_add_spawn_points_from_root() -> void:
+	_add_spawn_points.clear()
+	var root: Node = get_node_or_null(add_spawn_points_root_path)
+	if root == null:
+		return
+	for child: Node in root.get_children():
+		var n: Node2D = child as Node2D
+		if n != null:
+			_add_spawn_points.append(n)
+
+func _pick_add_spawn_points(count: int) -> Array[Node2D]:
+	var result: Array[Node2D] = []
+	if not randomize_add_spawn_points or _add_spawn_points.is_empty() or count <= 0:
+		return result
+
+	var idxs: Array[int] = []
+	for i: int in range(_add_spawn_points.size()):
+		idxs.append(i)
+	for i: int in range(idxs.size() - 1, 0, -1):
+		var j: int = _rng.randi_range(0, i)
+		var tmp: int = idxs[i]
+		idxs[i] = idxs[j]
+		idxs[j] = tmp
+
+	var need: int = mini(count, idxs.size())
+	for i: int in range(need):
+		var n: Node2D = _add_spawn_points[idxs[i]]
+		if n != null and is_instance_valid(n):
+			result.append(n)
+	return result
 
 func _pick_active_spawn() -> void:
 	if _spawns.is_empty():

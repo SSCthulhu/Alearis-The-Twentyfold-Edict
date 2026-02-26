@@ -72,9 +72,10 @@ position = Vector2(0, 1090.667)
 texture = ExtResource("3_ej262")
 
 [node name="Near" type="Parallax2D" parent="BackgroundF1-F2"]
+visible = false
 scale = Vector2(1.5, 1.5)
 scroll_scale = Vector2(0.1, 0)
-scroll_offset = Vector2(-44, -455)
+scroll_offset = Vector2(-57, -347)
 repeat_size = Vector2(1280, 0)
 repeat_times = 3
 follow_viewport = false
@@ -141,7 +142,7 @@ texture = ExtResource("9_thmre")
 [node name="Mid" type="Parallax2D" parent="BackgroundF3-F5"]
 scale = Vector2(1.5, 1.5)
 scroll_scale = Vector2(0.06, 0)
-scroll_offset = Vector2(-3106, -1461)
+scroll_offset = Vector2(-3153, -1168)
 repeat_size = Vector2(2112, 0)
 repeat_times = 7
 follow_viewport = false
@@ -154,7 +155,7 @@ texture = ExtResource("10_80gak")
 [node name="Near" type="Parallax2D" parent="BackgroundF3-F5"]
 scale = Vector2(3, 3)
 scroll_scale = Vector2(0.1, 0)
-scroll_offset = Vector2(173, -1190)
+scroll_offset = Vector2(-7888, -792)
 repeat_size = Vector2(2688, 0)
 repeat_times = 3
 follow_viewport = false
@@ -170,6 +171,7 @@ charge_scene = ExtResource("2_n8wkn")
 world_scene_paths = Array[String](["res://scenes/world/World1.tscn", "res://scenes/world/World2.tscn", "res://scenes/world/World3.tscn"])
 ascension_sockets_root_path = NodePath("../AscensionSocket")
 add_scene = ExtResource("3_61woi")
+add_enemy_pool = Array[PackedScene]([ExtResource("3_61woi"), ExtResource("3_necro"), ExtResource("3_rogue"), ExtResource("3_mage")])
 golem_scene = ExtResource("3_golem")
 start_on_ready = false
 
@@ -178,11 +180,21 @@ script = ExtResource("4_yjglx")
 steam_elevator_path = NodePath("")
 floor_progression_mode = 1
 floor_ceiling_y = PackedFloat32Array(0)
+boss_start_x = 49377.0
 chest_scene = ExtResource("5_mi5e1")
 dice_choice_ui_path = NodePath("../DiceModifierChoice")
 chest_spawn_fallback_path = NodePath("../Arena/ChestSpawns")
 enable_orb_flight = false
 enable_world1_floor3_transition = true
+enable_world1_boss_arena_camera = true
+world1_boss_camera_left = 47009.27
+world1_boss_camera_right = 54085.6
+world1_boss_camera_top = 10500.0
+world1_boss_camera_bottom = 14250.0
+world1_boss_camera_live_tuning = true
+world1_boss_camera_use_manual_center = true
+world1_boss_camera_center = Vector2(50867.07, 12371.58)
+world1_boss_camera_min_zoom = 0.77
 
 [node name="FloorEnemySpawner" type="Node" parent="."]
 script = ExtResource("6_imtto")
@@ -197,7 +209,7 @@ enable_strict_ledge_guard = true
 position = Vector2(0, -3200)
 
 [node name="Player" parent="." instance=ExtResource("12_gp4b6")]
-position = Vector2(-83, 1276)
+position = Vector2(-1346, 1545)
 
 [node name="InteractArea" parent="Player" index="2"]
 position = Vector2(-11.56, 51.15)
@@ -208,27 +220,36 @@ position = Vector2(11.555, -51.155)
 [node name="Camera2D" parent="Player" index="10"]
 limit_top = -4500
 limit_right = 65360
-limit_bottom = 14000
+limit_bottom = 14535
 
 [node name="PlayerCameraController" parent="Player" index="30"]
 enable_progressive_limits = false
 
+[node name="BossArenaCamera" type="Camera2D" parent="."]
+position = Vector2(50849, 12767.5)
+enabled = false
+limit_left = 49377
+limit_top = 11000
+limit_right = 52321
+limit_bottom = 14535
+
 [node name="Boss" parent="." instance=ExtResource("13_1srhu")]
-position = Vector2(52925, 12831)
+position = Vector2(50759, 12794)
 collision_mask = 3
 
 [node name="AcensionCharge" parent="." instance=ExtResource("2_n8wkn")]
-position = Vector2(51155, 12953)
+position = Vector2(51397, 12593)
 
 [node name="AscensionSocket" type="Node2D" parent="."]
-position = Vector2(54407, 16871)
+z_index = 2
+position = Vector2(50749, 16927)
 
 [node name="AscensionSocketA" parent="AscensionSocket" instance=ExtResource("14_usd6y")]
-position = Vector2(-303, -3995)
+position = Vector2(-562, -3995)
 scale = Vector2(1, 1)
 
 [node name="AscensionSocketB" parent="AscensionSocket" instance=ExtResource("14_usd6y")]
-position = Vector2(311, -3995)
+position = Vector2(625, -4001)
 scale = Vector2(1, 1)
 
 [node name="UI" parent="." instance=ExtResource("16_thmre")]

@@ -95,6 +95,12 @@ var _saved_position: Vector2 = Vector2.ZERO
 var _is_sprinting: bool = false
 var _dash_jump_buffer: bool = false
 var _used_double_jump: bool = false  # Track if double jump was used for landing animation
+var _drop_last_tap_time: float = -999.0
+var _drop_through_timer: float = 0.0
+var _drop_through_fall_lock_timer: float = 0.0
+var _drop_restore_collision_mask: int = 0
+var _floor_on_dropthrough_platform: bool = false
+var _last_floor_collider_name: StringName = &""
 
 # Timers
 var _coyote_timer: Timer = null
@@ -147,6 +153,7 @@ var _roll_speed: float = 0.0
 @export_group("Input Actions")
 @export var input_move_left: StringName = &"move_left"
 @export var input_move_right: StringName = &"move_right"
+@export var input_move_down: StringName = &"move_down"
 @export var input_jump: StringName = &"jump"
 @export var input_dash: StringName = &"dash"
 @export var input_roll: StringName = &"Dodge"
@@ -154,6 +161,18 @@ var _roll_speed: float = 0.0
 @export var input_heavy_attack: StringName = &"attack_heavy"
 @export var input_ultimate: StringName = &"ultimate"
 @export var input_defend: StringName = &"defend"
+
+@export_group("Drop Through Platforms")
+@export var drop_through_double_tap_window: float = 0.22
+@export var drop_through_duration: float = 0.12
+@export var drop_through_downward_boost: float = 360.0
+@export var drop_through_downward_boost_air: float = 460.0
+@export var drop_through_world_collision_layer_bit: int = 1
+@export var auto_drop_when_airborne_holding_down: bool = true
+@export var drop_through_airborne_probe_feet_offset: float = 36.0
+@export var drop_through_airborne_probe_distance: float = 96.0
+@export var drop_through_roll_cue_lock_time: float = 0.14
+@export var drop_through_allowed_floor_names: PackedStringArray = PackedStringArray(["Platforms"])
 
 # Testing/Debug inputs
 @export_group("Debug/Testing Inputs")
@@ -170,6 +189,7 @@ func _ready() -> void:
 	_setup_timers()
 	_load_character_data()
 	_initialize_roll_charges()
+	_drop_restore_collision_mask = collision_mask
 	switch_state(STATE.FALL)
 
 
@@ -258,6 +278,8 @@ func _initialize_roll_charges() -> void:
 # Physics Process
 # -----------------------------
 func _physics_process(delta: float) -> void:
+	_update_drop_through_timer(delta)
+
 	# CRITICAL: If input is locked (victory UI, cutscenes, etc.), freeze player completely
 	if _input_locked:
 		velocity = Vector2.ZERO  # Stop all movement
@@ -282,6 +304,8 @@ func _physics_process(delta: float) -> void:
 	_update_roll_charges(delta)
 	_update_timers(delta)
 	_update_combo_timers(delta)
+	_check_grounded_dropthrough_request()
+	_check_airborne_pre_dropthrough()
 	
 	# Check for debug/test inputs
 	_handle_debug_inputs()
@@ -289,8 +313,133 @@ func _physics_process(delta: float) -> void:
 	process_state(delta)
 	
 	# Don't apply physics during ultimate
+	var was_on_floor_before_move: bool = is_on_floor()
 	if active_state != STATE.ULTIMATE:
 		move_and_slide()
+	_update_floor_surface_cache()
+	_check_airborne_auto_dropthrough(was_on_floor_before_move)
+
+func _update_drop_through_timer(delta: float) -> void:
+	if _drop_through_fall_lock_timer > 0.0:
+		_drop_through_fall_lock_timer = maxf(_drop_through_fall_lock_timer - delta, 0.0)
+	if _drop_through_timer <= 0.0:
+		return
+	_drop_through_timer = maxf(_drop_through_timer - delta, 0.0)
+	if _drop_through_timer <= 0.0:
+		collision_mask = _drop_restore_collision_mask
+
+func _check_grounded_dropthrough_request() -> void:
+	if _drop_through_timer > 0.0:
+		return
+	if not is_on_floor():
+		return
+	if not _floor_on_dropthrough_platform:
+		return
+	if not Input.is_action_just_pressed(input_move_down):
+		return
+	var now_sec: float = float(Time.get_ticks_msec()) / 1000.0
+	if now_sec - _drop_last_tap_time <= drop_through_double_tap_window:
+		_start_drop_through(true)
+		_drop_last_tap_time = -999.0
+	else:
+		_drop_last_tap_time = now_sec
+
+func _check_airborne_pre_dropthrough() -> void:
+	if _drop_through_timer > 0.0:
+		return
+	if not auto_drop_when_airborne_holding_down:
+		return
+	if is_on_floor():
+		return
+	if not Input.is_action_pressed(input_move_down):
+		return
+	if not _is_dropthrough_platform_below():
+		return
+	# Pre-emptively disable one-way platform collision before landing frame.
+	_start_drop_through(false, true)
+
+func _check_airborne_auto_dropthrough(was_on_floor_before_move: bool) -> void:
+	if _drop_through_timer > 0.0:
+		return
+	if not auto_drop_when_airborne_holding_down:
+		return
+	# If falling while holding down and we touch a one-way platform this frame, drop through immediately.
+	if was_on_floor_before_move:
+		return
+	if not is_on_floor():
+		return
+	if not Input.is_action_pressed(input_move_down):
+		return
+	if not _floor_on_dropthrough_platform:
+		return
+	_start_drop_through(false, true)
+
+func _start_drop_through(play_roll_anim: bool = false, airborne_mode: bool = false) -> void:
+	if _drop_through_timer > 0.0:
+		return
+	var bit: int = clampi(drop_through_world_collision_layer_bit, 1, 32)
+	_drop_restore_collision_mask = collision_mask
+	collision_mask = collision_mask & ~(1 << (bit - 1))
+	_drop_through_timer = maxf(drop_through_duration, 0.01)
+	velocity.y = maxf(velocity.y, drop_through_downward_boost_air if airborne_mode else drop_through_downward_boost)
+	if active_state != STATE.FALL:
+		switch_state(STATE.FALL)
+	if play_roll_anim and not airborne_mode:
+		_drop_through_fall_lock_timer = maxf(drop_through_roll_cue_lock_time, 0.01)
+		# Play roll cue after state change so FALL animation setup doesn't immediately override it.
+		_play_animation("dodge", 2.0)
+
+func _is_dropthrough_platform_below() -> bool:
+	var space_state: PhysicsDirectSpaceState2D = get_world_2d().direct_space_state
+	var from: Vector2 = global_position + Vector2(0.0, drop_through_airborne_probe_feet_offset)
+	var to: Vector2 = from + Vector2(0.0, maxf(drop_through_airborne_probe_distance, 8.0))
+	var query: PhysicsRayQueryParameters2D = PhysicsRayQueryParameters2D.create(from, to)
+	query.exclude = [self]
+	query.collide_with_areas = false
+	query.collide_with_bodies = true
+	var hit: Dictionary = space_state.intersect_ray(query)
+	if hit.is_empty():
+		return false
+	var collider_obj: Variant = hit.get("collider", null)
+	if collider_obj is Node:
+		return _is_dropthrough_platform_node(collider_obj as Node)
+	return false
+
+func _update_floor_surface_cache() -> void:
+	_floor_on_dropthrough_platform = false
+	_last_floor_collider_name = &""
+	if not is_on_floor():
+		return
+	for i in range(get_slide_collision_count()):
+		var col: KinematicCollision2D = get_slide_collision(i)
+		if col == null:
+			continue
+		if col.get_normal().dot(Vector2.UP) < 0.5:
+			continue
+		var collider_obj: Object = col.get_collider()
+		if collider_obj is Node:
+			var n: Node = collider_obj as Node
+			_last_floor_collider_name = StringName(n.name)
+			if _is_dropthrough_platform_node(n):
+				_floor_on_dropthrough_platform = true
+				return
+
+func _is_dropthrough_floor_name_allowed(surface_name: String) -> bool:
+	for allowed: String in drop_through_allowed_floor_names:
+		if allowed == surface_name:
+			return true
+	var lower: String = surface_name.to_lower()
+	return lower.contains("platform")
+
+func _is_dropthrough_platform_node(node: Node) -> bool:
+	if node == null:
+		return false
+	if _is_dropthrough_floor_name_allowed(String(node.name)):
+		return true
+	var p: Node = node.get_parent()
+	if p != null and _is_dropthrough_floor_name_allowed(String(p.name)):
+		return true
+	return false
 
 
 func _update_timers(delta: float) -> void:
@@ -582,7 +731,7 @@ func process_state(delta: float) -> void:
 			
 			if Input.is_action_just_pressed(input_defend) and _can_use_defend():
 				switch_state(STATE.DEFEND)
-			elif is_on_floor():
+			elif is_on_floor() and _drop_through_fall_lock_timer <= 0.0:
 				# Only play landing animation/VFX if we entered FALL from a jump (not walking off edge)
 				# Check previous state: if we came from IDLE/WALK/SPRINT, it's a slope/coyote situation
 				var came_from_ground_state: bool = (previous_state == STATE.IDLE or 
