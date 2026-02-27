@@ -461,7 +461,7 @@ func _is_dropthrough_floor_name_allowed(surface_name: String) -> bool:
 		if allowed == surface_name:
 			return true
 	var lower: String = surface_name.to_lower()
-	return lower.contains("platform")
+	return lower.contains("platform") or lower.contains("cloud") or lower.contains("ledge")
 
 func _is_dropthrough_platform_node(node: Node) -> bool:
 	if node == null:
