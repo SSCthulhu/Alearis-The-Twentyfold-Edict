@@ -466,11 +466,13 @@ func _is_dropthrough_floor_name_allowed(surface_name: String) -> bool:
 func _is_dropthrough_platform_node(node: Node) -> bool:
 	if node == null:
 		return false
-	if _is_dropthrough_floor_name_allowed(String(node.name)):
-		return true
-	var p: Node = node.get_parent()
-	if p != null and _is_dropthrough_floor_name_allowed(String(p.name)):
-		return true
+
+	# Check collider ancestry so nested shapes/bodies under platform groups still qualify.
+	var cursor: Node = node
+	while cursor != null:
+		if _is_dropthrough_floor_name_allowed(String(cursor.name)):
+			return true
+		cursor = cursor.get_parent()
 	return false
 
 

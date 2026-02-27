@@ -527,6 +527,7 @@ colors = PackedColorArray(0, 0, 0, 1, 1, 1, 1, 0, 1, 1, 1, 0.25, 1, 1, 1, 0.25, 
 [node name="World3" type="Node2D"]
 
 [node name="FloorCameraBounds" type="Node2D" parent="."]
+visible = false
 
 [node name="Floor1" type="Node2D" parent="FloorCameraBounds"]
 
@@ -798,7 +799,7 @@ enable_strict_ledge_guard = true
 [node name="Player" parent="." instance=ExtResource("25_mi1eq")]
 z_index = 12
 z_as_relative = false
-position = Vector2(-1398, 1290)
+position = Vector2(-316, 1188)
 
 [node name="CollisionShape2D" parent="Player" index="0"]
 position = Vector2(0, 3.5)
@@ -820,7 +821,7 @@ limit_bottom = 3000
 enable_progressive_limits = false
 
 [node name="Boss" parent="." instance=ExtResource("26_rr44v")]
-position = Vector2(26974, -4833)
+position = Vector2(26974, -4860)
 
 [node name="CollisionShape2D" parent="Boss/Hurtbox" index="0"]
 position = Vector2(0, 85)
@@ -838,10 +839,10 @@ debug_socket = true
 [node name="UI" parent="." instance=ExtResource("29_x3lom")]
 
 [node name="PlayerHUDCluster" parent="UI/ScreenRoot/HUDRoot/BottomRight" index="0"]
-offset_left = -408.0
-offset_top = -172.5
-offset_right = -16.5
-offset_bottom = -16.5
+offset_left = -414.8
+offset_top = -175.375
+offset_right = -16.775
+offset_bottom = -16.775
 style = ExtResource("30_pghea")
 
 [node name="PlayerHUDWiring" parent="UI/ScreenRoot/HUDRoot" index="4"]
@@ -885,6 +886,15 @@ layout_mode = 0
 anchor_right = 1.0
 anchor_bottom = 1.0
 mouse_filter = 2
+
+[node name="LowHealthPostFX" parent="UI/ScreenRoot/HUDRoot/PlayerDamageFeedback" index="0"]
+layout_mode = 3
+
+[node name="LowHealthBorder" parent="UI/ScreenRoot/HUDRoot/PlayerDamageFeedback" index="1"]
+layout_mode = 3
+
+[node name="HitFlash" parent="UI/ScreenRoot/HUDRoot/PlayerDamageFeedback" index="2"]
+layout_mode = 3
 
 [node name="DiceModifierChoice" parent="." instance=ExtResource("31_cdgb1")]
 
@@ -1000,10 +1010,6 @@ copy_mode = 0
 rect = Rect2(-10000, -10000, 20000, 20000)
 
 [editable path="Arena"]
-[editable path="Arena/Geometry/Floors/Floor1"]
-[editable path="Arena/Geometry/Floors/Floor3B"]
-[editable path="Arena/Geometry/Floors/Floor4"]
-[editable path="Arena/Geometry/Floors/Floor5"]
 [editable path="Player"]
 [editable path="Player/Visual/Body3DView"]
 [editable path="Boss"]
