@@ -1,4 +1,4 @@
-[gd_scene load_steps=35 format=3 uid="uid://cos5po5s14l56"]
+[gd_scene load_steps=39 format=3 uid="uid://cos5po5s14l56"]
 
 [ext_resource type="Script" uid="uid://bwo5386w06j5j" path="res://scripts/systems/BossEncounterWorld2.gd" id="1_bossenc2"]
 [ext_resource type="PackedScene" uid="uid://b5uuaa28c07e8" path="res://scenes/boss/PortalWorld2.tscn" id="1_portalw2"]
@@ -19,7 +19,7 @@
 [ext_resource type="Texture2D" uid="uid://c1q3i77fw7hoe" path="res://art/Worlds/Rolling Hills/Mountain/cloud4.png" id="6_saqrm"]
 [ext_resource type="Texture2D" uid="uid://crg5j0xxhh6r0" path="res://art/Worlds/Jungle/background/1.png" id="7_somlc"]
 [ext_resource type="Texture2D" uid="uid://btj8ejner44my" path="res://art/Worlds/Dungeon/bg/1.png" id="9_hi1dp"]
-[ext_resource type="Texture2D" uid="uid://c2diinyw3gowt" path="res://art/Worlds/Rolling Hills/Mountain/cloud3.png" id="10_o5lv8"]
+[ext_resource type="Texture2D" uid="uid://blt6ipqohvu1p" path="res://art/Worlds/Jungle/background/clouds/cloud-7.png" id="10_8wr4c"]
 [ext_resource type="PackedScene" uid="uid://c72m65e63bs0o" path="res://scenes/player/player.tscn" id="12_2cxal"]
 [ext_resource type="PackedScene" uid="uid://c73g8ryxy8vv5" path="res://scenes/boss/Boss_World2.tscn" id="13_ys2ak"]
 [ext_resource type="PackedScene" uid="uid://bxmiuknanvwv6" path="res://scenes/arena/Arena2.tscn" id="14_l6nik"]
@@ -33,13 +33,42 @@
 [ext_resource type="PackedScene" uid="uid://8hysfqws2ayt" path="res://scenes/player/OrbFlightController.tscn" id="25_bytlt"]
 [ext_resource type="AudioStream" uid="uid://dn3jm8svfdr6j" path="res://music/level/(Disc 2) 14 - Catacecaumene.mp3" id="33_devdu"]
 
-[sub_resource type="CapsuleShape2D" id="CapsuleShape2D_devdu"]
-radius = 64.9
-height = 754.7
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_8wr4c"]
+texture = ExtResource("5_4163r")
+texture_region_size = Vector2i(799, 367)
+0:0/0 = 0
+0:0/0/physics_layer_0/polygon_0/points = PackedVector2Array(-399.5, 50.045456, 399.49994, 50.045456, 399.49994, 150.13635, -399.5, 150.13635)
+0:0/0/physics_layer_0/polygon_0/one_way = true
 
-[sub_resource type="CapsuleShape2D" id="CapsuleShape2D_awieb"]
-radius = 34.85
-height = 604.55
+[sub_resource type="TileSet" id="TileSet_devdu"]
+tile_size = Vector2i(799, 367)
+physics_layer_0/collision_layer = 1
+sources/2 = SubResource("TileSetAtlasSource_8wr4c")
+
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_devdu"]
+texture = ExtResource("4_bytlt")
+texture_region_size = Vector2i(871, 389)
+0:0/0 = 0
+0:0/0/physics_layer_0/polygon_0/points = PackedVector2Array(-415.5, 25.54544, 415.5, 25.54544, 415.5, 127.727264, -415.5, 127.727264)
+0:0/0/physics_layer_0/polygon_0/one_way = true
+
+[sub_resource type="TileSet" id="TileSet_awieb"]
+tile_size = Vector2i(871, 389)
+physics_layer_0/collision_layer = 1
+sources/0 = SubResource("TileSetAtlasSource_devdu")
+
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_o5lv8"]
+texture = ExtResource("10_8wr4c")
+texture_region_size = Vector2i(1020, 565)
+0:0/0 = 0
+0:0/0/physics_layer_0/polygon_0/points = PackedVector2Array(-231.81818, 25.681824, 510, -25.681824, 417.2727, 128.40909, -231.81818, 128.40909)
+0:0/0/physics_layer_0/polygon_0/one_way = true
+0:0/0/physics_layer_0/polygon_1/points = PackedVector2Array(-510, 179.77274, -510, 282.5, 46.363647, 282.5, 46.363647, 231.13635)
+
+[sub_resource type="TileSet" id="TileSet_hyqpu"]
+tile_size = Vector2i(1020, 565)
+physics_layer_0/collision_layer = 1
+sources/1 = SubResource("TileSetAtlasSource_o5lv8")
 
 [node name="World2" type="Node2D"]
 
@@ -189,17 +218,17 @@ texture = ExtResource("7_somlc")
 
 [node name="CastleBG1" type="Sprite2D" parent="BackgroundStatic"]
 z_index = -4
-position = Vector2(0, 1940)
+position = Vector2(1, 1970)
 texture = ExtResource("9_hi1dp")
 
 [node name="CastleBG2" type="Sprite2D" parent="BackgroundStatic"]
 z_index = -4
-position = Vector2(-2374, 1940)
+position = Vector2(-2373, 1970)
 texture = ExtResource("9_hi1dp")
 
 [node name="CastleBG3" type="Sprite2D" parent="BackgroundStatic"]
 z_index = -4
-position = Vector2(2374, 1940)
+position = Vector2(2375, 1970)
 texture = ExtResource("9_hi1dp")
 
 [node name="Arena" parent="." instance=ExtResource("14_l6nik")]
@@ -220,45 +249,31 @@ position = Vector2(-158, -15199)
 modulate = Color(1, 1, 1, 0.7254902)
 position = Vector2(861, -21414)
 
-[node name="Sprite2D" type="Sprite2D" parent="Arena/Cloud1"]
-texture = ExtResource("5_4163r")
-
-[node name="AnimatableBody2D" type="AnimatableBody2D" parent="Arena/Cloud1"]
-
-[node name="CollisionShape2D" type="CollisionShape2D" parent="Arena/Cloud1/AnimatableBody2D"]
-position = Vector2(0, 66)
-rotation = 1.5358897
-shape = SubResource("CapsuleShape2D_devdu")
+[node name="TileMapLayer" type="TileMapLayer" parent="Arena/Cloud1"]
+position = Vector2(394, 181)
+tile_map_data = PackedByteArray(0, 0, 255, 255, 255, 255, 2, 0, 0, 0, 0, 0, 0, 0)
+tile_set = SubResource("TileSet_devdu")
 
 [node name="Cloud2" type="Node2D" parent="Arena"]
 modulate = Color(1, 1, 1, 0.7254902)
 position = Vector2(-715, -21448)
 scale = Vector2(0.7, 0.7)
 
-[node name="Sprite2D" type="Sprite2D" parent="Arena/Cloud2"]
-texture = ExtResource("10_o5lv8")
-
-[node name="AnimatableBody2D" type="AnimatableBody2D" parent="Arena/Cloud2"]
-
-[node name="CollisionShape2D" type="CollisionShape2D" parent="Arena/Cloud2/AnimatableBody2D"]
-position = Vector2(-19.996094, 97.42969)
-rotation = 1.5707964
-shape = SubResource("CapsuleShape2D_awieb")
+[node name="TileMapLayer2" type="TileMapLayer" parent="Arena/Cloud2"]
+position = Vector2(2187.143, 299.9997)
+tile_map_data = PackedByteArray(0, 0, 253, 255, 255, 255, 0, 0, 0, 0, 0, 0, 0, 0)
+tile_set = SubResource("TileSet_awieb")
 
 [node name="Cloud3" type="Node2D" parent="Arena"]
 modulate = Color(1, 1, 1, 0.7254902)
-position = Vector2(-23.000008, -21702)
+position = Vector2(-28, -21672)
 scale = Vector2(0.7, 0.7)
 
-[node name="Sprite2D" type="Sprite2D" parent="Arena/Cloud3"]
-texture = ExtResource("6_saqrm")
-
-[node name="AnimatableBody2D" type="AnimatableBody2D" parent="Arena/Cloud3"]
-
-[node name="CollisionShape2D" type="CollisionShape2D" parent="Arena/Cloud3/AnimatableBody2D"]
-position = Vector2(34.285652, 131.42801)
-rotation = 1.5707964
-shape = SubResource("CapsuleShape2D_awieb")
+[node name="TileMapLayer3" type="TileMapLayer" parent="Arena/Cloud3"]
+position = Vector2(2598.5715, 287.14313)
+scale = Vector2(0.99999994, 0.99999994)
+tile_map_data = PackedByteArray(0, 0, 253, 255, 255, 255, 1, 0, 0, 0, 0, 0, 0, 0)
+tile_set = SubResource("TileSet_hyqpu")
 
 [node name="BossEncounterWorld2" type="Node" parent="."]
 script = ExtResource("1_bossenc2")
@@ -344,10 +359,10 @@ debug_socket = true
 [node name="UI" parent="." instance=ExtResource("16_devdu")]
 
 [node name="PlayerHUDCluster" parent="UI/ScreenRoot/HUDRoot/BottomRight" index="0"]
-offset_left = -408.0
-offset_top = -172.5
-offset_right = -16.5
-offset_bottom = -16.5
+offset_left = -548.5333
+offset_top = -231.91667
+offset_right = -22.183332
+offset_bottom = -22.183332
 style = ExtResource("17_o5lv8")
 
 [node name="PlayerHUDWiring" parent="UI/ScreenRoot/HUDRoot" index="4"]
@@ -357,6 +372,15 @@ combat_path = NodePath("../../../../Player/Combat")
 [node name="EncounterHUDWiring" parent="UI/ScreenRoot/HUDRoot" index="5"]
 floor_controller_path = NodePath("../../../../FloorProgressionController")
 boss_path = NodePath("../../../../Boss")
+
+[node name="LowHealthPostFX" parent="UI/ScreenRoot/HUDRoot/PlayerDamageFeedback" index="0"]
+layout_mode = 3
+
+[node name="LowHealthBorder" parent="UI/ScreenRoot/HUDRoot/PlayerDamageFeedback" index="1"]
+layout_mode = 3
+
+[node name="HitFlash" parent="UI/ScreenRoot/HUDRoot/PlayerDamageFeedback" index="2"]
+layout_mode = 3
 
 [node name="DiceModifierChoice" parent="." instance=ExtResource("18_awieb")]
 
@@ -368,15 +392,6 @@ stream = ExtResource("33_devdu")
 volume_db = -5.0
 
 [editable path="Arena"]
-[editable path="Arena/Geometry/Floors/Floor1"]
-[editable path="Arena/Geometry/Floors/Floor2"]
-[editable path="Arena/Geometry/Floors/Floor4"]
-[editable path="Arena/Geometry/Floors/Floor5"]
-[editable path="Arena/Geometry/Platforms/PlatformResizable"]
-[editable path="Arena/Geometry/Platforms/PlatformResizable2"]
-[editable path="Arena/Geometry/Platforms/PlatformResizable3"]
-[editable path="Arena/Geometry/Platforms/PlatformResizable4"]
-[editable path="Arena/Geometry/Platforms/PlatformResizable5"]
 [editable path="Arena/Geometry/Floor1Celing"]
 [editable path="Player"]
 [editable path="Player/Visual/Body3DView"]

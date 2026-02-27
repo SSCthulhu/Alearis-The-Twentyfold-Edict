@@ -1,4 +1,4 @@
-[gd_scene load_steps=32 format=3 uid="uid://cv1vsv6qtu6oh"]
+[gd_scene load_steps=41 format=4 uid="uid://cv1vsv6qtu6oh"]
 
 [ext_resource type="Script" uid="uid://bmi06qcgd5fny" path="res://scripts/boss/SubArenaController.gd" id="1_p8dq7"]
 [ext_resource type="PackedScene" uid="uid://ccrejlifa6gwm" path="res://scenes/enemies/EnemyKnightAdd.tscn" id="2_bpxfn"]
@@ -8,19 +8,23 @@
 [ext_resource type="PackedScene" uid="uid://3n3mym4g3" path="res://scenes/enemies/EnemySkeletonMage.tscn" id="5_jn32v"]
 [ext_resource type="PackedScene" uid="uid://cai81qjmmgokj" path="res://scenes/arena/AscensionCharge.tscn" id="6_rbgt4"]
 [ext_resource type="Texture2D" uid="uid://bu71lu0wv2orc" path="res://art/Worlds/cave/background/wall bg.png" id="7_iyrl2"]
-[ext_resource type="PackedScene" uid="uid://3fuld8awghlh" path="res://scenes/arena/PlatformResizable.tscn" id="7_sdgf6"]
 [ext_resource type="Texture2D" uid="uid://di2c413mbri0w" path="res://art/Worlds/cave/background/bg1.png" id="8_i2446"]
-[ext_resource type="Texture2D" uid="uid://c0ho73d2kvuil" path="res://art/Worlds/Dungeon/Tile Set/1.png" id="8_jgdsy"]
 [ext_resource type="Texture2D" uid="uid://dcdruorr6jr2i" path="res://art/Worlds/cave/background/filter.png" id="9_fay85"]
 [ext_resource type="Texture2D" uid="uid://1bn08fcfrknt" path="res://art/Worlds/cave/background/bg3.png" id="9_u27wa"]
 [ext_resource type="PackedScene" uid="uid://da2fr6n8vi4x7" path="res://scenes/ui/UI.tscn" id="9_ui"]
 [ext_resource type="Texture2D" uid="uid://but35i62nr4c6" path="res://art/Worlds/cave/props/Skull on Spear.png" id="10_v7mt5"]
 [ext_resource type="Texture2D" uid="uid://c5ddyxhatruiw" path="res://art/Worlds/cave/background/light.png" id="11_fsn4j"]
 [ext_resource type="Texture2D" uid="uid://duajxu3ik3ioa" path="res://art/Worlds/cave/crystal/green/crystal4.png" id="12_p8vo2"]
+[ext_resource type="Texture2D" uid="uid://dckyo0n1ep3ih" path="res://art/Worlds2/Dwarf Mines/Platformer/Ground_02.png" id="13_e44xa"]
 [ext_resource type="Texture2D" uid="uid://btyjbcfxwu7vm" path="res://art/Worlds/cave/crystal/red/crystal5.png" id="13_xlkl4"]
 [ext_resource type="Texture2D" uid="uid://bnlfj4qkatwfr" path="res://art/Worlds/cave/crystal/red/crystal2.png" id="14_hlqro"]
+[ext_resource type="Texture2D" uid="uid://dlhtdd8eud2l7" path="res://art/Worlds2/Dwarf Mines/Platformer/Ground_06.png" id="14_r2kvr"]
 [ext_resource type="Texture2D" uid="uid://cdm206os8wfmy" path="res://art/Worlds/cave/crystal/blue/crystal3.png" id="15_erk47"]
+[ext_resource type="Texture2D" uid="uid://7po5wl3e7834" path="res://art/Worlds2/Dwarf Mines/Platformer/Ground_04.png" id="15_fjf3j"]
+[ext_resource type="Texture2D" uid="uid://i358bb0qhtnq" path="res://art/Worlds2/Dwarf Mines/Platformer/Ground_08.png" id="16_c0hlr"]
 [ext_resource type="Texture2D" uid="uid://bc6tsv60dckg7" path="res://art/Worlds/Tropical/Background/water.png" id="16_erk47"]
+[ext_resource type="Texture2D" uid="uid://ir4y6edh2bn7" path="res://art/Worlds2/Dwarf Mines/Platformer/Ground_09.png" id="17_214yc"]
+[ext_resource type="Texture2D" uid="uid://dabhy3lil14bt" path="res://art/Worlds2/Dwarf Mines/Platformer/Ground_13.png" id="18_2wkxa"]
 [ext_resource type="Texture2D" uid="uid://c5wxgxlakb3jc" path="res://art/Worlds/cave/props/Closed Wooden Crate.png" id="20_ommoq"]
 [ext_resource type="Texture2D" uid="uid://lu708nykd5i3" path="res://art/Worlds/cave/props/dead_skeleton_Warrior.png" id="21_y44nt"]
 [ext_resource type="Texture2D" uid="uid://cffhun22lgbnl" path="res://art/Worlds/cave/props/dead_skeleton_Warrior2.png" id="22_s1wd2"]
@@ -29,27 +33,64 @@
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_ommoq"]
 size = Vector2(80, 2000)
 
-[sub_resource type="RectangleShape2D" id="RectangleShape2D_s1wd2"]
-size = Vector2(2222, 254)
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_l4n71"]
+texture = ExtResource("13_e44xa")
+texture_region_size = Vector2i(128, 128)
+0:0/0 = 0
+0:0/0/physics_layer_0/polygon_0/points = PackedVector2Array(-64, -64, 64, -64, 64, -29.090908, -64, -29.090908)
 
-[sub_resource type="RectangleShape2D" id="RectangleShape2D_n4qux"]
-size = Vector2(1797, 254)
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_m4km6"]
+texture = ExtResource("14_r2kvr")
+texture_region_size = Vector2i(128, 128)
+0:0/0 = 0
 
-[sub_resource type="RectangleShape2D" id="RectangleShape2D_y44nt"]
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_cb2jc"]
+texture = ExtResource("15_fjf3j")
+texture_region_size = Vector2i(128, 128)
+0:0/0 = 0
+0:0/0/physics_layer_0/polygon_0/points = PackedVector2Array(-64, -64, 64, -64, 64, -29.090908, -64, -29.090908)
+
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_uhugo"]
+texture = ExtResource("16_c0hlr")
+texture_region_size = Vector2i(128, 128)
+0:0/0 = 0
+0:0/0/physics_layer_0/polygon_0/points = PackedVector2Array(-64, -64, 64, -64, 64, -29.090908, -64, -29.090908)
+
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_fs642"]
+texture = ExtResource("17_214yc")
+texture_region_size = Vector2i(128, 128)
+0:0/0 = 0
+
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_2h6qs"]
+texture = ExtResource("18_2wkxa")
+texture_region_size = Vector2i(128, 128)
+0:0/0 = 0
+
+[sub_resource type="TileSet" id="TileSet_ycq7t"]
+tile_size = Vector2i(128, 128)
+physics_layer_0/collision_layer = 1
+sources/0 = SubResource("TileSetAtlasSource_l4n71")
+sources/1 = SubResource("TileSetAtlasSource_m4km6")
+sources/2 = SubResource("TileSetAtlasSource_cb2jc")
+sources/3 = SubResource("TileSetAtlasSource_uhugo")
+sources/4 = SubResource("TileSetAtlasSource_fs642")
+sources/5 = SubResource("TileSetAtlasSource_2h6qs")
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_ijvrr"]
 size = Vector2(1208.98, 80)
 
-[sub_resource type="CapsuleShape2D" id="CapsuleShape2D_ommoq"]
+[sub_resource type="CapsuleShape2D" id="CapsuleShape2D_317wa"]
 radius = 20.0
 height = 310.35
 
-[sub_resource type="CapsuleShape2D" id="CapsuleShape2D_y44nt"]
+[sub_resource type="CapsuleShape2D" id="CapsuleShape2D_2geub"]
 radius = 20.0
 height = 310.35
 
 [node name="BossSubArenaWrong" type="Node2D"]
 script = ExtResource("1_p8dq7")
 enemy_scenes = Array[PackedScene]([ExtResource("2_bpxfn"), ExtResource("3_gfnh7"), ExtResource("4_3v2df"), ExtResource("5_jn32v")])
-enemy_spawn_positions = Array[Vector2]([Vector2(-1250, 0), Vector2(500, 0), Vector2(1000, 0)])
+enemy_spawn_positions = Array[Vector2]([Vector2(-1250, -200), Vector2(500, -200), Vector2(1000, -200)])
 orb_scene = ExtResource("6_rbgt4")
 orb_spawn_position = Vector2(0, -50)
 
@@ -128,52 +169,19 @@ shape = SubResource("RectangleShape2D_ommoq")
 position = Vector2(1577, -821)
 shape = SubResource("RectangleShape2D_ommoq")
 
-[node name="PlatformResizable" parent="." instance=ExtResource("7_sdgf6")]
+[node name="Floor" type="TileMapLayer" parent="."]
 z_index = 1
-position = Vector2(942, 111)
-texture = ExtResource("8_jgdsy")
-width_px = 2222
-height_px = 306
-collision_height_px = 254
-collision_offset_y_px = 28.0
-
-[node name="Visual" parent="PlatformResizable" index="0"]
-offset_left = -1111.0
-offset_top = -153.0
-offset_right = 1111.0
-offset_bottom = 153.0
-texture = ExtResource("8_jgdsy")
-
-[node name="Collision" parent="PlatformResizable/Body" index="0"]
-position = Vector2(0, 28)
-shape = SubResource("RectangleShape2D_s1wd2")
-
-[node name="PlatformResizable2" parent="." instance=ExtResource("7_sdgf6")]
-position = Vector2(-1500, 111)
-texture = ExtResource("8_jgdsy")
-width_px = 1797
-height_px = 306
-collision_height_px = 254
-collision_offset_y_px = 28.0
-
-[node name="Visual" parent="PlatformResizable2" index="0"]
-offset_left = -898.5
-offset_top = -153.0
-offset_right = 898.5
-offset_bottom = 153.0
-texture = ExtResource("8_jgdsy")
-
-[node name="Collision" parent="PlatformResizable2/Body" index="0"]
-position = Vector2(0, 28)
-shape = SubResource("RectangleShape2D_n4qux")
+position = Vector2(0, -29)
+tile_map_data = PackedByteArray("AAD6/wAAAwAAAAAAAAD6/wIABQAAAAAAAAD6/wEABQAAAAAAAADt/wEAAQAAAAAAAADt/wIAAQAAAAAAAADu/wEAAQAAAAAAAADu/wIAAQAAAAAAAADv/wEAAQAAAAAAAADv/wIAAQAAAAAAAADw/wEAAQAAAAAAAADw/wIAAQAAAAAAAADx/wEAAQAAAAAAAADx/wIAAQAAAAAAAADy/wEAAQAAAAAAAADy/wIAAQAAAAAAAADz/wEAAQAAAAAAAADz/wIAAQAAAAAAAAD0/wEAAQAAAAAAAAD0/wIAAQAAAAAAAAD1/wEAAQAAAAAAAAD1/wIAAQAAAAAAAAD2/wEAAQAAAAAAAAD2/wIAAQAAAAAAAAD3/wEAAQAAAAAAAAD3/wIAAQAAAAAAAAD4/wEAAQAAAAAAAAD4/wIAAQAAAAAAAAD5/wEAAQAAAAAAAAD5/wIAAQAAAAAAAADt/wAAAAAAAAAAAADu/wAAAAAAAAAAAADv/wAAAAAAAAAAAADw/wAAAAAAAAAAAADx/wAAAAAAAAAAAADy/wAAAAAAAAAAAADz/wAAAAAAAAAAAAD0/wAAAAAAAAAAAAD1/wAAAAAAAAAAAAD2/wAAAAAAAAAAAAD3/wAAAAAAAAAAAAD4/wAAAAAAAAAAAAD5/wAAAAAAAAAAAAD//wAAAgAAAAAAAAAAAAAAAAAAAAAAAAABAAAAAAAAAAAAAAACAAAAAAAAAAAAAAADAAAAAAAAAAAAAAAEAAAAAAAAAAAAAAAFAAAAAAAAAAAAAAAGAAAAAAAAAAAAAAAHAAAAAAAAAAAAAAAIAAAAAAAAAAAAAAAJAAAAAAAAAAAAAAAKAAAAAAAAAAAAAAALAAAAAAAAAAAAAAAMAAAAAAAAAAAAAAANAAAAAAAAAAAAAAAOAAAAAAAAAAAAAAAPAAAAAAAAAAAAAAAQAAAAAAAAAAAAAAD//wIABAAAAAAAAAAAAAIAAQAAAAAAAAABAAIAAQAAAAAAAAACAAIAAQAAAAAAAAADAAIAAQAAAAAAAAAEAAIAAQAAAAAAAAAFAAIAAQAAAAAAAAAGAAIAAQAAAAAAAAAHAAIAAQAAAAAAAAAIAAIAAQAAAAAAAAAJAAIAAQAAAAAAAAAKAAIAAQAAAAAAAAALAAIAAQAAAAAAAAAMAAIAAQAAAAAAAAANAAIAAQAAAAAAAAAOAAIAAQAAAAAAAAAPAAIAAQAAAAAAAAD//wEABAAAAAAAAAAAAAEAAQAAAAAAAAABAAEAAQAAAAAAAAACAAEAAQAAAAAAAAADAAEAAQAAAAAAAAAEAAEAAQAAAAAAAAAFAAEAAQAAAAAAAAAGAAEAAQAAAAAAAAAHAAEAAQAAAAAAAAAIAAEAAQAAAAAAAAAJAAEAAQAAAAAAAAAKAAEAAQAAAAAAAAALAAEAAQAAAAAAAAAMAAEAAQAAAAAAAAANAAEAAQAAAAAAAAAOAAEAAQAAAAAAAAAPAAEAAQAAAAAAAAA=")
+tile_set = SubResource("TileSet_ycq7t")
 
 [node name="Node2D" type="Node2D" parent="."]
-position = Vector2(0, -22)
+position = Vector2(1, -38)
 
 [node name="Bridge" type="Sprite2D" parent="Node2D"]
 z_index = 1
 position = Vector2(-386, 25.999998)
-scale = Vector2(0.35, 0.35)
+scale = Vector2(0.4, 0.35)
 texture = ExtResource("23_ommoq")
 
 [node name="StaticBody2D" type="StaticBody2D" parent="Node2D"]
@@ -184,35 +192,35 @@ scale = Vector2(0.35, 0.35)
 z_index = 1
 position = Vector2(-2.8571777, 34.285767)
 scale = Vector2(0.99999994, 0.99999994)
-shape = SubResource("RectangleShape2D_y44nt")
+shape = SubResource("RectangleShape2D_ijvrr")
 
 [node name="CollisionShape2D2" type="CollisionShape2D" parent="Node2D/StaticBody2D"]
 z_index = 1
-position = Vector2(725.7143, 31.428589)
-rotation = 1.7051867
-shape = SubResource("CapsuleShape2D_ommoq")
+position = Vector2(680, -2.8571355)
+rotation = 1.3980087
+shape = SubResource("CapsuleShape2D_317wa")
 
 [node name="CollisionShape2D3" type="CollisionShape2D" parent="Node2D/StaticBody2D"]
 z_index = 1
-position = Vector2(-728.5712, 31.42858)
-rotation = 1.436406
-shape = SubResource("CapsuleShape2D_y44nt")
+position = Vector2(-680, -5.714274)
+rotation = 1.701696
+shape = SubResource("CapsuleShape2D_2geub")
 
 [node name="Decor" type="Node2D" parent="."]
 
 [node name="SkullOnSpear" type="Sprite2D" parent="Decor"]
 z_index = 2
-position = Vector2(541.00006, -106)
+position = Vector2(541.00006, -96)
 scale = Vector2(0.2, 0.2)
 texture = ExtResource("10_v7mt5")
 
 [node name="ClosedWoodenCrate" type="Sprite2D" parent="Decor"]
-position = Vector2(-718, -59)
+position = Vector2(-788.00006, -59)
 scale = Vector2(0.25, 0.25)
 texture = ExtResource("20_ommoq")
 
 [node name="DeadSkeletonWarrior" type="Sprite2D" parent="Decor"]
-position = Vector2(-774, -93)
+position = Vector2(-844.00006, -93)
 rotation = -0.42760566
 scale = Vector2(0.25, 0.25)
 texture = ExtResource("21_y44nt")
@@ -240,23 +248,22 @@ scale = Vector2(0.55, 0.55)
 texture = ExtResource("14_hlqro")
 
 [node name="Crystal3" type="Sprite2D" parent="Decor"]
-position = Vector2(294.99994, -173)
+position = Vector2(296, -148)
 scale = Vector2(0.8, 0.8)
 texture = ExtResource("15_erk47")
 
 [node name="Player" parent="." instance=ExtResource("2_player")]
-position = Vector2(0, -57)
+position = Vector2(-4, -107)
 
-[node name="Camera2D" parent="Player" index="9"]
+[node name="Camera2D" parent="Player" index="10"]
 offset = Vector2(0, -400)
 limit_top = -1050
 limit_bottom = 475
 
 [node name="PlayerSpawn" type="Marker2D" parent="."]
+position = Vector2(-3, -218)
 
 [node name="UI" parent="." instance=ExtResource("9_ui")]
 
-[editable path="PlatformResizable"]
-[editable path="PlatformResizable2"]
 [editable path="Player"]
 [editable path="Player/Visual/Body3DView"]
