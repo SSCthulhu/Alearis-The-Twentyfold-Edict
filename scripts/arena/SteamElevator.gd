@@ -38,7 +38,7 @@ signal teleport_completed  # Emitted when launch+teleport+fade sequence is fully
 @export var require_chest_opened: bool = true
 
 # Debug
-@export var debug_logs: bool = true
+@export var debug_logs: bool = false
 
 var _animated_sprite: AnimatedSprite2D = null
 var _detection_area: Area2D = null

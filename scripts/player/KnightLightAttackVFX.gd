@@ -9,7 +9,7 @@ const VfxRenderUtil = preload("res://scripts/vfx/VfxRenderUtil.gd")
 @export var offset_y: float = 0.0
 @export var forward_offset: float = 150.0  # Distance in front based on facing (matches Rogue)
 @export var cooldown: float = 0.1
-@export var debug_logs: bool = true
+@export var debug_logs: bool = false
 
 @onready var _player_controller: Node = get_parent()
 

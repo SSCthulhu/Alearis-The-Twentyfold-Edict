@@ -1430,7 +1430,7 @@ texture = ExtResource("9_cwhoj")
 position = Vector2(7814, 4952)
 script = ExtResource("7_nvbvt")
 always_active = true
-debug_logs = true
+debug_logs = false
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="DeathZone"]
 position = Vector2(6397.5, -3003.5)

@@ -169,7 +169,7 @@ defensive_vfx_scene = ExtResource("24_defensive")
 [node name="HeavyAttackVFX" type="Node" parent="."]
 script = ExtResource("23_heavy")
 heavy_attack_vfx_scene = ExtResource("24_heavy")
-debug_logs = true
+debug_logs = false
 
 [node name="KnightHeavyAttackVFX" type="Node" parent="."]
 script = ExtResource("23_knightheavy")

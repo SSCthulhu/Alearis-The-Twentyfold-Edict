@@ -14,7 +14,7 @@ const VfxRenderUtil = preload("res://scripts/vfx/VfxRenderUtil.gd")
 @export var offset_y: float = 0.0  # Y offset from player center
 @export var shock_burst_delay: float = 1.0  # Delay before shock burst spawns (after impact)
 @export var cooldown: float = 0.5
-@export var debug_logs: bool = true
+@export var debug_logs: bool = false
 
 @onready var _player_controller: Node = get_parent()
 

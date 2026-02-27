@@ -194,7 +194,7 @@ const DAMAGE_TAG_SHOCK: StringName = &"shock"
 # -----------------------------
 # Debug
 # -----------------------------
-@export var debug_logs: bool = true
+@export var debug_logs: bool = false
 @export var debug_force_all_relics_enabled: bool = false
 @export var debug_force_relic_ids: Array[StringName] = []
 @export var debug_force_grants_to_runstate: bool = true # <-- add this toggle

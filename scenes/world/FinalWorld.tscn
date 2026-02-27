@@ -18,7 +18,7 @@
 script = ExtResource("6_fwctl")
 fade_rect_path = NodePath("../UI/ScreenRoot/HUDRoot/FinalWorldFade")
 victory_screen_path = NodePath("../FinalVictoryScreen")
-debug_logs = true
+debug_logs = false
 
 [node name="EncounterController" type="Node" parent="."]
 script = ExtResource("1_n01b3")

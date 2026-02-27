@@ -16,7 +16,7 @@ signal roll_completed(result: int)
 @export var result_display_duration: float = 3.0
 
 # Debug
-@export var debug_logs: bool = true
+@export var debug_logs: bool = false
 
 # UI References
 @onready var _overlay: ColorRect = $Overlay

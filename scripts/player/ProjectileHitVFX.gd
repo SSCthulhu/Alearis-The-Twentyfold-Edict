@@ -8,7 +8,7 @@ const VfxRenderUtil = preload("res://scripts/vfx/VfxRenderUtil.gd")
 @export var blood_side_burst_scene: PackedScene  # For physical attacks (melee, arrows)
 @export var offset_y: float = 0.0  # Y offset from player center
 @export var blood_side_offset_x: float = -20.0  # X offset for blood side burst
-@export var debug_logs: bool = true
+@export var debug_logs: bool = false
 
 @onready var _player_health: Node = get_parent().get_node_or_null("Health")
 

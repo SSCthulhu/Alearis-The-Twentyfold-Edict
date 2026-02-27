@@ -9,7 +9,7 @@ const VfxRenderUtil = preload("res://scripts/vfx/VfxRenderUtil.gd")
 @export var offset_x: float = 0.0  # X offset from player center
 @export var offset_y: float = 0.0  # Y offset from player center
 @export var cooldown: float = 0.5  # Anti-spam cooldown
-@export var debug_logs: bool = true
+@export var debug_logs: bool = false
 
 @onready var _player_controller: Node = get_parent()
 

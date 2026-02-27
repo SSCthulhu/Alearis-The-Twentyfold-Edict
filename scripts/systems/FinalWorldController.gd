@@ -8,7 +8,7 @@ extends Node
 @export var fade_in_duration: float = 1.5
 @export var fade_rect_path: NodePath = ^"../UI/ScreenRoot/HUDRoot/FinalWorldFade"
 @export var victory_screen_path: NodePath = ^"../FinalVictoryScreen"
-@export var debug_logs: bool = true
+@export var debug_logs: bool = false
 
 var _boss: Node2D = null
 var _fade_rect: ColorRect = null

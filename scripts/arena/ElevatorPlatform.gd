@@ -11,7 +11,7 @@ class_name ElevatorPlatform
 @export var move_duration: float = 3.0
 @export var pause_duration: float = 5.0
 @export var initial_delay: float = 5.0
-@export var debug_logs: bool = true
+@export var debug_logs: bool = false
 
 var _floor_progression: Node = null
 var _active: bool = false

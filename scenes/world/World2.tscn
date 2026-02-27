@@ -211,7 +211,7 @@ position = Vector2(-28, 1121)
 [node name="DeathZone" parent="Arena" index="4"]
 activation_y = -14000.0
 player_path = NodePath("../../Player")
-debug_logs = true
+debug_logs = false
 
 [node name="ChestSpawn_F3" parent="Arena/ChestSpawns" index="2"]
 position = Vector2(-158, -15199)
