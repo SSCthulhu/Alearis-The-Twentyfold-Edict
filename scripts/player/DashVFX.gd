@@ -1,5 +1,6 @@
 extends Node
 class_name DashVFX
+const VfxRenderUtil = preload("res://scripts/vfx/VfxRenderUtil.gd")
 
 ## Spawns directional dash VFX when the player dashes
 ## VFX flips horizontally based on dash direction
@@ -118,6 +119,7 @@ func _spawn_dash_vfx(facing_direction: int) -> void:
 	var world_parent: Node = player_body.get_parent()
 	if world_parent != null:
 		world_parent.add_child(vfx)
+		VfxRenderUtil.promote(vfx, 220)
 		
 		# Position at player center
 		var vfx_position: Vector2 = player_body.global_position

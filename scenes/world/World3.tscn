@@ -1,4 +1,4 @@
-[gd_scene load_steps=116 format=3 uid="uid://dys38fqf8xcfq"]
+[gd_scene load_steps=115 format=3 uid="uid://dys38fqf8xcfq"]
 
 [ext_resource type="Texture2D" uid="uid://connrsb3cn7bu" path="res://art/Worlds/Volcanic/lava object 1/lava.png" id="1_dyo3b"]
 [ext_resource type="Texture2D" uid="uid://c0q8eugl2wyyi" path="res://art/Worlds/Volcanic/Mountain/sky.png" id="1_qiv8n"]
@@ -34,7 +34,6 @@
 [ext_resource type="PackedScene" uid="uid://c72m65e63bs0o" path="res://scenes/player/player.tscn" id="25_mi1eq"]
 [ext_resource type="PackedScene" uid="uid://pwes5t08csj" path="res://scenes/boss/Boss_World3.tscn" id="26_rr44v"]
 [ext_resource type="PackedScene" uid="uid://ojpp3p46grti" path="res://scenes/arena/AscensionSocket.tscn" id="27_xpg0q"]
-[ext_resource type="PackedScene" uid="uid://b3grgamegrqq2" path="res://scenes/hazards/RisingHazard.tscn" id="28_x7hll"]
 [ext_resource type="PackedScene" uid="uid://da2fr6n8vi4x7" path="res://scenes/ui/UI.tscn" id="29_x3lom"]
 [ext_resource type="Resource" uid="uid://dtfg2ntfkn5oa" path="res://styles/HUDStyle.tres" id="30_pghea"]
 [ext_resource type="PackedScene" uid="uid://cxsb0sxvfl0t" path="res://scenes/ui/DiceModifierChoice.tscn" id="31_cdgb1"]
@@ -528,6 +527,7 @@ colors = PackedColorArray(0, 0, 0, 1, 1, 1, 1, 0, 1, 1, 1, 0.25, 1, 1, 1, 0.25, 
 [node name="World3" type="Node2D"]
 
 [node name="FloorCameraBounds" type="Node2D" parent="."]
+visible = false
 
 [node name="Floor1" type="Node2D" parent="FloorCameraBounds"]
 
@@ -740,6 +740,7 @@ position = Vector2(26228, -5056)
 script = ExtResource("18_ctfyx")
 charge_scene = ExtResource("18_2j4gx")
 steam_elevator_path = NodePath("../Arena/Geometry/ForgePlatform")
+forge_duration = 5.0
 debug_logs = true
 
 [node name="ReturnFromSubArenaHandler" type="Node" parent="."]
@@ -749,7 +750,6 @@ charge_scene = ExtResource("18_2j4gx")
 [node name="FloorProgressionController" type="Node" parent="."]
 script = ExtResource("19_14glk")
 encounter_controller_path = NodePath("../BossEncounterWorld3")
-rising_hazard_path = NodePath("")
 steam_elevator_path = NodePath("../Arena/Geometry/Cave/SteamElevator")
 floor_progression_mode = 1
 derive_floor_ceiling_y_from_gates = false
@@ -799,7 +799,7 @@ enable_strict_ledge_guard = true
 [node name="Player" parent="." instance=ExtResource("25_mi1eq")]
 z_index = 12
 z_as_relative = false
-position = Vector2(-1398, 1290)
+position = Vector2(-316, 1188)
 
 [node name="CollisionShape2D" parent="Player" index="0"]
 position = Vector2(0, 3.5)
@@ -821,7 +821,7 @@ limit_bottom = 3000
 enable_progressive_limits = false
 
 [node name="Boss" parent="." instance=ExtResource("26_rr44v")]
-position = Vector2(26974, -4833)
+position = Vector2(26974, -4860)
 
 [node name="CollisionShape2D" parent="Boss/Hurtbox" index="0"]
 position = Vector2(0, 85)
@@ -836,18 +836,13 @@ position = Vector2(25497, -4639)
 scale = Vector2(1, 1)
 debug_socket = true
 
-[node name="RisingHazard" parent="." instance=ExtResource("28_x7hll")]
-visible = false
-collision_layer = 3
-collision_mask = 3
-
 [node name="UI" parent="." instance=ExtResource("29_x3lom")]
 
 [node name="PlayerHUDCluster" parent="UI/ScreenRoot/HUDRoot/BottomRight" index="0"]
-offset_left = -408.0
-offset_top = -172.5
-offset_right = -16.5
-offset_bottom = -16.5
+offset_left = -414.8
+offset_top = -175.375
+offset_right = -16.775
+offset_bottom = -16.775
 style = ExtResource("30_pghea")
 
 [node name="PlayerHUDWiring" parent="UI/ScreenRoot/HUDRoot" index="4"]
@@ -892,8 +887,16 @@ anchor_right = 1.0
 anchor_bottom = 1.0
 mouse_filter = 2
 
+[node name="LowHealthPostFX" parent="UI/ScreenRoot/HUDRoot/PlayerDamageFeedback" index="0"]
+layout_mode = 3
+
+[node name="LowHealthBorder" parent="UI/ScreenRoot/HUDRoot/PlayerDamageFeedback" index="1"]
+layout_mode = 3
+
+[node name="HitFlash" parent="UI/ScreenRoot/HUDRoot/PlayerDamageFeedback" index="2"]
+layout_mode = 3
+
 [node name="DiceModifierChoice" parent="." instance=ExtResource("31_cdgb1")]
-rising_hazard_path = NodePath("")
 
 [node name="DiceRollScreen" parent="." instance=ExtResource("32_droll")]
 
@@ -1007,15 +1010,10 @@ copy_mode = 0
 rect = Rect2(-10000, -10000, 20000, 20000)
 
 [editable path="Arena"]
-[editable path="Arena/Geometry/Floors/Floor1"]
-[editable path="Arena/Geometry/Floors/Floor3B"]
-[editable path="Arena/Geometry/Floors/Floor4"]
-[editable path="Arena/Geometry/Floors/Floor5"]
 [editable path="Player"]
 [editable path="Player/Visual/Body3DView"]
 [editable path="Boss"]
 [editable path="AscensionSocket/AscensionSocketA"]
-[editable path="RisingHazard"]
 [editable path="UI"]
 [editable path="UI/DeathOverlay/RunSummaryPanel"]
 [editable path="UI/VictoryUI/Root/CardA"]

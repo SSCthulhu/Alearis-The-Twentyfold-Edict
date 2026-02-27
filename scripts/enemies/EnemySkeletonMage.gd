@@ -15,9 +15,15 @@ class_name EnemySkeletonMage
 @export var min_distance: float = 250.0  # Increased from 200
 @export var max_distance: float = 500.0  # Increased from 400
 
+# Casting aura VFX
+@export var cast_aura_vfx_scene: PackedScene
+@export var cast_aura_y_offset: float = -10.0
+@export_range(0.5, 4.0, 0.01) var cast_aura_diameter_scale: float = 2.3
+
 # State tracking
 var _shooting: bool = false  # Playing shoot animation after cast
 var _ranged_cd: float = 0.0
+var _cast_aura_vfx: Node = null
 
 # Magic animation names (same as Necromancer)
 var anim_cast: StringName = &"Player/Ranged_Magic_Spellcasting"
@@ -96,6 +102,7 @@ func _start_ranged_cast() -> void:
 	var duration: float = anim_len if anim_len > 0.0 else ranged_cast_time
 	
 	_casting_helper.start_cast(duration)
+	_spawn_cast_aura_vfx()
 	_play_anim(anim_cast, true)
 
 func _update_casting(delta: float) -> void:
@@ -104,6 +111,7 @@ func _update_casting(delta: float) -> void:
 
 func _finish_cast() -> void:
 	_casting_helper.finish_cast()
+	_finish_cast_aura_vfx()
 	_shooting = true  # Lock in shooting animation
 	
 	# Execute the spell effect
@@ -158,7 +166,65 @@ func _on_anim_finished(anim_name: StringName) -> void:
 	if anim_name == anim_shoot:
 		_shooting = false
 
+
+func _start_death() -> void:
+	_clear_cast_aura_vfx_immediately()
+	super._start_death()
+
 # Disable melee attacks
 func _try_attack() -> void:
 	# Mages don't use melee attacks
 	pass
+
+
+func _spawn_cast_aura_vfx() -> void:
+	if cast_aura_vfx_scene == null:
+		return
+	if _cast_aura_vfx != null and is_instance_valid(_cast_aura_vfx):
+		return
+
+	var vfx: Node = cast_aura_vfx_scene.instantiate()
+	if vfx == null:
+		return
+
+	add_child(vfx)
+	VfxRenderUtil.promote(vfx, 230)
+	_cast_aura_vfx = vfx
+
+	if vfx is Node2D:
+		(vfx as Node2D).position = Vector2(0.0, cast_aura_y_offset)
+
+	var target_diameter: float = _get_cast_aura_target_diameter()
+	if vfx.has_method("set_target_diameter"):
+		vfx.call("set_target_diameter", target_diameter)
+
+
+func _finish_cast_aura_vfx() -> void:
+	if _cast_aura_vfx == null or not is_instance_valid(_cast_aura_vfx):
+		_cast_aura_vfx = null
+		return
+	if _cast_aura_vfx.has_method("end_cast_gracefully"):
+		_cast_aura_vfx.call("end_cast_gracefully")
+	else:
+		_cast_aura_vfx.queue_free()
+	_cast_aura_vfx = null
+
+
+func _clear_cast_aura_vfx_immediately() -> void:
+	if _cast_aura_vfx == null or not is_instance_valid(_cast_aura_vfx):
+		_cast_aura_vfx = null
+		return
+	if _cast_aura_vfx.has_method("stop_immediately"):
+		_cast_aura_vfx.call("stop_immediately")
+	else:
+		_cast_aura_vfx.queue_free()
+	_cast_aura_vfx = null
+
+
+func _get_cast_aura_target_diameter() -> float:
+	var fallback_height: float = 280.0
+	var hurt_shape_node: CollisionShape2D = get_node_or_null("Hurtbox/CollisionShape2D") as CollisionShape2D
+	if hurt_shape_node != null and hurt_shape_node.shape is CapsuleShape2D:
+		var capsule: CapsuleShape2D = hurt_shape_node.shape as CapsuleShape2D
+		fallback_height = capsule.height + (capsule.radius * 2.0)
+	return fallback_height * cast_aura_diameter_scale

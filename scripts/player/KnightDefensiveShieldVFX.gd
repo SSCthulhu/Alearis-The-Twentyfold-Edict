@@ -1,4 +1,5 @@
 extends Node
+const VfxRenderUtil = preload("res://scripts/vfx/VfxRenderUtil.gd")
 
 ## Manager for Knight defensive shield VFX
 ## Handles three-stage shield system:
@@ -65,6 +66,7 @@ func _spawn_shield_on() -> void:
 	
 	# Add to world (not as child of player)
 	get_tree().root.add_child(vfx)
+	VfxRenderUtil.promote(vfx, 220)
 	
 	pass
 
@@ -96,6 +98,7 @@ func _spawn_shield_active() -> void:
 	
 	# Add to world
 	get_tree().root.add_child(_active_shield)
+	VfxRenderUtil.promote(_active_shield, 220)
 	
 	pass
 
@@ -118,5 +121,6 @@ func _spawn_shield_off() -> void:
 	
 	# Add to world
 	get_tree().root.add_child(vfx)
+	VfxRenderUtil.promote(vfx, 220)
 	
 	pass

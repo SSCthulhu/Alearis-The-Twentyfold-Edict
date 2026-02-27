@@ -1,5 +1,6 @@
 extends Node
 class_name DoubleJumpVFX
+const VfxRenderUtil = preload("res://scripts/vfx/VfxRenderUtil.gd")
 
 ## Spawns double jump VFX when the player performs a double jump
 ## VFX is rotated 270 degrees and flips based on facing direction
@@ -94,6 +95,7 @@ func _spawn_double_jump_vfx(facing_direction: int) -> void:
 	var world_parent: Node = player_body.get_parent()
 	if world_parent != null:
 		world_parent.add_child(vfx)
+		VfxRenderUtil.promote(vfx, 220)
 		
 		# Position VFX
 		var vfx_position: Vector2 = player_body.global_position

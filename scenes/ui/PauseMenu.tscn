@@ -1,8 +1,20 @@
-[gd_scene load_steps=10 format=3 uid="uid://dpause001menu"]
+[gd_scene load_steps=11 format=3 uid="uid://dpause001menu"]
 
-[ext_resource type="Script" path="res://scripts/ui/PauseMenu.gd" id="1_pausemenu"]
+[ext_resource type="Script" uid="uid://c5hq0mirogawe" path="res://scripts/ui/PauseMenu.gd" id="1_pausemenu"]
 [ext_resource type="PackedScene" uid="uid://dupyoobfyolg" path="res://scripts/ui/RunSummaryPanel.tscn" id="2_runsummary"]
 [ext_resource type="FontFile" uid="uid://c2ru0ylq10uj0" path="res://fonts/RobotoSerif-ExtraLight.ttf" id="3_font"]
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_howtoplay"]
+bg_color = Color(0.1, 0.1, 0.1, 0.8)
+border_width_left = 8
+border_width_top = 8
+border_width_right = 8
+border_width_bottom = 8
+border_color = Color(0.85882354, 0.72156864, 0.32941177, 1)
+corner_radius_top_left = 10
+corner_radius_top_right = 10
+corner_radius_bottom_right = 10
+corner_radius_bottom_left = 10
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_button_normal"]
 bg_color = Color(0.6, 0.6, 0.6, 0)
@@ -11,6 +23,8 @@ border_width_top = 8
 border_width_right = 8
 border_width_bottom = 8
 border_color = Color(0.858824, 0.721569, 0.329412, 1)
+
+[sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_button"]
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_button_hover"]
 bg_color = Color(0.6, 0.6, 0.6, 0)
@@ -21,8 +35,6 @@ border_width_bottom = 8
 border_color = Color(0.858824, 0.721569, 0.329412, 1)
 shadow_color = Color(0.858824, 0.721569, 0.329412, 0)
 shadow_size = 5
-
-[sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_button"]
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_confirm_panel"]
 bg_color = Color(0.07, 0.07, 0.09, 0.95)
@@ -54,20 +66,9 @@ border_color = Color(0.858824, 0.721569, 0.329412, 1)
 shadow_color = Color(0.858824, 0.721569, 0.329412, 0)
 shadow_size = 5
 
-[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_howtoplay"]
-bg_color = Color(0.1, 0.1, 0.1, 0.8)
-border_width_left = 8
-border_width_top = 8
-border_width_right = 8
-border_width_bottom = 8
-border_color = Color(0.85882354, 0.72156864, 0.32941177, 1)
-corner_radius_top_left = 10
-corner_radius_top_right = 10
-corner_radius_bottom_right = 10
-corner_radius_bottom_left = 10
-
 [node name="PauseMenu" type="Control"]
 process_mode = 3
+z_index = 100
 layout_mode = 3
 anchors_preset = 15
 anchor_right = 1.0
@@ -192,7 +193,6 @@ custom_minimum_size = Vector2(600, 0)
 layout_mode = 0
 offset_right = 600.0
 offset_bottom = 300.0
-mouse_filter = 1
 theme_override_constants/separation = 20
 
 [node name="ResumeButton" type="Button" parent="Root/ButtonsContainer"]
@@ -201,8 +201,8 @@ layout_mode = 2
 size_flags_horizontal = 4
 theme_override_font_sizes/font_size = 80
 theme_override_styles/normal = SubResource("StyleBoxFlat_button_normal")
-theme_override_styles/hover = SubResource("StyleBoxFlat_button_hover")
 theme_override_styles/pressed = SubResource("StyleBoxEmpty_button")
+theme_override_styles/hover = SubResource("StyleBoxFlat_button_hover")
 theme_override_styles/disabled = SubResource("StyleBoxEmpty_button")
 theme_override_styles/focus = SubResource("StyleBoxEmpty_button")
 text = "Resume"
@@ -213,8 +213,8 @@ layout_mode = 2
 size_flags_horizontal = 4
 theme_override_font_sizes/font_size = 80
 theme_override_styles/normal = SubResource("StyleBoxFlat_button_normal")
-theme_override_styles/hover = SubResource("StyleBoxFlat_button_hover")
 theme_override_styles/pressed = SubResource("StyleBoxEmpty_button")
+theme_override_styles/hover = SubResource("StyleBoxFlat_button_hover")
 theme_override_styles/disabled = SubResource("StyleBoxEmpty_button")
 theme_override_styles/focus = SubResource("StyleBoxEmpty_button")
 text = "Settings"
@@ -225,8 +225,8 @@ layout_mode = 2
 size_flags_horizontal = 4
 theme_override_font_sizes/font_size = 80
 theme_override_styles/normal = SubResource("StyleBoxFlat_button_normal")
-theme_override_styles/hover = SubResource("StyleBoxFlat_button_hover")
 theme_override_styles/pressed = SubResource("StyleBoxEmpty_button")
+theme_override_styles/hover = SubResource("StyleBoxFlat_button_hover")
 theme_override_styles/disabled = SubResource("StyleBoxEmpty_button")
 theme_override_styles/focus = SubResource("StyleBoxEmpty_button")
 text = "Quit"
@@ -282,8 +282,8 @@ theme_override_constants/separation = 30
 [node name="ConfirmLabel" type="Label" parent="Root/ConfirmDialog/ConfirmPanel/VBox"]
 layout_mode = 2
 size_flags_vertical = 3
-theme_override_font_sizes/font_size = 60
 theme_override_colors/font_color = Color(0.95, 0.95, 0.97, 1)
+theme_override_font_sizes/font_size = 60
 text = "Are you sure? Progress will be lost."
 horizontal_alignment = 1
 vertical_alignment = 1
@@ -299,8 +299,8 @@ custom_minimum_size = Vector2(300, 0)
 layout_mode = 2
 theme_override_font_sizes/font_size = 60
 theme_override_styles/normal = SubResource("StyleBoxFlat_confirm_button_normal")
-theme_override_styles/hover = SubResource("StyleBoxFlat_confirm_button_hover")
 theme_override_styles/pressed = SubResource("StyleBoxEmpty_button")
+theme_override_styles/hover = SubResource("StyleBoxFlat_confirm_button_hover")
 theme_override_styles/disabled = SubResource("StyleBoxEmpty_button")
 theme_override_styles/focus = SubResource("StyleBoxEmpty_button")
 text = "Yes"
@@ -310,8 +310,8 @@ custom_minimum_size = Vector2(300, 0)
 layout_mode = 2
 theme_override_font_sizes/font_size = 60
 theme_override_styles/normal = SubResource("StyleBoxFlat_confirm_button_normal")
-theme_override_styles/hover = SubResource("StyleBoxFlat_confirm_button_hover")
 theme_override_styles/pressed = SubResource("StyleBoxEmpty_button")
+theme_override_styles/hover = SubResource("StyleBoxFlat_confirm_button_hover")
 theme_override_styles/disabled = SubResource("StyleBoxEmpty_button")
 theme_override_styles/focus = SubResource("StyleBoxEmpty_button")
 text = "No"

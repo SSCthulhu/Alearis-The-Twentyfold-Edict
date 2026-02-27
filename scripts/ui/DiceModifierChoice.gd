@@ -4,7 +4,6 @@ class_name DiceModifierChoice
 signal modifier_chosen()
 
 @export var pause_game: bool = true
-@export var rising_hazard_path: NodePath = ^"../../RisingHazard"
 @export var boss_group: StringName = &"boss"
 
 @export var card_width_design: float = 360.0
@@ -33,8 +32,6 @@ signal modifier_chosen()
 @onready var _active_panel: Panel = $Root/ActiveModsPanel
 @onready var _active_margin: MarginContainer = $Root/ActiveModsPanel/Margin
 @onready var _active_text: RichTextLabel = $Root/ActiveModsPanel/Margin/ActiveModsText
-
-@onready var _hazard: Node = get_node_or_null(rising_hazard_path)
 
 var _rng: RandomNumberGenerator = RandomNumberGenerator.new()
 var _options: Array[Dictionary] = []
@@ -188,13 +185,6 @@ func open_from_chest(floor_number: int, chest: Node) -> void:
 	_refresh_active_mods()
 
 	visible = true
-
-	# Gate hazard + queue the rise until a modifier is chosen
-	if _hazard != null:
-		if _hazard.has_method("set_paused_by_system"):
-			_hazard.set_paused_by_system(true)
-		if _hazard.has_method("start_rising"):
-			_hazard.start_rising()
 
 	# Pause boss combat BEFORE pausing tree
 	_set_boss_combat_paused(true)
@@ -559,10 +549,6 @@ func _apply_option(opt: Dictionary) -> void:
 
 	# Update active list immediately (so you can see it was applied)
 	_refresh_active_mods()
-
-	# Unpause hazard AFTER the selection so queued rise can begin
-	if _hazard != null and _hazard.has_method("set_paused_by_system"):
-		_hazard.set_paused_by_system(false)
 
 	# Do NOT delete the chest; just lock it open.
 	if _source_chest != null and is_instance_valid(_source_chest):

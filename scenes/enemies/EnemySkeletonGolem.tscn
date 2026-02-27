@@ -1,4 +1,4 @@
-[gd_scene load_steps=16 format=3 uid="uid://deotiruix5irf"]
+[gd_scene load_steps=17 format=3 uid="uid://deotiruix5irf"]
 
 [ext_resource type="Script" uid="uid://cvgfg5i2q5hty" path="res://scripts/enemies/EnemySkeletonGolem.gd" id="1_golem"]
 [ext_resource type="PackedScene" uid="uid://bvgni0b2cndxi" path="res://scenes/ui/DamageNumber.tscn" id="2_damage"]
@@ -7,10 +7,11 @@
 [ext_resource type="Script" uid="uid://b0nfn5rqrixak" path="res://scripts/boss/Hurtbox.gd" id="3_hurtbox"]
 [ext_resource type="Script" uid="uid://ct6vabs6fcwub" path="res://scripts/enemies/EnemyHealth.gd" id="4_health"]
 [ext_resource type="PackedScene" uid="uid://cvlobx6k68egu" path="res://scenes/vfx/EnemyHitVFX.tscn" id="6_mfpmr"]
-[ext_resource type="PackedScene" path="res://scenes/vfx/EnemyCritVFX.tscn" id="7_8lxfj"]
+[ext_resource type="PackedScene" uid="uid://d186dmo00kqu5" path="res://scenes/vfx/EnemyCritVFX.tscn" id="7_8lxfj"]
 [ext_resource type="Script" uid="uid://dnkb2ub8ghbd8" path="res://scripts/enemies/EnemyRunScaler.gd" id="7_scaler"]
 [ext_resource type="Script" uid="uid://xq6026rltx5k" path="res://scripts/enemies/EnemyStatusEffects.gd" id="8_statusfx"]
 [ext_resource type="Script" uid="uid://bxkstno4wqyqf" path="res://scripts/ui/DamageNumberEmitter.gd" id="13_emitter"]
+[ext_resource type="PackedScene" uid="uid://lp27g2thtmor" path="res://scenes/vfx/SlamGroundWindVFX.tscn" id="14_slamvfx"]
 
 [sub_resource type="CapsuleShape2D" id="CapsuleShape2D_golem_body"]
 radius = 80.0
@@ -48,8 +49,9 @@ corner_radius_bottom_left = 8
 z_index = 5
 collision_layer = 4
 script = ExtResource("1_golem")
-slam_radius = 1500.0
+slam_radius = 500.0
 melee_damage_range = 200.0
+slam_ground_vfx_scene = ExtResource("14_slamvfx")
 melee_forward_bias_px = 120.0
 melee_width_px = 180.0
 melee_spawn_forward_px = 80.0

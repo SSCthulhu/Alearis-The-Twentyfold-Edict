@@ -41,6 +41,7 @@ var _invuln_timer: float = 0.0
 var _is_dead: bool = false
 var _invuln_source: String = ""  # Track what granted invuln: "roll", "hit", "other"
 var _is_initialized: bool = false  # Track if initial setup is complete
+var _healing_vfx_suppressed_until_sec: float = 0.0
 
 const STAT_MAX_HP_MULT: StringName = &"max_hp_mult"
 
@@ -400,8 +401,20 @@ func revive_full() -> void:
 	else:
 		health_changed.emit(hp, max_hp)
 
+func suppress_healing_vfx_for(seconds: float) -> void:
+	if seconds <= 0.0:
+		return
+	var now_sec: float = Time.get_ticks_msec() / 1000.0
+	_healing_vfx_suppressed_until_sec = maxf(_healing_vfx_suppressed_until_sec, now_sec + seconds)
+
+func _is_healing_vfx_suppressed() -> bool:
+	var now_sec: float = Time.get_ticks_msec() / 1000.0
+	return now_sec < _healing_vfx_suppressed_until_sec
+
 func _spawn_healing_vfx() -> void:
 	"""Spawns healing VFX that follows the player"""
+	if _is_healing_vfx_suppressed():
+		return
 	if HEALING_VFX_SCENE == null:
 		return
 	

@@ -1,5 +1,6 @@
 extends Area2D
 class_name EnemyProjectile
+const VfxRenderUtil = preload("res://scripts/vfx/VfxRenderUtil.gd")
 
 @export var speed: float = 600.0
 @export var lifetime: float = 5.0
@@ -22,13 +23,16 @@ func initialize(direction: Vector2, damage: int) -> void:
 	_update_vfx_flip()
 
 func _ready() -> void:
+	VfxRenderUtil.promote(self, 220)
 	body_entered.connect(_on_body_entered)
 	area_entered.connect(_on_area_entered)
-	
-	# Auto-destroy after lifetime
-	get_tree().create_timer(lifetime).timeout.connect(queue_free)
 
 func _physics_process(delta: float) -> void:
+	# Auto-destroy after lifetime (checked here so it respects pause — we don't run when paused)
+	if _time_alive >= lifetime:
+		queue_free()
+		return
+
 	# Check for overlapping areas BEFORE moving (early collision detection)
 	var overlapping = get_overlapping_areas()
 	for area in overlapping:

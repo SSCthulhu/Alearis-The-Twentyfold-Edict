@@ -1,4 +1,5 @@
 extends Node
+const VfxRenderUtil = preload("res://scripts/vfx/VfxRenderUtil.gd")
 
 ## Knight Light Attack VFX Manager
 ## Spawns light attack VFX when Knight uses light attack combo
@@ -64,6 +65,7 @@ func _spawn_knight_light_vfx(facing_direction: int) -> void:
 	
 	var world = get_tree().root
 	world.add_child(vfx)
+	VfxRenderUtil.promote(vfx, 220)
 	
 	# Position IN FRONT of player based on facing direction (matches Rogue positioning)
 	var vfx_position: Vector2 = player_body.global_position

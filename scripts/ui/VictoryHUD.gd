@@ -396,7 +396,9 @@ func _apply_relic_choice(i: int) -> bool:
 
 	if RunStateSingleton.has_method("advance_world"):
 		pass
+		print("[VictoryUI] Before advance_world: world_index = ", RunStateSingleton.world_index)
 		RunStateSingleton.call("advance_world")
+		print("[VictoryUI] After advance_world: world_index = ", RunStateSingleton.world_index)
 		pass
 	else:
 		if RunStateSingleton.has_method("clear_world_modifiers"):

@@ -1,5 +1,6 @@
 extends Node
 class_name AirDashVFX
+const VfxRenderUtil = preload("res://scripts/vfx/VfxRenderUtil.gd")
 
 ## Spawns directional air dash VFX when the player dashes while airborne
 ## VFX flips horizontally based on dash direction
@@ -94,6 +95,7 @@ func _spawn_air_dash_vfx(facing_direction: int) -> void:
 	var world_parent: Node = player_body.get_parent()
 	if world_parent != null:
 		world_parent.add_child(vfx)
+		VfxRenderUtil.promote(vfx, 220)
 		
 		# Position BEHIND the player (opposite of dash direction)
 		var vfx_position: Vector2 = player_body.global_position

@@ -9,7 +9,6 @@ signal chest_opened(floor_number: int)
 
 @export var player_path: NodePath = ^"../Player"
 @export var encounter_controller_path: NodePath = ^"../EncounterController"
-@export var rising_hazard_path: NodePath = ^"../RisingHazard"
 @export var steam_elevator_path: NodePath = ^"../Arena/Geometry/SteamElevator"
 
 @export var gate_paths: Array[NodePath] = [
@@ -163,6 +162,34 @@ var _orb_flight_completed_once: bool = false
 @export_group("Platform Unlocks")
 @export var hide_platforms_on_ready: bool = true
 
+@export_group("World1 Floor3 Transition")
+@export var enable_world1_floor3_transition: bool = false
+@export var world1_floor3_trigger_x: float = 8000.0
+@export var world1_floor3_wait_before_fade: float = 3.0
+@export var world1_floor3_fade_out_time: float = 1.0
+@export var world1_floor3_fade_in_time: float = 1.0
+@export var world1_floor3_destination_path: NodePath = ^"../Arena/Spawns/Floor3/PlayerSpawn"
+@export var world1_floor3_fade_rect_path: NodePath = ^"../UI/ScreenRoot/HUDRoot/Floor3TransitionFade"
+@export var world1_floor3_enemy_unlock_delay: float = 1.0
+@export var world1_floor3_camera_offset: Vector2 = Vector2(0.0, -450.0)
+
+@export_group("World1 Boss Arena Camera")
+@export var enable_world1_boss_arena_camera: bool = false
+@export var world1_boss_arena_camera_path: NodePath = ^"../BossArenaCamera"
+@export var world1_boss_camera_left: float = 49377.0
+@export var world1_boss_camera_right: float = 52321.0
+@export var world1_boss_camera_top: float = 11000.0
+@export var world1_boss_camera_bottom: float = 14535.0
+@export var world1_boss_camera_transition_time: float = 0.75
+@export var world1_boss_camera_live_tuning: bool = false
+@export var world1_boss_camera_use_manual_center: bool = false
+@export var world1_boss_camera_center: Vector2 = Vector2(50849.0, 12767.5)
+@export var world1_boss_camera_auto_fit_zoom: bool = true
+@export var world1_boss_camera_fit_padding_px: float = 80.0
+@export var world1_boss_camera_min_zoom: float = 0.25
+@export var world1_boss_camera_max_zoom: float = 1.0
+@export var world1_lock_floor4_gate_on_boss_entry: bool = true
+
 @export_group("Unlock after Floor 1 + Dice Choice")
 @export var unlock_floor_1_platforms: Array[NodePath] = [] # Platform8, Platform9
 
@@ -186,27 +213,16 @@ var _orb_flight_completed_once: bool = false
 # -----------------------------
 # Legacy arrays (kept for compatibility)
 # -----------------------------
-@export var unlock_after_floor_1: Array[NodePath] = [
-	^"../Arena/Platform8",
-	^"../Arena/Platform9",
-]
-@export var unlock_after_floor_2: Array[NodePath] = [
-	^"../Arena/Platform14",
-]
-@export var unlock_after_floor_3: Array[NodePath] = [
-	^"../Arena/Platform23",
-]
-@export var unlock_after_floor_4: Array[NodePath] = [
-	^"../Arena/Platform20",
-	^"../Arena/Platform24",
-]
+@export var unlock_after_floor_1: Array[NodePath] = []
+@export var unlock_after_floor_2: Array[NodePath] = []
+@export var unlock_after_floor_3: Array[NodePath] = []
+@export var unlock_after_floor_4: Array[NodePath] = []
 
 # Cache original collision layers/masks so we can restore
 var _platform_collision_cache: Dictionary = {} # CollisionObject2D -> {"layer": int, "mask": int}
 
 @onready var _player: Node2D = get_node_or_null(player_path) as Node2D
 @onready var _encounter: Node = get_node_or_null(encounter_controller_path)
-@onready var _hazard: Node = get_node_or_null(rising_hazard_path)
 
 @export var floor_band_padding: float = 40.0
 
@@ -230,6 +246,11 @@ var _chest_spawned: PackedByteArray = PackedByteArray()
 var _floor_spawned: PackedByteArray = PackedByteArray([1, 0, 0, 0])  # Floor 1 spawns on ready
 
 var _last_floor_number: int = -1
+var _world1_floor3_transition_started: bool = false
+var _world1_floor3_transition_running: bool = false
+var _world1_floor3_enemy_pause_cache: Dictionary = {}
+var _world1_boss_camera_activated: bool = false
+var _world1_boss_camera_ref: Camera2D = null
 
 # -----------------------------
 # World2 door runtime
@@ -563,12 +584,14 @@ func _process(_delta: float) -> void:
 	# Floor 4 is index 3, so check if _unlocked[3] == 1
 	var floor4_unlocked: bool = (_unlocked.size() > 3 and _unlocked[3] == 1)
 	
-	# Check boss start based on progression mode
-	# World3 (horizontal mode): Boss starts via SteamElevator teleport_completed signal (after 1 second delay)
-	# World2 (vertical mode): Boss starts when player crosses Y threshold
+	# Check boss start based on progression mode.
+	# Vertical mode (World2): Y-threshold trigger.
+	# Horizontal mode:
+	# - World3 keeps SteamElevator signal-based trigger.
+	# - Worlds without a SteamElevator can use boss_start_x fallback.
 	if floor_progression_mode == 0:
-		# Vertical mode (World2): Position-based trigger
-		var boss_triggered: bool = _player.global_position.y <= boss_start_y
+		# Vertical mode (World2): Position-based trigger.
+		var boss_triggered: bool = (_player != null and _player.global_position.y <= boss_start_y)
 		
 		if not _boss_started and _player != null and boss_triggered and floor4_unlocked:
 			_boss_started = true
@@ -581,10 +604,24 @@ func _process(_delta: float) -> void:
 				pass
 				_encounter.call("begin_boss_encounter")
 				pass
-	# Horizontal mode (World3): Boss starts from _on_steam_elevator_teleport_completed()
-	# No position check needed here
+	else:
+		# Horizontal mode fallback: if there is no SteamElevator hookup, use X-threshold trigger.
+		var has_steam_elevator_trigger: bool = (_steam_elevator != null and is_instance_valid(_steam_elevator))
+		if not has_steam_elevator_trigger:
+			var boss_triggered_x: bool = (_player != null and _player.global_position.x >= boss_start_x)
+			if not _boss_started and boss_triggered_x and floor4_unlocked:
+				_boss_started = true
+				_activate_world1_boss_arena_camera()
+				if _encounter == null:
+					pass
+				elif not _encounter.has_method("begin_boss_encounter"):
+					pass
+				else:
+					_encounter.call("begin_boss_encounter")
 
 	_update_current_floor_from_player()
+	_try_start_world1_floor3_transition()
+	_update_world1_boss_camera_live_tuning()
 	_sync_runstate_floor()
 	_emit_floor_status_if_changed()
 
@@ -687,8 +724,226 @@ func _set_player_input_locked(locked: bool) -> void:
 	if "input_locked" in _player:
 		_player.set("input_locked", locked)
 
+func _set_player_cutscene_motion_lock(locked: bool) -> void:
+	if _player == null:
+		return
+	if _player.has_method("set_cutscene_motion_lock"):
+		_player.call("set_cutscene_motion_lock", locked)
+		return
+	# Fallback if player script does not expose the dedicated method.
+	_set_player_input_locked(locked)
+
 func _is_floor_cleared_by_group(group_name: StringName) -> bool:
 	return get_tree().get_nodes_in_group(group_name).is_empty()
+
+func _try_start_world1_floor3_transition() -> void:
+	if not enable_world1_floor3_transition:
+		return
+	if _world1_floor3_transition_started or _world1_floor3_transition_running:
+		return
+	if _player == null:
+		return
+	if _player.global_position.x < world1_floor3_trigger_x:
+		return
+
+	_world1_floor3_transition_started = true
+	_world1_floor3_transition_running = true
+	call_deferred("_run_world1_floor3_transition")
+
+func _set_world1_floor3_enemies_paused(paused: bool) -> void:
+	if floor_enemy_groups.size() < 3:
+		return
+	var group_name: StringName = floor_enemy_groups[2]
+	var enemies: Array[Node] = get_tree().get_nodes_in_group(group_name)
+
+	if paused:
+		_world1_floor3_enemy_pause_cache.clear()
+		for e: Node in enemies:
+			if e == null or not is_instance_valid(e):
+				continue
+			_world1_floor3_enemy_pause_cache[e] = {
+				"process": e.is_processing(),
+				"physics": e.is_physics_processing()
+			}
+			e.set_process(false)
+			e.set_physics_process(false)
+			if e is CharacterBody2D:
+				(e as CharacterBody2D).velocity = Vector2.ZERO
+	else:
+		for e_obj: Variant in _world1_floor3_enemy_pause_cache.keys():
+			var e: Node = e_obj as Node
+			if e == null or not is_instance_valid(e):
+				continue
+			var cached: Variant = _world1_floor3_enemy_pause_cache.get(e, null)
+			if cached == null:
+				continue
+			e.set_process(bool(cached["process"]))
+			e.set_physics_process(bool(cached["physics"]))
+		_world1_floor3_enemy_pause_cache.clear()
+
+func _set_world1_floor3_fade_alpha(alpha: float, fade_rect: ColorRect) -> void:
+	if fade_rect == null:
+		return
+	var c: Color = fade_rect.color
+	c.a = alpha
+	fade_rect.color = c
+
+func _activate_world1_boss_arena_camera() -> void:
+	if not enable_world1_boss_arena_camera:
+		return
+	if _world1_boss_camera_activated:
+		return
+	_world1_boss_camera_activated = true
+	_lock_world1_floor4_gate_if_needed()
+
+	var boss_cam: Camera2D = get_node_or_null(world1_boss_arena_camera_path) as Camera2D
+	if boss_cam == null:
+		push_warning("[Floors] World1 boss arena camera not found: %s" % String(world1_boss_arena_camera_path))
+		return
+	_world1_boss_camera_ref = boss_cam
+	if _player == null:
+		return
+
+	var player_cam: Camera2D = _player.get_node_or_null("Camera2D") as Camera2D
+	if player_cam != null:
+		boss_cam.global_position = player_cam.global_position
+		boss_cam.zoom = player_cam.zoom
+	else:
+		boss_cam.global_position = _player.global_position
+		boss_cam.zoom = Vector2.ONE
+
+	boss_cam.limit_left = int(world1_boss_camera_left)
+	boss_cam.limit_right = int(world1_boss_camera_right)
+	boss_cam.limit_top = int(world1_boss_camera_top)
+	boss_cam.limit_bottom = int(world1_boss_camera_bottom)
+	boss_cam.position_smoothing_enabled = false
+	boss_cam.enabled = true
+	boss_cam.make_current()
+
+	var center: Vector2 = _get_world1_boss_camera_target_center()
+	var target_zoom: Vector2 = _get_world1_boss_arena_fit_zoom()
+	var tween: Tween = create_tween()
+	tween.set_pause_mode(Tween.TWEEN_PAUSE_PROCESS)
+	tween.set_trans(Tween.TRANS_SINE)
+	tween.set_ease(Tween.EASE_IN_OUT)
+	tween.tween_property(boss_cam, "global_position", center, maxf(world1_boss_camera_transition_time, 0.01))
+	if world1_boss_camera_auto_fit_zoom:
+		tween.parallel().tween_property(boss_cam, "zoom", target_zoom, maxf(world1_boss_camera_transition_time, 0.01))
+
+func _lock_world1_floor4_gate_if_needed() -> void:
+	if not world1_lock_floor4_gate_on_boss_entry:
+		return
+	# gate_paths index 3 maps to CeilingGate_F4 in this project's floor order (F1..F4).
+	if gate_paths.size() > 3:
+		_set_gate_open(3, false)
+
+func _get_world1_boss_camera_target_center() -> Vector2:
+	if world1_boss_camera_use_manual_center:
+		return world1_boss_camera_center
+	return Vector2(
+		(world1_boss_camera_left + world1_boss_camera_right) * 0.5,
+		(world1_boss_camera_top + world1_boss_camera_bottom) * 0.5
+	)
+
+func _get_world1_boss_arena_fit_zoom() -> Vector2:
+	if not world1_boss_camera_auto_fit_zoom:
+		return Vector2.ONE
+	var vp: Viewport = get_viewport()
+	if vp == null:
+		return Vector2.ONE
+	var view_size: Vector2 = vp.get_visible_rect().size
+	var arena_w: float = absf(world1_boss_camera_right - world1_boss_camera_left) + world1_boss_camera_fit_padding_px * 2.0
+	var arena_h: float = absf(world1_boss_camera_bottom - world1_boss_camera_top) + world1_boss_camera_fit_padding_px * 2.0
+	if arena_w <= 1.0 or arena_h <= 1.0:
+		return Vector2.ONE
+	var zx: float = view_size.x / arena_w
+	var zy: float = view_size.y / arena_h
+	var z: float = minf(zx, zy)
+	z = clampf(z, world1_boss_camera_min_zoom, world1_boss_camera_max_zoom)
+	return Vector2(z, z)
+
+func _update_world1_boss_camera_live_tuning() -> void:
+	if not enable_world1_boss_arena_camera:
+		return
+	if not world1_boss_camera_live_tuning:
+		return
+	var in_boss_zone: bool = (_player != null and _player.global_position.x >= boss_start_x)
+	if not _world1_boss_camera_activated and not in_boss_zone:
+		return
+	if _world1_boss_camera_ref == null or not is_instance_valid(_world1_boss_camera_ref):
+		_world1_boss_camera_ref = get_node_or_null(world1_boss_arena_camera_path) as Camera2D
+		if _world1_boss_camera_ref == null:
+			return
+
+	# In live tuning mode, make sure this camera is current so inspector tweaks are visible immediately.
+	if not _world1_boss_camera_ref.is_current():
+		_world1_boss_camera_ref.enabled = true
+		_world1_boss_camera_ref.make_current()
+
+	_world1_boss_camera_ref.limit_left = int(world1_boss_camera_left)
+	_world1_boss_camera_ref.limit_right = int(world1_boss_camera_right)
+	_world1_boss_camera_ref.limit_top = int(world1_boss_camera_top)
+	_world1_boss_camera_ref.limit_bottom = int(world1_boss_camera_bottom)
+	if world1_boss_camera_auto_fit_zoom:
+		_world1_boss_camera_ref.zoom = _get_world1_boss_arena_fit_zoom()
+	# Let you drive framing manually while tuning.
+	if world1_boss_camera_use_manual_center:
+		_world1_boss_camera_ref.global_position = _get_world1_boss_camera_target_center()
+
+func _run_world1_floor3_transition() -> void:
+	_set_player_cutscene_motion_lock(true)
+	_set_world1_floor3_enemies_paused(true)
+
+	await get_tree().create_timer(maxf(world1_floor3_wait_before_fade, 0.0)).timeout
+
+	var fade_rect: ColorRect = get_node_or_null(world1_floor3_fade_rect_path) as ColorRect
+	if fade_rect != null:
+		fade_rect.visible = true
+		_set_world1_floor3_fade_alpha(0.0, fade_rect)
+		var tween_out: Tween = create_tween()
+		tween_out.set_pause_mode(Tween.TWEEN_PAUSE_PROCESS)
+		tween_out.tween_method(_set_world1_floor3_fade_alpha.bind(fade_rect), 0.0, 1.0, maxf(world1_floor3_fade_out_time, 0.01))
+		await tween_out.finished
+	else:
+		await get_tree().create_timer(maxf(world1_floor3_fade_out_time, 0.01)).timeout
+
+	var destination: Node2D = get_node_or_null(world1_floor3_destination_path) as Node2D
+	if destination == null:
+		push_warning("[Floors] World1 Floor3 destination not found: %s" % String(world1_floor3_destination_path))
+	else:
+		_player.global_position = destination.global_position
+
+	var cam: Camera2D = null
+	if _player != null:
+		cam = _player.get_node_or_null("Camera2D") as Camera2D
+	if cam != null:
+		cam.limit_left = 41528
+		cam.offset = world1_floor3_camera_offset
+		cam.position = Vector2.ZERO
+		var prev_smoothing: bool = cam.position_smoothing_enabled
+		cam.position_smoothing_enabled = false
+		cam.global_position = _player.global_position
+		if cam.has_method("reset_smoothing"):
+			cam.call("reset_smoothing")
+		cam.position_smoothing_enabled = prev_smoothing
+
+	if fade_rect != null:
+		var tween_in: Tween = create_tween()
+		tween_in.set_pause_mode(Tween.TWEEN_PAUSE_PROCESS)
+		tween_in.tween_method(_set_world1_floor3_fade_alpha.bind(fade_rect), 1.0, 0.0, maxf(world1_floor3_fade_in_time, 0.01))
+		await tween_in.finished
+		fade_rect.visible = false
+	else:
+		await get_tree().create_timer(maxf(world1_floor3_fade_in_time, 0.01)).timeout
+
+	_set_player_cutscene_motion_lock(false)
+	if cam != null:
+		cam.offset = world1_floor3_camera_offset
+		cam.position = Vector2.ZERO
+		cam.set_deferred("offset", world1_floor3_camera_offset)
+	await get_tree().create_timer(maxf(world1_floor3_enemy_unlock_delay, 0.0)).timeout
+	_set_world1_floor3_enemies_paused(false)
+	_world1_floor3_transition_running = false
 
 func _set_boss_combat_paused(p: bool) -> void:
 	var boss: Node = get_tree().get_first_node_in_group(&"boss")
@@ -699,13 +954,6 @@ func _on_floor_cleared(index: int) -> void:
 	_unlocked[index] = 1
 
 	_set_boss_combat_paused(true)
-
-	if _hazard != null and _hazard.has_method("set_paused_by_system"):
-		_hazard.call("set_paused_by_system", true)
-
-	if _hazard != null and _hazard.has_method("rise_to_ceiling_y"):
-		var target_y: float = _get_floor_ceiling_y(index)
-		_hazard.call("rise_to_ceiling_y", target_y, true)
 
 	_pending_gate_open[index] = 1
 	_pending_floor_to_open = index
@@ -728,10 +976,10 @@ func _on_modifier_chosen() -> void:
 		_pending_gate_open[idx] = 0
 		_pending_floor_to_open = -1
 
-		# World1 & World2 use ceiling gates normally
-		# World3 (horizontal mode): Open all gates EXCEPT Floor 3 (idx 2) - player uses cave teleport for Floor 3
+		# World1 & World2 use ceiling gates normally.
+		# Only skip Floor 3 gate in the specific World3 teleport flow.
 		var should_open_gate: bool = true
-		if floor_progression_mode == 1 and idx == 2:  # Horizontal mode + Floor 3
+		if floor_progression_mode == 1 and enable_world3_teleport and idx == 2:
 			should_open_gate = false
 			pass
 		

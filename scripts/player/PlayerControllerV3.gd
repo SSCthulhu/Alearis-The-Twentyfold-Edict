@@ -63,6 +63,12 @@ const FALL_VELOCITY: float = 500.0
 const DASH_LENGTH: float = 100.0
 const DASH_VELOCITY: float = 600.0
 
+@export_group("Ground Adhesion")
+@export var enable_slope_ground_adhesion: bool = true
+@export var slope_floor_snap_length: float = 22.0
+@export var slope_floor_max_angle_deg: float = 50.0
+@export var slope_snap_requires_downward_motion: bool = true
+
 # -----------------------------
 # Character Data
 # -----------------------------
@@ -83,6 +89,7 @@ var _health = null
 # Input Lock (Victory UI, Cutscenes, etc.)
 # -----------------------------
 var _input_locked: bool = false  # When true, disable all player input and freeze animations
+var _cutscene_motion_locked: bool = false  # When true, disable control but still allow natural falling
 
 # -----------------------------
 # Movement State
@@ -94,6 +101,12 @@ var _saved_position: Vector2 = Vector2.ZERO
 var _is_sprinting: bool = false
 var _dash_jump_buffer: bool = false
 var _used_double_jump: bool = false  # Track if double jump was used for landing animation
+var _drop_last_tap_time: float = -999.0
+var _drop_through_timer: float = 0.0
+var _drop_through_fall_lock_timer: float = 0.0
+var _drop_restore_collision_mask: int = 0
+var _floor_on_dropthrough_platform: bool = false
+var _last_floor_collider_name: StringName = &""
 
 # Timers
 var _coyote_timer: Timer = null
@@ -107,6 +120,10 @@ var _combo_window_timer: float = 0.0
 var _combo_attack_timer: float = 0.0
 var _combo_attack_duration: float = 0.0  # Full animation duration for current attack
 var _combo_can_continue: bool = false  # Flag when animation is far enough to accept next input
+
+@export_group("Light Combo Feel")
+@export_range(0.30, 0.95, 0.01) var rogue_combo_chain_unlock_threshold: float = 0.70
+@export_range(0.30, 0.95, 0.01) var knight_combo_chain_unlock_threshold: float = 0.55
 
 # Attack movement
 var _attack_move_active: bool = false
@@ -142,6 +159,7 @@ var _roll_speed: float = 0.0
 @export_group("Input Actions")
 @export var input_move_left: StringName = &"move_left"
 @export var input_move_right: StringName = &"move_right"
+@export var input_move_down: StringName = &"move_down"
 @export var input_jump: StringName = &"jump"
 @export var input_dash: StringName = &"dash"
 @export var input_roll: StringName = &"Dodge"
@@ -149,6 +167,18 @@ var _roll_speed: float = 0.0
 @export var input_heavy_attack: StringName = &"attack_heavy"
 @export var input_ultimate: StringName = &"ultimate"
 @export var input_defend: StringName = &"defend"
+
+@export_group("Drop Through Platforms")
+@export var drop_through_double_tap_window: float = 0.22
+@export var drop_through_duration: float = 0.12
+@export var drop_through_downward_boost: float = 360.0
+@export var drop_through_downward_boost_air: float = 460.0
+@export var drop_through_world_collision_layer_bit: int = 1
+@export var auto_drop_when_airborne_holding_down: bool = true
+@export var drop_through_airborne_probe_feet_offset: float = 36.0
+@export var drop_through_airborne_probe_distance: float = 96.0
+@export var drop_through_roll_cue_lock_time: float = 0.14
+@export var drop_through_allowed_floor_names: PackedStringArray = PackedStringArray(["Platforms"])
 
 # Testing/Debug inputs
 @export_group("Debug/Testing Inputs")
@@ -165,6 +195,8 @@ func _ready() -> void:
 	_setup_timers()
 	_load_character_data()
 	_initialize_roll_charges()
+	_drop_restore_collision_mask = collision_mask
+	floor_max_angle = deg_to_rad(slope_floor_max_angle_deg)
 	switch_state(STATE.FALL)
 
 
@@ -253,15 +285,35 @@ func _initialize_roll_charges() -> void:
 # Physics Process
 # -----------------------------
 func _physics_process(delta: float) -> void:
+	_update_drop_through_timer(delta)
+
 	# CRITICAL: If input is locked (victory UI, cutscenes, etc.), freeze player completely
 	if _input_locked:
 		velocity = Vector2.ZERO  # Stop all movement
 		move_and_slide()
 		return  # Skip all input processing and state updates
-	
+
+	# Cutscene motion lock: no control/actions, but allow falling to ground naturally.
+	if _cutscene_motion_locked:
+		velocity.x = 0.0
+		if not is_on_floor():
+			if active_state != STATE.FALL:
+				switch_state(STATE.FALL)
+			velocity.y = move_toward(velocity.y, FALL_VELOCITY, FALL_GRAVITY * delta)
+		else:
+			if velocity.y > 0.0:
+				velocity.y = 0.0
+			if active_state != STATE.IDLE:
+				switch_state(STATE.IDLE)
+		move_and_slide()
+		return
+
 	_update_roll_charges(delta)
 	_update_timers(delta)
 	_update_combo_timers(delta)
+	_update_slope_ground_adhesion()
+	_check_grounded_dropthrough_request()
+	_check_airborne_pre_dropthrough()
 	
 	# Check for debug/test inputs
 	_handle_debug_inputs()
@@ -269,8 +321,159 @@ func _physics_process(delta: float) -> void:
 	process_state(delta)
 	
 	# Don't apply physics during ultimate
+	var was_on_floor_before_move: bool = is_on_floor()
 	if active_state != STATE.ULTIMATE:
 		move_and_slide()
+	_update_floor_surface_cache()
+	_check_airborne_auto_dropthrough(was_on_floor_before_move)
+
+func _update_slope_ground_adhesion() -> void:
+	if not enable_slope_ground_adhesion:
+		return
+
+	floor_max_angle = deg_to_rad(slope_floor_max_angle_deg)
+
+	var jump_pressed: bool = Input.is_action_just_pressed(input_jump)
+	var disable_snap: bool = (
+		_drop_through_timer > 0.0
+		or jump_pressed
+		or active_state == STATE.JUMP
+		or active_state == STATE.DOUBLE_JUMP
+	)
+	floor_snap_length = 0.0 if disable_snap else maxf(slope_floor_snap_length, 0.0)
+	if disable_snap:
+		return
+
+	if slope_snap_requires_downward_motion and velocity.y < 0.0:
+		return
+
+	# Keeps body glued to valid slopes when descending, while still allowing true ledge drop-offs.
+	if not is_on_floor():
+		apply_floor_snap()
+
+func _update_drop_through_timer(delta: float) -> void:
+	if _drop_through_fall_lock_timer > 0.0:
+		_drop_through_fall_lock_timer = maxf(_drop_through_fall_lock_timer - delta, 0.0)
+	if _drop_through_timer <= 0.0:
+		return
+	_drop_through_timer = maxf(_drop_through_timer - delta, 0.0)
+	if _drop_through_timer <= 0.0:
+		collision_mask = _drop_restore_collision_mask
+
+func _check_grounded_dropthrough_request() -> void:
+	if _drop_through_timer > 0.0:
+		return
+	if not is_on_floor():
+		return
+	if not _floor_on_dropthrough_platform:
+		return
+	if not Input.is_action_just_pressed(input_move_down):
+		return
+	var now_sec: float = float(Time.get_ticks_msec()) / 1000.0
+	if now_sec - _drop_last_tap_time <= drop_through_double_tap_window:
+		_start_drop_through(true)
+		_drop_last_tap_time = -999.0
+	else:
+		_drop_last_tap_time = now_sec
+
+func _check_airborne_pre_dropthrough() -> void:
+	if _drop_through_timer > 0.0:
+		return
+	if not auto_drop_when_airborne_holding_down:
+		return
+	if is_on_floor():
+		return
+	if not Input.is_action_pressed(input_move_down):
+		return
+	if not _is_dropthrough_platform_below():
+		return
+	# Pre-emptively disable one-way platform collision before landing frame.
+	_start_drop_through(false, true)
+
+func _check_airborne_auto_dropthrough(was_on_floor_before_move: bool) -> void:
+	if _drop_through_timer > 0.0:
+		return
+	if not auto_drop_when_airborne_holding_down:
+		return
+	# If falling while holding down and we touch a one-way platform this frame, drop through immediately.
+	if was_on_floor_before_move:
+		return
+	if not is_on_floor():
+		return
+	if not Input.is_action_pressed(input_move_down):
+		return
+	if not _floor_on_dropthrough_platform:
+		return
+	_start_drop_through(false, true)
+
+func _start_drop_through(play_roll_anim: bool = false, airborne_mode: bool = false) -> void:
+	if _drop_through_timer > 0.0:
+		return
+	var bit: int = clampi(drop_through_world_collision_layer_bit, 1, 32)
+	_drop_restore_collision_mask = collision_mask
+	collision_mask = collision_mask & ~(1 << (bit - 1))
+	_drop_through_timer = maxf(drop_through_duration, 0.01)
+	velocity.y = maxf(velocity.y, drop_through_downward_boost_air if airborne_mode else drop_through_downward_boost)
+	if active_state != STATE.FALL:
+		switch_state(STATE.FALL)
+	if play_roll_anim and not airborne_mode:
+		_drop_through_fall_lock_timer = maxf(drop_through_roll_cue_lock_time, 0.01)
+		# Play roll cue after state change so FALL animation setup doesn't immediately override it.
+		_play_animation("dodge", 2.0)
+
+func _is_dropthrough_platform_below() -> bool:
+	var space_state: PhysicsDirectSpaceState2D = get_world_2d().direct_space_state
+	var from: Vector2 = global_position + Vector2(0.0, drop_through_airborne_probe_feet_offset)
+	var to: Vector2 = from + Vector2(0.0, maxf(drop_through_airborne_probe_distance, 8.0))
+	var query: PhysicsRayQueryParameters2D = PhysicsRayQueryParameters2D.create(from, to)
+	query.exclude = [self]
+	query.collide_with_areas = false
+	query.collide_with_bodies = true
+	var hit: Dictionary = space_state.intersect_ray(query)
+	if hit.is_empty():
+		return false
+	var collider_obj: Variant = hit.get("collider", null)
+	if collider_obj is Node:
+		return _is_dropthrough_platform_node(collider_obj as Node)
+	return false
+
+func _update_floor_surface_cache() -> void:
+	_floor_on_dropthrough_platform = false
+	_last_floor_collider_name = &""
+	if not is_on_floor():
+		return
+	for i in range(get_slide_collision_count()):
+		var col: KinematicCollision2D = get_slide_collision(i)
+		if col == null:
+			continue
+		if col.get_normal().dot(Vector2.UP) < 0.5:
+			continue
+		var collider_obj: Object = col.get_collider()
+		if collider_obj is Node:
+			var n: Node = collider_obj as Node
+			_last_floor_collider_name = StringName(n.name)
+			if _is_dropthrough_platform_node(n):
+				_floor_on_dropthrough_platform = true
+				return
+
+func _is_dropthrough_floor_name_allowed(surface_name: String) -> bool:
+	for allowed: String in drop_through_allowed_floor_names:
+		if allowed == surface_name:
+			return true
+	var lower: String = surface_name.to_lower()
+	return lower.contains("platform")
+
+func _is_dropthrough_platform_node(node: Node) -> bool:
+	if node == null:
+		return false
+
+	# Check collider ancestry so nested shapes/bodies under platform groups still qualify.
+	var cursor: Node = node
+	while cursor != null:
+		if _is_dropthrough_floor_name_allowed(String(cursor.name)):
+			return true
+		cursor = cursor.get_parent()
+	return false
 
 
 func _update_timers(delta: float) -> void:
@@ -483,7 +686,7 @@ func process_state(delta: float) -> void:
 				switch_state(STATE.LIGHT_ATTACK)
 			elif Input.is_action_just_pressed(input_heavy_attack) and _can_use_heavy_attack():
 				switch_state(STATE.HEAVY_ATTACK)
-			elif Input.is_action_just_pressed(input_ultimate):
+			elif Input.is_action_just_pressed(input_ultimate) and _can_use_ultimate():
 				switch_state(STATE.ULTIMATE)
 		
 		STATE.WALK:
@@ -508,7 +711,7 @@ func process_state(delta: float) -> void:
 				switch_state(STATE.LIGHT_ATTACK)
 			elif Input.is_action_just_pressed(input_heavy_attack) and _can_use_heavy_attack():
 				switch_state(STATE.HEAVY_ATTACK)
-			elif Input.is_action_just_pressed(input_ultimate):
+			elif Input.is_action_just_pressed(input_ultimate) and _can_use_ultimate():
 				switch_state(STATE.ULTIMATE)
 		
 		STATE.SPRINT:
@@ -562,7 +765,7 @@ func process_state(delta: float) -> void:
 			
 			if Input.is_action_just_pressed(input_defend) and _can_use_defend():
 				switch_state(STATE.DEFEND)
-			elif is_on_floor():
+			elif is_on_floor() and _drop_through_fall_lock_timer <= 0.0:
 				# Only play landing animation/VFX if we entered FALL from a jump (not walking off edge)
 				# Check previous state: if we came from IDLE/WALK/SPRINT, it's a slope/coyote situation
 				var came_from_ground_state: bool = (previous_state == STATE.IDLE or 
@@ -818,6 +1021,15 @@ func _can_use_heavy_attack() -> bool:
 	return is_ready
 
 
+func _can_use_ultimate() -> bool:
+	"""Check if ultimate is off cooldown"""
+	if _combat == null:
+		return false
+	if not _combat.has_method("is_ability_ready"):
+		return false
+	return _combat.call("is_ability_ready", &"ultimate")
+
+
 func _start_roll() -> void:
 	if not _can_roll():
 		return
@@ -1028,11 +1240,11 @@ func _process_light_attack(delta: float) -> void:
 		# Check if animation is complete enough - unlock combo continuation
 		if not _combo_can_continue and _combo_attack_duration > 0.0:
 			var progress: float = 1.0 - (_combo_attack_timer / _combo_attack_duration)
-			# Knight: 55% for all hits (heavier feel, but not locked)
-			# Rogue: 50% for all hits (most responsive)
-			var unlock_threshold: float = 0.55  # Default for Knight
+			# Require a minimum completion percentage before chaining next combo hit.
+			var unlock_threshold: float = knight_combo_chain_unlock_threshold
 			if character_data != null and character_data.character_name == "Rogue":
-				unlock_threshold = 0.5  # Rogue can chain slightly faster (50% complete)
+				unlock_threshold = rogue_combo_chain_unlock_threshold
+			unlock_threshold = clampf(unlock_threshold, 0.05, 0.99)
 			
 			if progress >= unlock_threshold:
 				_combo_can_continue = true
@@ -1041,7 +1253,7 @@ func _process_light_attack(delta: float) -> void:
 	# Check for combo continuation - ONLY if animation is far enough along
 	if Input.is_action_just_pressed(input_light_attack):
 		if _combo_can_continue and _combo_window_timer > 0.0:
-			# Animation is 70%+ done, and within buffer window - start next combo
+			# Animation has passed the per-character unlock threshold and is within buffer window.
 			_start_light_attack()
 			return
 	
@@ -1246,7 +1458,18 @@ var _ultimate_origin_pos: Vector2 = Vector2.ZERO
 var _defend_animation_timer: float = 0.0
 
 func _start_ultimate() -> void:
-	pass
+	# Safety gate: block if ultimate is still on cooldown.
+	if not _can_use_ultimate():
+		if is_on_floor():
+			var input_dir: float = Input.get_axis(input_move_left, input_move_right)
+			switch_state(STATE.WALK if input_dir != 0.0 else STATE.IDLE)
+		else:
+			switch_state(STATE.FALL)
+		return
+	
+	# Trigger ultimate cooldown in PlayerCombat
+	if _combat != null:
+		_combat._start_attack(&"ultimate")
 	
 	# Trigger ultimate cooldown in PlayerCombat
 	if _combat != null:
@@ -1630,6 +1853,29 @@ func set_input_locked(locked: bool) -> void:
 			switch_state(STATE.IDLE)
 		
 		pass
+
+
+func set_cutscene_motion_lock(locked: bool) -> void:
+	"""Disable player control while still allowing gravity/fall behavior."""
+	_cutscene_motion_locked = locked
+
+	if locked:
+		# Stop any currently playing animation immediately to avoid run/walk carry-over.
+		if _body_3d_view != null:
+			var anim_player = _body_3d_view.get("_anim_player")
+			if anim_player != null and anim_player.is_playing():
+				anim_player.stop()
+
+		# Clear horizontal movement immediately; keep vertical so air states can fall naturally.
+		velocity.x = 0.0
+
+		# Force state immediately so visuals snap to idle/fall instead of running in place.
+		switch_state(STATE.IDLE if is_on_floor() else STATE.FALL)
+	else:
+		if is_on_floor():
+			switch_state(STATE.IDLE)
+		else:
+			switch_state(STATE.FALL)
 
 
 func get_current_state() -> STATE:

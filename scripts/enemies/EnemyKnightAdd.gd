@@ -1,5 +1,6 @@
 extends CharacterBody2D
 class_name EnemyKnightAdd
+const VfxRenderUtil = preload("res://scripts/vfx/VfxRenderUtil.gd")
 
 @export var move_speed: float = 140.0
 @export var accel: float = 1800.0
@@ -56,6 +57,7 @@ var _home_initialized: bool = false
 
 # Attack VFX
 @export var enable_attack_vfx: bool = true  # Toggle to enable/disable attack VFX
+@export var attack_vfx_hit_offset_px: float = 20.0  # Offset from hit target along attack direction
 const ATTACK_VFX_SCENE: PackedScene = preload("res://scenes/vfx/BlueSlashVFX.tscn")
 
 # -----------------------------
@@ -762,10 +764,6 @@ func _try_attack() -> void:
 
 	var hit_delay: float = clampf(attack_hit_time, 0.0, maxf(anim_len, 0.01))
 	var spawn_pos: Vector2 = global_position + Vector2(melee_spawn_forward_px * float(dir), 0.0)
-	
-	# Spawn attack slash VFX
-	if enable_attack_vfx and ATTACK_VFX_SCENE != null:
-		_spawn_attack_vfx(spawn_pos, dir)
 
 	# ✅ TIMING DEBUG: Mark attack animation start
 	var _attack_start_time: float = Time.get_ticks_msec() / 1000.0
@@ -791,6 +789,8 @@ func _try_attack() -> void:
 		hb.set("damage", attack_damage)
 		hb.set("target_group", &"player")
 		hb.set("debug_logs", debug_logs)  # Pass debug flag to hitbox
+		if hb.has_signal("damage_confirmed") and not hb.damage_confirmed.is_connected(_on_attack_damage_confirmed):
+			hb.damage_confirmed.connect(_on_attack_damage_confirmed)
 
 		var parent: Node = get_tree().current_scene
 		if parent == null:
@@ -1036,8 +1036,19 @@ func _spawn_attack_vfx(spawn_position: Vector2, direction: int) -> void:
 	var scene_root: Node = get_tree().current_scene
 	if scene_root != null:
 		scene_root.add_child(vfx)
+		VfxRenderUtil.promote(vfx, 230)
 		vfx.global_position = spawn_position
 		
 		# Set VFX facing direction
 		if vfx.has_method("set_facing"):
 			vfx.call("set_facing", direction)
+
+func _on_attack_damage_confirmed(_target_node: Node, hit_position: Vector2, facing: int) -> void:
+	"""Spawn slash VFX only when a melee hit actually deals HP damage."""
+	if not enable_attack_vfx:
+		return
+	if ATTACK_VFX_SCENE == null:
+		return
+	var dir: int = -1 if facing < 0 else 1
+	var spawn_position: Vector2 = hit_position + Vector2(attack_vfx_hit_offset_px * float(dir), 0.0)
+	_spawn_attack_vfx(spawn_position, dir)

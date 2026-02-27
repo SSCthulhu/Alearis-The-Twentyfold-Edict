@@ -31,7 +31,6 @@ receiver_path = NodePath("../BossHealth")
 require_group = &""
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="Hurtbox"]
-position = Vector2(0, 0)
 shape = SubResource("RectangleShape2D_gvkpj")
 
 [node name="BossHealth" type="Node" parent="."]
@@ -39,7 +38,6 @@ script = ExtResource("4_pm08e")
 max_hp = 2500
 hit_vfx_scene = ExtResource("4_a3e3y")
 crit_vfx_scene = ExtResource("5_e4sse")
-spawn_hit_vfx = true
 
 [node name="DamageNumberEmitter" type="Node" parent="."]
 script = ExtResource("7_yn033")
@@ -52,6 +50,7 @@ damage_number_scene = ExtResource("3_cog1j")
 health_path = NodePath("../BossHealth")
 
 [node name="ProjectileSpawnPoint" type="Node2D" parent="."]
+z_index = 20
 position = Vector2(0, -100)
 
 [node name="BossProjectileAttack" type="Node" parent="."]
@@ -61,4 +60,3 @@ attack_patterns = Array[ExtResource("11_pattern")]([ExtResource("12_wave"), ExtR
 boss_visual_path = NodePath("../FrostGolem3DView")
 
 [node name="FrostGolem3DView" parent="." instance=ExtResource("14_62ceh")]
-position = Vector2(0, 0)

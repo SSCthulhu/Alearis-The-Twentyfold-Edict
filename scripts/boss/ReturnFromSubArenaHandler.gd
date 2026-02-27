@@ -66,6 +66,10 @@ func _handle_return(player: Node2D, fade_overlay: ColorRect) -> void:
 	var portal_data = get_node_or_null("/root/PortalTransitionData")
 	if portal_data == null:
 		return
+
+	var player_health_node: Node = player.get_node_or_null("Health")
+	if player_health_node != null and player_health_node.has_method("suppress_healing_vfx_for"):
+		player_health_node.call("suppress_healing_vfx_for", 4.0)
 	
 	var return_pos: Vector2 = portal_data.return_position
 	

@@ -1,4 +1,4 @@
-[gd_scene load_steps=16 format=3 uid="uid://3n3mym4g3"]
+[gd_scene load_steps=17 format=3 uid="uid://3n3mym4g3"]
 
 [ext_resource type="Script" uid="uid://dwo81u2x52b38" path="res://scripts/enemies/EnemySkeletonMage.gd" id="1_mage"]
 [ext_resource type="PackedScene" uid="uid://bvgni0b2cndxi" path="res://scenes/ui/DamageNumber.tscn" id="2_damage"]
@@ -12,6 +12,7 @@
 [ext_resource type="PackedScene" path="res://scenes/vfx/EnemyCritVFX.tscn" id="8_38n77"]
 [ext_resource type="Script" uid="uid://xq6026rltx5k" path="res://scripts/enemies/EnemyStatusEffects.gd" id="8_statusfx"]
 [ext_resource type="Script" uid="uid://bxkstno4wqyqf" path="res://scripts/ui/DamageNumberEmitter.gd" id="13_emitter"]
+[ext_resource type="PackedScene" path="res://scenes/vfx/SkeletonMageCastAuraVFX.tscn" id="14_castaura"]
 
 [sub_resource type="CapsuleShape2D" id="CapsuleShape2D_mage_body"]
 radius = 55.0
@@ -38,6 +39,8 @@ z_index = 5
 collision_layer = 4
 script = ExtResource("1_mage")
 projectile_scene = ExtResource("3_projectile")
+cast_aura_vfx_scene = ExtResource("14_castaura")
+cast_aura_y_offset = -45.0
 melee_spawn_forward_px = 50.0
 edge_aggro_lockout_time = 0.35
 aggro_range = 1200.0

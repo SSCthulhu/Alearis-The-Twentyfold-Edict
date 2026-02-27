@@ -4,6 +4,7 @@ extends Node
 ## 1. Charge-up + Defensive VFX on player (phase 1 - immediate, together)
 ## 2. Impact cut + Lightning strike on each enemy hit (at damage time - immediate, together, with stun)
 ## 3. Blue shock burst on each enemy hit (phase 2 - delayed after impact, with stun/interrupt)
+const VfxRenderUtil = preload("res://scripts/vfx/VfxRenderUtil.gd")
 
 @export var player_vfx_scene: PackedScene  # Lightning charge-up on player (plays first)
 @export var player_defensive_vfx_scene: PackedScene  # Defensive VFX on player (plays with charge-up)
@@ -80,6 +81,7 @@ func _spawn_player_vfx(player_pos: Vector2) -> void:
 	
 	var world = get_tree().root
 	world.add_child(vfx)
+	VfxRenderUtil.promote(vfx, 220)
 	
 	vfx.global_position = Vector2(player_pos.x, player_pos.y + offset_y)
 	
@@ -93,6 +95,7 @@ func _spawn_player_defensive_vfx(player_pos: Vector2) -> void:
 	
 	var world = get_tree().root
 	world.add_child(vfx)
+	VfxRenderUtil.promote(vfx, 220)
 	
 	vfx.global_position = Vector2(player_pos.x, player_pos.y + offset_y)
 	vfx.scale = Vector2(2.0, 2.0)  # Scale up for ultimate (2x bigger than normal defensive)
@@ -115,6 +118,7 @@ func _on_knight_ultimate_hit(enemy: Node, enemy_position: Vector2) -> void:
 	# 1. Spawn impact cut VFX IMMEDIATELY (at damage time)
 	var impact_vfx: Node2D = enemy_impact_vfx_scene.instantiate()
 	world.add_child(impact_vfx)
+	VfxRenderUtil.promote(impact_vfx, 220)
 	impact_vfx.global_position = enemy_position
 	
 	if debug_logs:
@@ -123,6 +127,7 @@ func _on_knight_ultimate_hit(enemy: Node, enemy_position: Vector2) -> void:
 	# 2. Spawn lightning strike VFX IMMEDIATELY (at damage time, with stun)
 	var lightning_vfx: Node2D = enemy_lightning_vfx_scene.instantiate()
 	world.add_child(lightning_vfx)
+	VfxRenderUtil.promote(lightning_vfx, 220)
 	lightning_vfx.global_position = enemy_position
 	
 	# Pass enemy reference to VFX for stun
@@ -157,6 +162,7 @@ func _spawn_enemy_hit_vfx(hit_data: Dictionary) -> void:
 	# Spawn shock burst VFX
 	var shock_burst_vfx: Node2D = enemy_shock_burst_vfx_scene.instantiate()
 	world.add_child(shock_burst_vfx)
+	VfxRenderUtil.promote(shock_burst_vfx, 220)
 	shock_burst_vfx.global_position = enemy_pos
 	
 	# Pass enemy reference to VFX for stun/interrupt (only if still valid)

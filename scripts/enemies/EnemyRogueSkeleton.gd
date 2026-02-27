@@ -29,6 +29,9 @@ var anim_aim: StringName = &"Player/Ranged_2H_Aiming"
 var anim_shoot: StringName = &"Player/Ranged_2H_Shoot"
 var anim_reload: StringName = &"Player/Ranged_2H_Reload"
 
+@onready var cast_bar: ProgressBar = $CastBar
+@onready var _casting_helper: EnemyCastingHelper = EnemyCastingHelper.new()
+
 func _ready() -> void:
 	# Override animations - remove melee, use ranged
 	anim_attack = &""  # No melee attack
@@ -40,6 +43,10 @@ func _ready() -> void:
 	anim_jump_start = &"Player/Jump_Start"
 	anim_jump_idle = &"Player/Jump_Idle"
 	anim_jump_land = &"Player/Jump_Land"
+
+	# Mirror other ranged/casting enemies: orange telegraph while aiming.
+	add_child(_casting_helper)
+	_casting_helper.initialize_cast_bar(cast_bar)
 	
 	super._ready()
 
@@ -114,10 +121,12 @@ func _start_aim() -> void:
 	# Use actual animation length or fallback to export value
 	var anim_len := _get_anim_length(anim_aim)
 	_attack_state_duration = anim_len if anim_len > 0.0 else aim_time
+	_casting_helper.start_cast(_attack_state_duration)
 	_play_anim(anim_aim, true)
 
 func _start_shoot() -> void:
 	_aiming = false
+	_casting_helper.finish_cast()
 	_shooting = true
 	_attack_timer = 0.0
 	# Always use actual animation length for shooting
@@ -138,6 +147,8 @@ func _start_reload() -> void:
 
 func _update_attack_state(delta: float) -> void:
 	_attack_timer += delta
+	if _aiming and _casting_helper.is_casting:
+		_casting_helper.update_cast(delta)
 	
 	if _attack_timer >= _attack_state_duration:
 		if _aiming:
@@ -151,6 +162,7 @@ func _finish_attack() -> void:
 	_aiming = false
 	_shooting = false
 	_reloading = false
+	_casting_helper.finish_cast()
 	_ranged_cd = ranged_attack_cooldown
 
 func _fire_projectile() -> void:

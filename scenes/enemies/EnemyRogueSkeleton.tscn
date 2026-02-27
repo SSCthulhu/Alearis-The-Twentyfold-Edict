@@ -1,4 +1,4 @@
-[gd_scene load_steps=16 format=3 uid="uid://cjteqkv3dbcyl"]
+[gd_scene load_steps=17 format=3 uid="uid://cjteqkv3dbcyl"]
 
 [ext_resource type="Script" uid="uid://c2ijohgv12my1" path="res://scripts/enemies/EnemyRogueSkeleton.gd" id="1_rogue"]
 [ext_resource type="PackedScene" uid="uid://bvgni0b2cndxi" path="res://scenes/ui/DamageNumber.tscn" id="2_damage"]
@@ -32,6 +32,18 @@ corner_radius_top_left = 10
 corner_radius_top_right = 10
 corner_radius_bottom_right = 10
 corner_radius_bottom_left = 10
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_cast"]
+bg_color = Color(1, 0.5, 0, 1)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0, 0, 0, 1)
+corner_radius_top_left = 8
+corner_radius_top_right = 8
+corner_radius_bottom_right = 8
+corner_radius_bottom_left = 8
 
 [node name="EnemyRogueSkeleton" type="CharacterBody2D"]
 z_index = 5
@@ -85,6 +97,17 @@ offset_right = 40.53
 offset_bottom = -107.33
 theme_override_styles/fill = SubResource("StyleBoxFlat_health")
 max_value = 50.0
+show_percentage = false
+
+[node name="CastBar" type="ProgressBar" parent="."]
+modulate = Color(1, 0.9, 0.2, 1)
+custom_minimum_size = Vector2(0, 10)
+offset_left = -39.47
+offset_top = -126.33
+offset_right = 40.53
+offset_bottom = -121.33
+theme_override_styles/fill = SubResource("StyleBoxFlat_cast")
+max_value = 1.0
 show_percentage = false
 
 [node name="RunScaler" type="Node" parent="."]
