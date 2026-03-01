@@ -18,6 +18,7 @@ var _active: bool = false
 var _floor_cleared: bool = false
 var _chest_looted: bool = false
 var _body: AnimatableBody2D = null
+var _move_tween: Tween = null
 
 func _ready() -> void:
 	visible = false
@@ -101,23 +102,27 @@ func _move_to_bottom() -> void:
 func _tween_body_to(target_global_y: float) -> void:
 	if not _body:
 		return
+
+	# Ensure only one movement tween is active at a time.
+	if _move_tween != null:
+		_move_tween.kill()
+		_move_tween = null
 	
-	# Create tween to move the AnimatableBody2D globally
-	var tween = create_tween()
-	tween.set_trans(Tween.TRANS_SINE)
-	tween.set_ease(Tween.EASE_IN_OUT)
+	# Move the root node so body + visuals remain perfectly in sync.
+	# Keep target semantics based on body Y so existing inspector values continue to work.
+	var body_to_root_offset_y: float = _body.global_position.y - global_position.y
+	var target_root_global_y: float = target_global_y - body_to_root_offset_y
+
+	# Create physics-timed tween for stable CharacterBody carrying.
+	_move_tween = create_tween()
+	_move_tween.set_process_mode(Tween.TWEEN_PROCESS_PHYSICS)
+	_move_tween.set_trans(Tween.TRANS_LINEAR)
+	_move_tween.set_ease(Tween.EASE_IN_OUT)
 	
-	# Tween the body's GLOBAL position
-	tween.tween_property(_body, "global_position:y", target_global_y, move_duration)
+	_move_tween.tween_property(self, "global_position:y", target_root_global_y, move_duration)
 	
-	# ALSO move any sprite/visual siblings to keep them synced
-	for sibling in get_children():
-		if sibling != _body and (sibling is Sprite2D or sibling is Node2D):
-			# Calculate the sprite's target position (maintaining its offset from the body)
-			var offset = sibling.global_position.y - _body.global_position.y
-			tween.parallel().tween_property(sibling, "global_position:y", target_global_y + offset, move_duration)
-	
-	await tween.finished
+	await _move_tween.finished
+	_move_tween = null
 	
 	if debug_logs:
 		pass

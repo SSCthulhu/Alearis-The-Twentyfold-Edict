@@ -27,6 +27,8 @@ enum Phase { IMMUNE_COMBAT, PORTAL_CHOICE, DPS }
 # Enemy spawning
 @export var enemy_scenes: Array[PackedScene] = []  # Add 4 enemy types
 @export var enemies_per_cycle: int = 3
+@export var enemy_spawns_root_path: NodePath = ^"../Arena/Spawns/Floor5"
+@export var randomize_enemy_spawn_points: bool = true
 @export var enemy_spawn_positions: Array[Vector2] = [
 	Vector2(-300, -18500),
 	Vector2(0, -18500),
@@ -64,6 +66,7 @@ var _phrase_display: Node = null
 var _dps_timer: float = 0.0
 var _active_enemies: Array[Node] = []
 var _active_portals: Array[Node] = []
+var _enemy_spawn_nodes: Array[Node2D] = []
 var _rng: RandomNumberGenerator = RandomNumberGenerator.new()
 
 var _current_phrase: String = ""
@@ -102,6 +105,7 @@ func _ready() -> void:
 	_victory_ui = get_node_or_null(victory_ui_path)
 	_socket = get_node_or_null(ascension_socket_path)
 	_phrase_display = get_node_or_null(phrase_display_path)
+	_load_enemy_spawn_nodes()
 	
 	pass
 	
@@ -229,7 +233,11 @@ func _spawn_cycle_enemies() -> void:
 		push_error("[BossEncounterWorld2] No enemy scenes assigned!")
 		return
 	
-	var spawn_count = mini(enemies_per_cycle, enemy_spawn_positions.size())
+	var spawn_positions: Array[Vector2] = _pick_enemy_spawn_positions(enemies_per_cycle)
+	var spawn_count: int = spawn_positions.size()
+	if spawn_count <= 0:
+		push_warning("[BossEncounterWorld2] No valid enemy spawn positions found.")
+		return
 	
 	for i in range(spawn_count):
 		# Pick random enemy type
@@ -243,7 +251,7 @@ func _spawn_cycle_enemies() -> void:
 			continue
 		
 		get_tree().current_scene.add_child(enemy_2d)
-		enemy_2d.global_position = enemy_spawn_positions[i]
+		enemy_2d.global_position = spawn_positions[i]
 		enemy_2d.add_to_group(&"floor5_enemies")
 		
 		_active_enemies.append(enemy_2d)
@@ -253,6 +261,46 @@ func _spawn_cycle_enemies() -> void:
 		
 		if debug_logs:
 			pass
+
+func _load_enemy_spawn_nodes() -> void:
+	_enemy_spawn_nodes.clear()
+	var root: Node = get_node_or_null(enemy_spawns_root_path)
+	if root == null:
+		if debug_logs:
+			push_warning("[BossEncounterWorld2] Enemy spawn root not found at: %s" % String(enemy_spawns_root_path))
+		return
+
+	for child: Node in root.get_children():
+		var p: Node2D = child as Node2D
+		if p != null:
+			_enemy_spawn_nodes.append(p)
+
+	if debug_logs:
+		pass
+
+func _pick_enemy_spawn_positions(requested_count: int) -> Array[Vector2]:
+	var result: Array[Vector2] = []
+	var count: int = maxi(requested_count, 0)
+	if count <= 0:
+		return result
+
+	if not _enemy_spawn_nodes.is_empty():
+		var pool: Array[Node2D] = _enemy_spawn_nodes.duplicate()
+		if randomize_enemy_spawn_points:
+			pool.shuffle()
+		var use_count: int = mini(count, pool.size())
+		for i in range(use_count):
+			var n: Node2D = pool[i]
+			if n != null and is_instance_valid(n):
+				result.append(n.global_position)
+		if not result.is_empty():
+			return result
+
+	# Fallback to legacy inspector vector positions if marker nodes are unavailable.
+	var fallback_count: int = mini(count, enemy_spawn_positions.size())
+	for i in range(fallback_count):
+		result.append(enemy_spawn_positions[i])
+	return result
 
 func _connect_enemy_death(enemy: Node2D) -> void:
 	var health = enemy.get_node_or_null("Health")

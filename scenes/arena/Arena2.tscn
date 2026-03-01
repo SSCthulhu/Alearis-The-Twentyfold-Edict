@@ -1106,22 +1106,22 @@ position = Vector2(1140, 1659)
 [node name="Floor2" type="Node2D" parent="Spawns"]
 
 [node name="P1" type="Marker2D" parent="Spawns/Floor2"]
-position = Vector2(400, -289)
+position = Vector2(385, -387)
 
 [node name="P2" type="Marker2D" parent="Spawns/Floor2"]
-position = Vector2(-390, -260)
+position = Vector2(-388, -373)
 
 [node name="P3" type="Marker2D" parent="Spawns/Floor2"]
-position = Vector2(-599, -763)
+position = Vector2(-591, -937)
 
 [node name="P4" type="Marker2D" parent="Spawns/Floor2"]
-position = Vector2(621, -908)
+position = Vector2(621, -960)
 
 [node name="P5" type="Marker2D" parent="Spawns/Floor2"]
-position = Vector2(-1266, -1353)
+position = Vector2(-1279, -1527)
 
 [node name="P6" type="Marker2D" parent="Spawns/Floor2"]
-position = Vector2(1256, -1380)
+position = Vector2(1248, -1549)
 
 [node name="Floor3" type="Node2D" parent="Spawns"]
 position = Vector2(-88, -13814)
@@ -1153,22 +1153,22 @@ position = Vector2(-923, -1148)
 position = Vector2(-333, -15209)
 
 [node name="P1" type="Marker2D" parent="Spawns/Floor4"]
-position = Vector2(-245, -3086)
+position = Vector2(-236, -3195)
 
 [node name="P2" type="Marker2D" parent="Spawns/Floor4"]
-position = Vector2(-17, -3074)
+position = Vector2(-19, -3195)
 
 [node name="P3" type="Marker2D" parent="Spawns/Floor4"]
-position = Vector2(569, -3095)
+position = Vector2(566, -3219)
 
 [node name="P4" type="Marker2D" parent="Spawns/Floor4"]
-position = Vector2(976, -3097)
+position = Vector2(986, -3251)
 
 [node name="P5" type="Marker2D" parent="Spawns/Floor4"]
-position = Vector2(1361, -3115)
+position = Vector2(1356, -3252)
 
 [node name="P6" type="Marker2D" parent="Spawns/Floor4"]
-position = Vector2(215, -3081)
+position = Vector2(221, -3207)
 
 [node name="Floor5" type="Node2D" parent="Spawns"]
 position = Vector2(542, -15409)

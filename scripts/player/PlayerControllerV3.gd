@@ -106,6 +106,8 @@ var _drop_through_timer: float = 0.0
 var _drop_through_fall_lock_timer: float = 0.0
 var _drop_restore_collision_mask: int = 0
 var _floor_on_dropthrough_platform: bool = false
+var _floor_on_elevator_platform: bool = false
+var _elevator_floor_grace_left: float = 0.0
 var _last_floor_collider_name: StringName = &""
 
 # Timers
@@ -179,6 +181,9 @@ var _roll_speed: float = 0.0
 @export var drop_through_airborne_probe_distance: float = 96.0
 @export var drop_through_roll_cue_lock_time: float = 0.14
 @export var drop_through_allowed_floor_names: PackedStringArray = PackedStringArray(["Platforms"])
+
+@export_group("Moving Platform Stability")
+@export var elevator_floor_grace_seconds: float = 0.12
 
 # Testing/Debug inputs
 @export_group("Debug/Testing Inputs")
@@ -285,6 +290,11 @@ func _initialize_roll_charges() -> void:
 # Physics Process
 # -----------------------------
 func _physics_process(delta: float) -> void:
+	if _elevator_floor_grace_left > 0.0:
+		_elevator_floor_grace_left = maxf(_elevator_floor_grace_left - delta, 0.0)
+	if is_on_floor() and _floor_on_elevator_platform:
+		_elevator_floor_grace_left = maxf(_elevator_floor_grace_left, elevator_floor_grace_seconds)
+
 	_update_drop_through_timer(delta)
 
 	# CRITICAL: If input is locked (victory UI, cutscenes, etc.), freeze player completely
@@ -439,6 +449,7 @@ func _is_dropthrough_platform_below() -> bool:
 
 func _update_floor_surface_cache() -> void:
 	_floor_on_dropthrough_platform = false
+	_floor_on_elevator_platform = false
 	_last_floor_collider_name = &""
 	if not is_on_floor():
 		return
@@ -452,6 +463,8 @@ func _update_floor_surface_cache() -> void:
 		if collider_obj is Node:
 			var n: Node = collider_obj as Node
 			_last_floor_collider_name = StringName(n.name)
+			if _is_dropthrough_blocked_platform_node(n):
+				_floor_on_elevator_platform = true
 			if _is_dropthrough_platform_node(n):
 				_floor_on_dropthrough_platform = true
 				return
@@ -463,8 +476,25 @@ func _is_dropthrough_floor_name_allowed(surface_name: String) -> bool:
 	var lower: String = surface_name.to_lower()
 	return lower.contains("platform") or lower.contains("cloud") or lower.contains("ledge")
 
+func _is_dropthrough_blocked_platform_node(node: Node) -> bool:
+	# Elevator platforms should never be drop-through eligible even if named like "Cloud*".
+	var cursor: Node = node
+	while cursor != null:
+		var script_ref: Script = cursor.get_script() as Script
+		if script_ref != null:
+			var script_path: String = script_ref.resource_path
+			if script_path.ends_with("ElevatorPlatform.gd"):
+				return true
+		cursor = cursor.get_parent()
+	return false
+
+func _should_force_ground_stability() -> bool:
+	return _elevator_floor_grace_left > 0.0
+
 func _is_dropthrough_platform_node(node: Node) -> bool:
 	if node == null:
+		return false
+	if _is_dropthrough_blocked_platform_node(node):
 		return false
 
 	# Check collider ancestry so nested shapes/bodies under platform groups still qualify.
@@ -526,7 +556,7 @@ func _trigger_bigd_attack() -> void:
 		return
 	
 	if _combat.has_method("_start_attack"):
-		_combat.call("_start_attack", &"BIGD")
+		var _bigd_started: bool = bool(_combat.call("_start_attack", &"BIGD"))
 		pass
 
 
@@ -668,7 +698,7 @@ func process_state(delta: float) -> void:
 			_handle_ground_movement()
 			
 			# Use coyote timer as floor buffer to prevent slope stuttering
-			if not is_on_floor() and _coyote_timer.time_left <= 0.0:
+			if not is_on_floor() and _coyote_timer.time_left <= 0.0 and not _should_force_ground_stability():
 				switch_state(STATE.FALL)
 			elif Input.is_action_just_pressed(input_defend) and _can_use_defend():
 				switch_state(STATE.DEFEND)
@@ -676,7 +706,7 @@ func process_state(delta: float) -> void:
 				switch_state(STATE.JUMP)
 			elif Input.is_action_just_pressed(input_dash):
 				switch_state(STATE.DASH)
-			elif Input.is_action_pressed(input_dash) and _dash_cooldown.time_left > 0:
+			elif Input.is_action_pressed(input_dash) and _dash_cooldown.time_left > 0 and Input.get_axis(input_move_left, input_move_right) != 0.0:
 				switch_state(STATE.SPRINT)
 			elif Input.get_axis(input_move_left, input_move_right) != 0:
 				switch_state(STATE.WALK)
@@ -693,7 +723,7 @@ func process_state(delta: float) -> void:
 			_handle_ground_movement()
 			
 			# Use coyote timer as floor buffer to prevent slope stuttering
-			if not is_on_floor() and _coyote_timer.time_left <= 0.0:
+			if not is_on_floor() and _coyote_timer.time_left <= 0.0 and not _should_force_ground_stability():
 				switch_state(STATE.FALL)
 			elif Input.is_action_just_pressed(input_defend) and _can_use_defend():
 				switch_state(STATE.DEFEND)
@@ -701,7 +731,7 @@ func process_state(delta: float) -> void:
 				switch_state(STATE.JUMP)
 			elif Input.is_action_just_pressed(input_dash):
 				switch_state(STATE.DASH)
-			elif Input.is_action_pressed(input_dash) and _dash_cooldown.time_left > 0:
+			elif Input.is_action_pressed(input_dash) and _dash_cooldown.time_left > 0 and Input.get_axis(input_move_left, input_move_right) != 0.0:
 				switch_state(STATE.SPRINT)
 			elif Input.get_axis(input_move_left, input_move_right) == 0:
 				switch_state(STATE.IDLE)
@@ -718,10 +748,12 @@ func process_state(delta: float) -> void:
 			_handle_sprint(delta)
 			
 			# Use coyote timer as floor buffer to prevent slope stuttering
-			if not is_on_floor() and _coyote_timer.time_left <= 0.0:
+			if not is_on_floor() and _coyote_timer.time_left <= 0.0 and not _should_force_ground_stability():
 				switch_state(STATE.FALL)
 			elif Input.is_action_just_pressed(input_defend) and _can_use_defend():
 				switch_state(STATE.DEFEND)
+			elif Input.get_axis(input_move_left, input_move_right) == 0.0:
+				switch_state(STATE.IDLE)
 			elif not Input.is_action_pressed(input_dash):
 				switch_state(STATE.WALK if Input.get_axis(input_move_left, input_move_right) != 0 else STATE.IDLE)
 			elif Input.is_action_just_pressed(input_jump):
@@ -832,9 +864,10 @@ func process_state(delta: float) -> void:
 				if _dash_jump_buffer and _coyote_timer.time_left > 0:
 					switch_state(STATE.JUMP)
 				elif is_on_floor():
-					if Input.is_action_pressed(input_dash):
+					var move_input: float = Input.get_axis(input_move_left, input_move_right)
+					if Input.is_action_pressed(input_dash) and move_input != 0.0:
 						switch_state(STATE.SPRINT)
-					elif Input.get_axis(input_move_left, input_move_right) != 0:
+					elif move_input != 0.0:
 						switch_state(STATE.WALK)
 					else:
 						switch_state(STATE.IDLE)
@@ -854,7 +887,7 @@ func process_state(delta: float) -> void:
 			_handle_sprint(delta)
 			
 			# Use coyote timer as floor buffer to prevent slope stuttering
-			if not is_on_floor() and _coyote_timer.time_left <= 0.0:
+			if not is_on_floor() and _coyote_timer.time_left <= 0.0 and not _should_force_ground_stability():
 				switch_state(STATE.FALL)
 			elif not _is_sprinting or velocity.x * _facing_direction >= SPRINT_VELOCITY * _get_speed_multiplier():
 				switch_state(STATE.WALK if Input.get_axis(input_move_left, input_move_right) != 0 else STATE.IDLE)
@@ -905,7 +938,12 @@ func _handle_ground_movement(input_direction: float = 0.0, horizontal_velocity: 
 
 
 func _handle_sprint(delta: float) -> void:
-	_handle_ground_movement(_facing_direction, SPRINT_VELOCITY, SPRINT_ACCELERATION * delta)
+	var input_direction: float = signf(Input.get_axis(input_move_left, input_move_right))
+	if input_direction == 0.0:
+		# Holding sprint without movement should never auto-drive the character.
+		velocity.x = move_toward(velocity.x, 0.0, SPRINT_ACCELERATION * delta)
+		return
+	_handle_ground_movement(input_direction, SPRINT_VELOCITY, SPRINT_ACCELERATION * delta)
 
 
 func _handle_air_movement() -> void:
@@ -1164,17 +1202,17 @@ func _start_light_attack() -> void:
 				# Rogue-specific combo values - fast and agile
 				match _combo_step:
 					1:
-						combo_damage = 2
+						combo_damage = 3  # Match Knight damage
 						combo_anim = &"QAnim/Sword_Regular_A"
-						combo_speed = 1.6
+						combo_speed = 1.4  # Match Knight timing
 					2:
-						combo_damage = 2
+						combo_damage = 3  # Match Knight damage
 						combo_anim = &"QAnim/Sword_Regular_B"
-						combo_speed = 1.6
+						combo_speed = 1.4  # Match Knight timing
 					3:
-						combo_damage = 5
+						combo_damage = 7  # Match Knight finisher damage
 						combo_anim = &"QAnim/Sword_Regular_C"
-						combo_speed = 1.8  # Fast finisher for continuous attacks
+						combo_speed = 1.2  # Match Knight timing
 			
 			"Knight":
 				# Knight-specific combo values - slower and heavier but still fluid
@@ -1249,6 +1287,22 @@ func _process_light_attack(delta: float) -> void:
 			if progress >= unlock_threshold:
 				_combo_can_continue = true
 				pass
+
+	# Allow immediate movement cancel on the 3rd combo hit (both Rogue and Knight).
+	# This removes the long finisher lock window so player can disengage defensively.
+	if _combo_step >= 3:
+		var finisher_move_input: float = Input.get_axis(input_move_left, input_move_right)
+		if finisher_move_input != 0.0:
+			_combo_step = 0
+			_combo_window_timer = 0.0
+			_combo_attack_timer = 0.0
+			_combo_attack_duration = 0.0
+			_combo_can_continue = false
+			if is_on_floor():
+				switch_state(STATE.WALK)
+			else:
+				switch_state(STATE.FALL)
+			return
 	
 	# Check for combo continuation - ONLY if animation is far enough along
 	if Input.is_action_just_pressed(input_light_attack):
@@ -1346,11 +1400,6 @@ func _start_heavy_attack() -> void:
 			switch_state(STATE.FALL)
 		return
 	
-	# Emit signal for VFX
-	var _char_name: String = character_data.character_name if character_data != null else "Unknown"
-	pass
-	heavy_attack_started.emit(_char_name, _facing_direction)
-	
 	# Get heavy attack config
 	var attack_distance: float = 0.0
 	var attack_duration: float = 0.0
@@ -1376,12 +1425,28 @@ func _start_heavy_attack() -> void:
 		pass
 	
 	# Trigger damage via PlayerCombat
+	var heavy_activated: bool = false
 	if _combat != null:
 		if _combat.has_method("_start_attack"):
-			_combat.call("_start_attack", &"heavy")
+			heavy_activated = bool(_combat.call("_start_attack", &"heavy"))
 			pass
 		else:
 			pass
+			heavy_activated = false
+
+	if not heavy_activated:
+		# If heavy did not activate (cooldown/lock/etc), exit state immediately.
+		if is_on_floor():
+			var input_dir: float = Input.get_axis(input_move_left, input_move_right)
+			switch_state(STATE.WALK if input_dir != 0.0 else STATE.IDLE)
+		else:
+			switch_state(STATE.FALL)
+		return
+
+	# Emit signal for VFX only after heavy actually activated.
+	var _char_name: String = character_data.character_name if character_data != null else "Unknown"
+	pass
+	heavy_attack_started.emit(_char_name, _facing_direction)
 	
 	# Play animation
 	var anim_name: StringName = &"heavy_attack"
@@ -1468,8 +1533,18 @@ func _start_ultimate() -> void:
 		return
 	
 	# Trigger ultimate cooldown in PlayerCombat
+	var ultimate_activated: bool = false
 	if _combat != null:
-		_combat._start_attack(&"ultimate")
+		if _combat.has_method("_start_attack"):
+			ultimate_activated = bool(_combat.call("_start_attack", &"ultimate"))
+
+	if not ultimate_activated:
+		if is_on_floor():
+			var input_dir_blocked: float = Input.get_axis(input_move_left, input_move_right)
+			switch_state(STATE.WALK if input_dir_blocked != 0.0 else STATE.IDLE)
+		else:
+			switch_state(STATE.FALL)
+		return
 	
 	# Get enemies using FloorProgressionController (same as RogueController)
 	var enemies: Array[Node] = _get_enemies_on_current_floor()
@@ -1936,6 +2011,8 @@ func _can_use_defend() -> bool:
 func _start_defend() -> void:
 	"""Activate character-specific defensive ability"""
 	pass
+
+	var defend_activated: bool = false
 	
 	# Trigger defensive buff via PlayerCombat
 	# PlayerCombat._try_defend() will:
@@ -1944,9 +2021,19 @@ func _start_defend() -> void:
 	# 3. Set cooldown
 	if _combat != null:
 		if _combat.has_method("_try_defend"):
-			_combat.call("_try_defend")
+			defend_activated = bool(_combat.call("_try_defend"))
 		else:
 			push_warning("[PlayerV3] Combat node has no _try_defend method")
+			defend_activated = false
+
+	if not defend_activated:
+		# If defend did not actually activate (cooldown/lock/etc), exit defend state immediately.
+		if is_on_floor():
+			var input_dir: float = Input.get_axis(input_move_left, input_move_right)
+			switch_state(STATE.WALK if input_dir != 0.0 else STATE.IDLE)
+		else:
+			switch_state(STATE.FALL)
+		return
 	
 	# Emit signal for VFX
 	var _char_name: String = character_data.character_name if character_data != null else "Unknown"

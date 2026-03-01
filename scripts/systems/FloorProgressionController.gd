@@ -86,6 +86,7 @@ var _derived_floor_wall_x: PackedFloat32Array = PackedFloat32Array()
 
 # Where to spawn relative to Floor2Door when arriving
 @export var floor2_spawn_offset: Vector2 = Vector2(0.0, 10.0)
+@export_range(0.0, 0.5, 0.01) var world2_door_interact_buffer_seconds: float = 0.18
 
 # If true, hide doors until unlocked (optional)
 @export var door1_hide_until_unlocked: bool = false
@@ -260,6 +261,8 @@ var _door2: AnimatedSprite2D = null
 
 var _door1_unlocked: bool = false
 var _door_transition_active: bool = false
+var _door_interact_buffer_left: float = 0.0
+var _player_interact_area: Area2D = null
 
 # -----------------------------
 # World3 teleport runtime
@@ -433,6 +436,8 @@ func _setup_world2_doors() -> void:
 	_door2 = null
 	_door1_unlocked = false
 	_door_transition_active = false
+	_door_interact_buffer_left = 0.0
+	_player_interact_area = null
 
 	if not enable_world2_doors:
 		return
@@ -446,6 +451,9 @@ func _setup_world2_doors() -> void:
 		push_warning("[Floors] World2 doors enabled but Floor1Door path invalid.")
 	if _door2 == null:
 		push_warning("[Floors] World2 doors enabled but Floor2Door path invalid.")
+
+	if _player != null and is_instance_valid(_player):
+		_player_interact_area = _player.get_node_or_null("InteractArea") as Area2D
 
 	# Force correct default visuals (prevents "starts open")
 	_force_door_state(_door1, door_anim_closed)
@@ -570,6 +578,11 @@ func _emit_floor_status_if_changed() -> void:
 	floor_status_changed.emit(_current_floor_number, enemies_left, complete)
 
 func _process(_delta: float) -> void:
+	if _door_interact_buffer_left > 0.0:
+		_door_interact_buffer_left = maxf(_door_interact_buffer_left - _delta, 0.0)
+	if Input.is_action_just_pressed(input_interact):
+		_door_interact_buffer_left = maxf(_door_interact_buffer_left, world2_door_interact_buffer_seconds)
+
 	var count: int = mini(_gates.size(), floor_enemy_groups.size())
 	for i in range(count):
 		if _unlocked[i] == 1:
@@ -647,13 +660,21 @@ func _update_world2_door_interaction() -> void:
 	if _current_floor_number != 1:
 		return
 
-	if not Input.is_action_just_pressed(input_interact):
+	if _door_interact_buffer_left <= 0.0:
 		return
 
-	var door_point: Vector2 = _door1.global_position + door1_interact_offset
-	var d: float = _player.global_position.distance_to(door_point)
-	if d > door_interact_radius:
+	var in_range: bool = false
+	var door_area: Area2D = _door1.get_node_or_null("InteractArea") as Area2D
+	if _player_interact_area != null and is_instance_valid(_player_interact_area) and door_area != null and is_instance_valid(door_area):
+		in_range = _player_interact_area.overlaps_area(door_area)
+	if not in_range:
+		var door_point: Vector2 = _door1.global_position + door1_interact_offset
+		var d: float = _player.global_position.distance_to(door_point)
+		in_range = d <= door_interact_radius
+	if not in_range:
 		return
+
+	_door_interact_buffer_left = 0.0
 
 	# Trigger transition
 	_start_floor1_to_floor2_transition()

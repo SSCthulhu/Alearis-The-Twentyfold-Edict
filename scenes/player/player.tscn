@@ -116,6 +116,7 @@ debug_damage = true
 [node name="ChargeCarrier" type="Node" parent="."]
 script = ExtResource("5_p47bc")
 player_health_path = NodePath("../Health")
+interact_area_path = NodePath("../InteractArea")
 debuffs_path = NodePath("../Debuffs")
 manual_drop_damage = 0
 

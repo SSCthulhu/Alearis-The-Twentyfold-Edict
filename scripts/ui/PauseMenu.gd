@@ -13,7 +13,7 @@ signal quit_confirmed()
 @export var summary_to_button_gap: float = 50.0  # Gap between RunSummary bottom and Resume button top
 
 # Button sizing (match MainMenu style)
-@export var button_width: float = 600.0
+@export var button_width: float = 900.0
 @export var button_font_size: int = 80
 @export var button_spacing: float = 20.0
 
@@ -24,6 +24,7 @@ signal quit_confirmed()
 @onready var _resume_button: Button = $Root/ButtonsContainer/ResumeButton
 @onready var _settings_button: Button = $Root/ButtonsContainer/SettingsButton
 @onready var _quit_button: Button = $Root/ButtonsContainer/QuitButton
+@onready var _quit_to_desktop_button: Button = $Root/ButtonsContainer/QuitToDesktopButton
 @onready var _confirm_dialog: Control = $Root/ConfirmDialog
 @onready var _confirm_label: Label = $Root/ConfirmDialog/ConfirmPanel/VBox/ConfirmLabel
 @onready var _confirm_yes_button: Button = $Root/ConfirmDialog/ConfirmPanel/VBox/ButtonsHBox/YesButton
@@ -33,6 +34,10 @@ var _is_open: bool = false
 var _input_enabled: bool = false
 var _settings_menu_instance: SettingsMenu = null
 var _was_paused_before_open: bool = false
+var _was_time_scale_before_open: float = 1.0
+
+enum QuitAction { MAIN_MENU, DESKTOP }
+var _pending_quit_action: QuitAction = QuitAction.MAIN_MENU
 
 func _ready() -> void:
 	process_mode = Node.PROCESS_MODE_ALWAYS
@@ -58,6 +63,8 @@ func _ready() -> void:
 		_settings_button.pivot_offset = _settings_button.size / 2.0
 	if _quit_button != null:
 		_quit_button.pivot_offset = _quit_button.size / 2.0
+	if _quit_to_desktop_button != null:
+		_quit_to_desktop_button.pivot_offset = _quit_to_desktop_button.size / 2.0
 	if _confirm_yes_button != null:
 		_confirm_yes_button.pivot_offset = _confirm_yes_button.size / 2.0
 	if _confirm_no_button != null:
@@ -70,6 +77,8 @@ func _ready() -> void:
 		_settings_button.pressed.connect(_on_settings_pressed)
 	if _quit_button != null:
 		_quit_button.pressed.connect(_on_quit_pressed)
+	if _quit_to_desktop_button != null:
+		_quit_to_desktop_button.pressed.connect(_on_quit_to_desktop_pressed)
 	
 	# Connect confirmation dialog buttons
 	if _confirm_yes_button != null:
@@ -122,9 +131,13 @@ func open() -> void:
 	# This prevents unpausing flows that intentionally paused the tree
 	# (e.g. DiceModifierChoice while selecting a modifier).
 	_was_paused_before_open = get_tree().paused
+	_was_time_scale_before_open = Engine.time_scale
 
-	# Pause the game
+	# Hard pause:
+	# 1) SceneTree pause stops normal/inherited processing.
+	# 2) time_scale=0 freezes nodes that intentionally run in ALWAYS mode.
 	get_tree().paused = true
+	Engine.time_scale = 0.0
 	
 	# IMPORTANT: Layout buttons first, then run summary (so summary can position relative to buttons)
 	_layout_buttons()
@@ -144,6 +157,7 @@ func close() -> void:
 	
 	# Restore pause state from before opening this menu.
 	get_tree().paused = _was_paused_before_open
+	Engine.time_scale = _was_time_scale_before_open
 	
 	resume_pressed.emit()
 
@@ -195,7 +209,12 @@ func _on_settings_back() -> void:
 
 
 func _on_quit_pressed() -> void:
+	_pending_quit_action = QuitAction.MAIN_MENU
 	# Show confirmation dialog
+	_show_confirmation_dialog()
+
+func _on_quit_to_desktop_pressed() -> void:
+	_pending_quit_action = QuitAction.DESKTOP
 	_show_confirmation_dialog()
 
 
@@ -208,7 +227,10 @@ func _show_confirmation_dialog() -> void:
 	
 	# Update label text
 	if _confirm_label != null:
-		_confirm_label.text = "Are you sure? Progress will be lost."
+		if _pending_quit_action == QuitAction.DESKTOP:
+			_confirm_label.text = "Quit to desktop? Progress will be lost."
+		else:
+			_confirm_label.text = "Are you sure? Progress will be lost."
 
 
 func _hide_confirmation_dialog() -> void:
@@ -224,9 +246,14 @@ func _on_confirm_yes() -> void:
 	
 	# Unpause before changing scene
 	get_tree().paused = false
+	Engine.time_scale = _was_time_scale_before_open
 	
 	# Emit quit signal (handled by scene to clean up/return to main menu)
 	quit_confirmed.emit()
+
+	if _pending_quit_action == QuitAction.DESKTOP:
+		get_tree().quit()
+		return
 	
 	# Return to main menu
 	get_tree().call_deferred("change_scene_to_file", "res://scenes/ui/MainMenu.tscn")
@@ -293,6 +320,9 @@ func _connect_button_hover_effects() -> void:
 	if _quit_button != null:
 		_quit_button.mouse_entered.connect(_on_button_hover.bind(_quit_button))
 		_quit_button.mouse_exited.connect(_on_button_unhover.bind(_quit_button))
+	if _quit_to_desktop_button != null:
+		_quit_to_desktop_button.mouse_entered.connect(_on_button_hover.bind(_quit_to_desktop_button))
+		_quit_to_desktop_button.mouse_exited.connect(_on_button_unhover.bind(_quit_to_desktop_button))
 	if _confirm_yes_button != null:
 		_confirm_yes_button.mouse_entered.connect(_on_button_hover.bind(_confirm_yes_button))
 		_confirm_yes_button.mouse_exited.connect(_on_button_unhover.bind(_confirm_yes_button))

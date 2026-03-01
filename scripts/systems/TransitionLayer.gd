@@ -2,13 +2,19 @@ extends CanvasLayer
 
 @onready var rect = $ColorRect
 @onready var loading_label = $Label
+var _is_transitioning: bool = false
 
 func _ready():
-	# Force absolute invisibility on launch
-	rect.modulate.a = 0
-	loading_label.modulate.a = 0
+	_force_hidden()
 
 func fade_to_scene(target_scene_path: String):
+	_is_transitioning = true
+	visible = true
+	rect.visible = true
+	loading_label.visible = true
+	rect.modulate.a = 0.0
+	loading_label.modulate.a = 0.0
+
 	var tween = create_tween()
 	
 	# --- PHASE 1: FADE TO BLACK (Parallel) ---
@@ -26,5 +32,15 @@ func fade_to_scene(target_scene_path: String):
 	tween.chain().set_parallel(true)
 	tween.tween_property(rect, "modulate:a", 0.0, 0.5)
 	tween.tween_property(loading_label, "modulate:a", 0.0, 0.5)
+	tween.chain().tween_callback(_force_hidden)
 
+func _force_hidden() -> void:
+	_is_transitioning = false
+	if rect != null:
+		rect.modulate.a = 0.0
+		rect.visible = false
+	if loading_label != null:
+		loading_label.modulate.a = 0.0
+		loading_label.visible = false
+	visible = false
 

@@ -93,6 +93,11 @@ var _light_ready_time: float = 0.0
 var _heavy_ready_time: float = 0.0
 var _BIGD_ready_time: float = 0.0
 
+# Pause-aware clock state for cooldown timing.
+var _paused_time_accum_sec: float = 0.0
+var _pause_started_raw_sec: float = 0.0
+var _is_tracking_pause: bool = false
+
 func _ready() -> void:
 	_player = get_parent() as CharacterBody2D
 	if _player == null:
@@ -107,8 +112,32 @@ func _ready() -> void:
 	if hitbox_scene == null:
 		push_warning("PlayerCombat: hitbox_scene is not assigned. Set it in the Inspector.")
 
+	# Keep processing so cooldown clock can account for pause/unpause transitions.
+	process_mode = Node.PROCESS_MODE_ALWAYS
+	_update_pause_tracking()
+
 func _now() -> float:
+	_update_pause_tracking()
+	var raw_now_sec: float = _raw_now_seconds()
+	var effective_paused_sec: float = _paused_time_accum_sec
+	if _is_tracking_pause:
+		effective_paused_sec += maxf(raw_now_sec - _pause_started_raw_sec, 0.0)
+	return raw_now_sec - effective_paused_sec
+
+func _raw_now_seconds() -> float:
 	return float(Time.get_ticks_msec()) / 1000.0
+
+func _update_pause_tracking() -> void:
+	if get_tree() == null:
+		return
+	var raw_now_sec: float = _raw_now_seconds()
+	var is_paused: bool = get_tree().paused
+	if is_paused and not _is_tracking_pause:
+		_is_tracking_pause = true
+		_pause_started_raw_sec = raw_now_sec
+	elif not is_paused and _is_tracking_pause:
+		_paused_time_accum_sec += maxf(raw_now_sec - _pause_started_raw_sec, 0.0)
+		_is_tracking_pause = false
 
 func _cd_mult() -> float:
 	if RunStateSingleton != null and ("cooldown_mult" in RunStateSingleton):
@@ -210,6 +239,9 @@ func _clear_active_hitboxes() -> void:
 			hb.queue_free()
 
 func _process(_delta: float) -> void:
+	_update_pause_tracking()
+	if get_tree() != null and get_tree().paused:
+		return
 	if _player == null:
 		return
 
@@ -266,14 +298,14 @@ func _get_defend_duration_seconds() -> float:
 		dur += float(RunStateSingleton.relic_defend_duration_bonus)
 	return maxf(dur, 0.01)
 
-func _try_defend() -> void:
+func _try_defend() -> bool:
 	var now: float = _now()
 	if now < _defend_ready_time:
-		return
+		return false
 	if _carry_locked():
-		return
+		return false
 	if _busy:
-		return
+		return false
 	
 	# Get character type
 	var character_name: String = ""
@@ -286,7 +318,7 @@ func _try_defend() -> void:
 	
 	if character_name == "":
 		push_warning("[PlayerCombat] Cannot use defensive ability: no character selected")
-		return
+		return false
 	
 	# Set cooldown
 	_defend_ready_time = now + defend_cooldown * _cd_mult()
@@ -315,10 +347,13 @@ func _try_defend() -> void:
 		
 		_:
 			push_warning("[PlayerCombat] Unknown character: %s" % character_name)
-			return
+			return false
 	
 	if _buffs != null:
 		_buffs.add_buff(buff_id, duration, stats)
+		return true
+
+	return false
 
 func _apply_run_damage_multiplier(base_dmg: int) -> int:
 	var dmg: int = base_dmg
@@ -358,29 +393,29 @@ func _apply_crit_if_any(dmg: int, was_crit: bool) -> int:
 	var m: float = maxf(crit_mult, 1.0)
 	return max(int(round(float(dmg) * m)), 1)
 
-func _start_attack(kind: StringName) -> void:
+func _start_attack(kind: StringName) -> bool:
 	if _carry_locked():
-		return
+		return false
 
 	var now: float = _now()
 
 	match kind:
 		&"light":
 			if now < _light_ready_time:
-				return
+				return false
 		&"heavy":
 			if now < _heavy_ready_time:
 				var _cd_left: float = _heavy_ready_time - now
 				pass
-				return
+				return false
 		&"ultimate":
 			if now < _ultimate_ready_time:
-				return
+				return false
 		&"BIGD":
 			if now < _BIGD_ready_time:
-				return
+				return false
 		_:
-			return
+			return false
 
 	var windup: float = 0.0
 	var recovery: float = 0.0
@@ -423,7 +458,7 @@ func _start_attack(kind: StringName) -> void:
 			_BIGD_ready_time = now + (windup + recovery)
 
 		_:
-			return
+			return false
 
 	_busy = true
 	_current_attack_kind = kind
@@ -453,6 +488,7 @@ func _start_attack(kind: StringName) -> void:
 
 	_schedule_hit(kind, windup, dmg, lifetime, was_crit, my_seq)
 	_end_busy_after(kind, total_time, my_seq)
+	return true
 
 func _schedule_hit(kind: StringName, delay: float, dmg: int, lifetime: float, was_crit: bool, seq: int) -> void:
 	get_tree().create_timer(delay).timeout.connect(func() -> void:

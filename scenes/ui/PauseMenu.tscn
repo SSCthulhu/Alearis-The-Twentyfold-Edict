@@ -189,14 +189,14 @@ theme_override_font_sizes/font_size = 28
 text = "R - Ultimate Ability"
 
 [node name="ButtonsContainer" type="VBoxContainer" parent="Root"]
-custom_minimum_size = Vector2(600, 0)
+custom_minimum_size = Vector2(900, 0)
 layout_mode = 0
-offset_right = 600.0
-offset_bottom = 300.0
+offset_right = 900.0
+offset_bottom = 420.0
 theme_override_constants/separation = 20
 
 [node name="ResumeButton" type="Button" parent="Root/ButtonsContainer"]
-custom_minimum_size = Vector2(600, 0)
+custom_minimum_size = Vector2(900, 0)
 layout_mode = 2
 size_flags_horizontal = 4
 theme_override_font_sizes/font_size = 80
@@ -208,7 +208,7 @@ theme_override_styles/focus = SubResource("StyleBoxEmpty_button")
 text = "Resume"
 
 [node name="SettingsButton" type="Button" parent="Root/ButtonsContainer"]
-custom_minimum_size = Vector2(600, 0)
+custom_minimum_size = Vector2(900, 0)
 layout_mode = 2
 size_flags_horizontal = 4
 theme_override_font_sizes/font_size = 80
@@ -220,7 +220,7 @@ theme_override_styles/focus = SubResource("StyleBoxEmpty_button")
 text = "Settings"
 
 [node name="QuitButton" type="Button" parent="Root/ButtonsContainer"]
-custom_minimum_size = Vector2(600, 0)
+custom_minimum_size = Vector2(900, 0)
 layout_mode = 2
 size_flags_horizontal = 4
 theme_override_font_sizes/font_size = 80
@@ -230,6 +230,18 @@ theme_override_styles/hover = SubResource("StyleBoxFlat_button_hover")
 theme_override_styles/disabled = SubResource("StyleBoxEmpty_button")
 theme_override_styles/focus = SubResource("StyleBoxEmpty_button")
 text = "Quit"
+
+[node name="QuitToDesktopButton" type="Button" parent="Root/ButtonsContainer"]
+custom_minimum_size = Vector2(900, 0)
+layout_mode = 2
+size_flags_horizontal = 4
+theme_override_font_sizes/font_size = 80
+theme_override_styles/normal = SubResource("StyleBoxFlat_button_normal")
+theme_override_styles/pressed = SubResource("StyleBoxEmpty_button")
+theme_override_styles/hover = SubResource("StyleBoxFlat_button_hover")
+theme_override_styles/disabled = SubResource("StyleBoxEmpty_button")
+theme_override_styles/focus = SubResource("StyleBoxEmpty_button")
+text = "Quit to Desktop"
 
 [node name="ConfirmDialog" type="Control" parent="Root"]
 visible = false

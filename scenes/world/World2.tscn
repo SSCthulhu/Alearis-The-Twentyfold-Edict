@@ -1,4 +1,4 @@
-[gd_scene load_steps=39 format=3 uid="uid://cos5po5s14l56"]
+[gd_scene load_steps=41 format=3 uid="uid://cos5po5s14l56"]
 
 [ext_resource type="Script" uid="uid://bwo5386w06j5j" path="res://scripts/systems/BossEncounterWorld2.gd" id="1_bossenc2"]
 [ext_resource type="PackedScene" uid="uid://b5uuaa28c07e8" path="res://scenes/boss/PortalWorld2.tscn" id="1_portalw2"]
@@ -32,6 +32,7 @@
 [ext_resource type="PackedScene" uid="uid://cxsb0sxvfl0t" path="res://scenes/ui/DiceModifierChoice.tscn" id="18_awieb"]
 [ext_resource type="PackedScene" uid="uid://8hysfqws2ayt" path="res://scenes/player/OrbFlightController.tscn" id="25_bytlt"]
 [ext_resource type="AudioStream" uid="uid://dn3jm8svfdr6j" path="res://music/level/(Disc 2) 14 - Catacecaumene.mp3" id="33_devdu"]
+[ext_resource type="Script" path="res://scripts/arena/DeathZone.gd" id="34_bossdz"]
 
 [sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_8wr4c"]
 texture = ExtResource("5_4163r")
@@ -69,6 +70,9 @@ texture_region_size = Vector2i(1020, 565)
 tile_size = Vector2i(1020, 565)
 physics_layer_0/collision_layer = 1
 sources/1 = SubResource("TileSetAtlasSource_o5lv8")
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_bossfloor5dz"]
+size = Vector2(4200, 240)
 
 [node name="World2" type="Node2D"]
 
@@ -241,6 +245,36 @@ position = Vector2(-28, 1121)
 activation_y = -14000.0
 player_path = NodePath("../../Player")
 debug_logs = true
+enable_fire_vfx = false
+
+[node name="BossFloor5DeathZone" type="Area2D" parent="."]
+position = Vector2(0, -20720)
+script = ExtResource("34_bossdz")
+activation_y = -18069.0
+player_path = NodePath("../Player")
+debug_logs = false
+enable_fire_vfx = false
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="BossFloor5DeathZone"]
+shape = SubResource("RectangleShape2D_bossfloor5dz")
+
+[node name="P1" parent="Arena/Spawns/Floor5" index="0"]
+position = Vector2(-1268, -6211)
+
+[node name="P2" parent="Arena/Spawns/Floor5" index="1"]
+position = Vector2(-1071, -5828)
+
+[node name="P3" parent="Arena/Spawns/Floor5" index="2"]
+position = Vector2(-762, -6418)
+
+[node name="P4" parent="Arena/Spawns/Floor5" index="3"]
+position = Vector2(-356, -6537)
+
+[node name="P5" parent="Arena/Spawns/Floor5" index="4"]
+position = Vector2(248, -6215)
+
+[node name="P6" parent="Arena/Spawns/Floor5" index="5"]
+position = Vector2(18, -5833)
 
 [node name="ChestSpawn_F3" parent="Arena/ChestSpawns" index="2"]
 position = Vector2(-158, -15199)
@@ -359,10 +393,10 @@ debug_socket = true
 [node name="UI" parent="." instance=ExtResource("16_devdu")]
 
 [node name="PlayerHUDCluster" parent="UI/ScreenRoot/HUDRoot/BottomRight" index="0"]
-offset_left = -548.5333
-offset_top = -231.91667
-offset_right = -22.183332
-offset_bottom = -22.183332
+offset_left = -684.5333
+offset_top = -289.41666
+offset_right = -27.683332
+offset_bottom = -27.683332
 style = ExtResource("17_o5lv8")
 
 [node name="PlayerHUDWiring" parent="UI/ScreenRoot/HUDRoot" index="4"]

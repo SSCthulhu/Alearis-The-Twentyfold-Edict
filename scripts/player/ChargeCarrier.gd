@@ -84,6 +84,27 @@ func _handle_interact() -> void:
 		_pickup(target)
 
 func _find_charge_in_radius() -> AscensionCharge:
+	var query_center: Vector2 = _player.global_position
+	if _interact_area != null and is_instance_valid(_interact_area):
+		query_center = _interact_area.global_position
+
+		# Prefer real overlap data from the player's InteractArea for consistent pickup behavior.
+		var overlaps: Array[Area2D] = _interact_area.get_overlapping_areas()
+		var overlap_best: AscensionCharge = null
+		var overlap_best_d2: float = INF
+		for area: Area2D in overlaps:
+			var overlap_charge: AscensionCharge = _extract_charge_from_area(area)
+			if overlap_charge == null:
+				continue
+			if not overlap_charge.can_be_picked_up():
+				continue
+			var overlap_d2: float = query_center.distance_squared_to(overlap_charge.global_position)
+			if overlap_d2 < overlap_best_d2:
+				overlap_best_d2 = overlap_d2
+				overlap_best = overlap_charge
+		if overlap_best != null:
+			return overlap_best
+
 	var space_state: PhysicsDirectSpaceState2D = _player.get_world_2d().direct_space_state
 
 	var shape: CircleShape2D = CircleShape2D.new()
@@ -91,7 +112,7 @@ func _find_charge_in_radius() -> AscensionCharge:
 
 	var params: PhysicsShapeQueryParameters2D = PhysicsShapeQueryParameters2D.new()
 	params.shape = shape
-	params.transform = Transform2D(0.0, _player.global_position)
+	params.transform = Transform2D(0.0, query_center)
 	params.collision_mask = _pickup_mask
 	params.collide_with_areas = true
 	params.collide_with_bodies = false
@@ -110,18 +131,34 @@ func _find_charge_in_radius() -> AscensionCharge:
 		if area == null:
 			continue
 
-		var charge: AscensionCharge = area as AscensionCharge
+		var charge: AscensionCharge = _extract_charge_from_area(area)
 		if charge == null:
 			continue
 		if not charge.can_be_picked_up():
 			continue
 
-		var d2: float = _player.global_position.distance_squared_to(charge.global_position)
+		var d2: float = query_center.distance_squared_to(charge.global_position)
 		if d2 < best_d2:
 			best_d2 = d2
 			best = charge
 
 	return best
+
+func _extract_charge_from_area(area: Area2D) -> AscensionCharge:
+	if area == null:
+		return null
+
+	var direct: AscensionCharge = area as AscensionCharge
+	if direct != null:
+		return direct
+
+	var parent_node: Node = area.get_parent()
+	if parent_node != null:
+		var parent_charge: AscensionCharge = parent_node as AscensionCharge
+		if parent_charge != null:
+			return parent_charge
+
+	return null
 
 func _pickup(charge: AscensionCharge) -> void:
 	if is_carrying():

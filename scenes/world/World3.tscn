@@ -626,7 +626,7 @@ position = Vector2(-217, 891)
 texture = ExtResource("3_r7c4k")
 
 [node name="Lava" type="Parallax2D" parent="ParallaxRoot"]
-scroll_offset = Vector2(0, 1730)
+scroll_offset = Vector2(-55, 1834)
 repeat_size = Vector2(2376, 0)
 autoscroll = Vector2(400, 0)
 repeat_times = 25
@@ -810,6 +810,9 @@ position = Vector2(-11.56, 51.15)
 [node name="CollisionShape2D" parent="Player/InteractArea" index="0"]
 position = Vector2(11.554993, -49.155)
 
+[node name="ChargeCarrier" parent="Player" index="6"]
+interact_area_path = NodePath("")
+
 [node name="Camera2D" parent="Player" index="10"]
 offset = Vector2(0, -350)
 limit_left = -1530
@@ -839,10 +842,10 @@ debug_socket = true
 [node name="UI" parent="." instance=ExtResource("29_x3lom")]
 
 [node name="PlayerHUDCluster" parent="UI/ScreenRoot/HUDRoot/BottomRight" index="0"]
-offset_left = -414.8
-offset_top = -175.375
-offset_right = -16.775
-offset_bottom = -16.775
+offset_left = -684.5333
+offset_top = -289.41666
+offset_right = -27.683332
+offset_bottom = -27.683332
 style = ExtResource("30_pghea")
 
 [node name="PlayerHUDWiring" parent="UI/ScreenRoot/HUDRoot" index="4"]

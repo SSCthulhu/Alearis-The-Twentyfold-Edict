@@ -1,4 +1,4 @@
-[gd_scene load_steps=127 format=4 uid="uid://cmd2eqjxh0g5r"]
+[gd_scene load_steps=122 format=4 uid="uid://cmd2eqjxh0g5r"]
 
 [ext_resource type="Texture2D" uid="uid://bytsi88f7jice" path="res://art/Worlds2/Volcano/Platformer/Volcano Level Set_Platformer - Ground 01.png" id="1_ure61"]
 [ext_resource type="Texture2D" uid="uid://csrr01d3tepbg" path="res://art/Worlds2/Volcano/Platformer/Volcano Level Set_Platformer - Ground 02.png" id="2_myw2k"]
@@ -12,7 +12,6 @@
 [ext_resource type="Texture2D" uid="uid://3fcu8xey4na6" path="res://art/Worlds/Volcanic/lava object 1/2.png" id="8_at15v"]
 [ext_resource type="Texture2D" uid="uid://6cc00um5bq2i" path="res://assets/VFX/Wind VFX Spritesheets/Jet_Smoke_White_v6_A_spritesheet.png" id="8_eiumr"]
 [ext_resource type="Texture2D" uid="uid://mvqa7cr3s4eh" path="res://art/Worlds2/Volcano/Platformer/Volcano Level Set_Platformer - Ground 05.png" id="8_k1lv4"]
-[ext_resource type="Texture2D" uid="uid://dc13x041i078w" path="res://art/Worlds/Volcanic/lava object 1/12.png" id="8_lrqhm"]
 [ext_resource type="Texture2D" uid="uid://cruj4lvqxvjat" path="res://art/Worlds/Volcanic/lava object 1/5.png" id="9_cwhoj"]
 [ext_resource type="Texture2D" uid="uid://dkt3koja1sp1p" path="res://art/Worlds2/Volcano/Platformer/Volcano Level Set_Platformer - Ground 06.png" id="9_u5mkf"]
 [ext_resource type="Texture2D" uid="uid://ldd63qrygreo" path="res://art/Worlds/Volcanic/lava object 1/sadad1.png" id="10_5xq22"]
@@ -147,21 +146,6 @@ physics_layer_0/collision_layer = 1
 sources/9 = SubResource("TileSetAtlasSource_l2gbr")
 sources/10 = SubResource("TileSetAtlasSource_6x7pk")
 sources/11 = SubResource("TileSetAtlasSource_w3kl2")
-
-[sub_resource type="RectangleShape2D" id="RectangleShape2D_nvbvt"]
-size = Vector2(102, 1068.4805)
-
-[sub_resource type="CapsuleShape2D" id="CapsuleShape2D_lrqhm"]
-radius = 31.15
-height = 397.25
-
-[sub_resource type="CapsuleShape2D" id="CapsuleShape2D_5xq22"]
-radius = 31.15
-height = 397.25
-
-[sub_resource type="CapsuleShape2D" id="CapsuleShape2D_cwhoj"]
-radius = 31.15
-height = 990.15234
 
 [sub_resource type="CompressedTexture2D" id="CompressedTexture2D_ure61"]
 load_path = "res://.godot/imported/Volcano Level Set_Platformer - Wooden Bridge.png-98a4c4bbe12b6c0bfbb5a76d52dbc02f.ctex"
@@ -737,38 +721,6 @@ region_rect = Rect2(0, 0, 582, 428.761)
 position = Vector2(-61, 40)
 tile_map_data = PackedByteArray("AAAaAAgACQAAAAAAAAAbAAgACgAAAAAAAAAcAAgACgAAAAAAAAAdAAgACgAAAAAAAAAeAAgACgAAAAAAAAAfAAgACwAAAAAAAAAnAAYACwAAAAAAAAAmAAYACgAAAAAAAAAlAAYACgAAAAAAAAAkAAYACgAAAAAAAAAjAAYACgAAAAAAAAAiAAYACQAAAAAAAAAsAAgACgAAAAAAAAAtAAgACgAAAAAAAAAuAAgACgAAAAAAAAAvAAgACgAAAAAAAAArAAgACQAAAAAAAAA0AAoACgAAAAAAAAA1AAoACgAAAAAAAAA2AAoACgAAAAAAAAA3AAoACgAAAAAAAAA4AAoACgAAAAAAAAA5AAoACgAAAAAAAAA6AAoACgAAAAAAAAA7AAoACgAAAAAAAAA8AAoACwAAAAAAAABEAAcACwAAAAAAAABDAAcACgAAAAAAAABCAAcACgAAAAAAAABBAAcACgAAAAAAAABAAAcACgAAAAAAAAA/AAcACQAAAAAAAACNAAcACQAAAAAAAACTAP//CQAAAAAAAACNAPz/CQAAAAAAAACUAPn/CQAAAAAAAACaAPb/CQAAAAAAAACSAPT/CQAAAAAAAACbAPb/CgAAAAAAAACcAPb/CgAAAAAAAACdAPb/CgAAAAAAAACeAPb/CgAAAAAAAACOAPz/CgAAAAAAAACPAPz/CgAAAAAAAACQAPz/CgAAAAAAAACRAPz/CgAAAAAAAACUAP//CgAAAAAAAACVAP//CgAAAAAAAACWAP//CgAAAAAAAACXAP//CgAAAAAAAACVAPn/CgAAAAAAAACWAPn/CgAAAAAAAACXAPn/CgAAAAAAAACWAAUACgAAAAAAAACXAAUACgAAAAAAAACYAAUACgAAAAAAAACOAAcACgAAAAAAAACPAAcACgAAAAAAAACQAAcACgAAAAAAAACRAAcACwAAAAAAAACZAAUACwAAAAAAAACYAP//CwAAAAAAAACSAPz/CwAAAAAAAACYAPn/CwAAAAAAAACfAPb/CwAAAAAAAACXAPT/CwAAAAAAAACTAPT/CgAAAAAAAACUAPT/CgAAAAAAAACVAPT/CgAAAAAAAACWAPT/CgAAAAAAAACeAAIACwAAAAAAAACdAAIACgAAAAAAAACcAAIACgAAAAAAAACbAAIACQAAAAAAAAAwAAgACwAAAAAAAACVAAUACQAAAAAAAAAzAAoACQAAAAAAAAA=")
 tile_set = SubResource("TileSet_mivpl")
-
-[node name="12" type="Sprite2D" parent="Geometry/Platforms"]
-position = Vector2(5570, 925)
-rotation = 3.1415927
-scale = Vector2(0.1, -0.2)
-texture = ExtResource("8_lrqhm")
-
-[node name="StaticBody2D" type="StaticBody2D" parent="Geometry/Platforms/12"]
-
-[node name="CollisionShape2D" type="CollisionShape2D" parent="Geometry/Platforms/12/StaticBody2D"]
-position = Vector2(700, -185.00006)
-rotation = 1.7366027
-scale = Vector2(0.99999964, 0.99999964)
-shape = SubResource("RectangleShape2D_nvbvt")
-
-[node name="CollisionShape2D2" type="CollisionShape2D" parent="Geometry/Platforms/12/StaticBody2D"]
-position = Vector2(20, -252)
-rotation = 1.3281956
-scale = Vector2(0.99999964, 0.99999964)
-shape = SubResource("CapsuleShape2D_lrqhm")
-
-[node name="CollisionShape2D3" type="CollisionShape2D" parent="Geometry/Platforms/12/StaticBody2D"]
-position = Vector2(-290, -119.99988)
-rotation = 1.001819
-scale = Vector2(0.99999964, 0.99999964)
-shape = SubResource("CapsuleShape2D_5xq22")
-
-[node name="CollisionShape2D4" type="CollisionShape2D" parent="Geometry/Platforms/12/StaticBody2D"]
-position = Vector2(-745, 315.00012)
-rotation = 0.73652893
-scale = Vector2(0.99999964, 0.99999964)
-shape = SubResource("CapsuleShape2D_cwhoj")
 
 [node name="Bridge" type="TileMapLayer" parent="Geometry"]
 z_index = -1
@@ -1498,64 +1450,64 @@ position = Vector2(2383, 1034)
 position = Vector2(5849, 75)
 
 [node name="P1" type="Marker2D" parent="Spawns/Floor2"]
-position = Vector2(-2278, 748)
+position = Vector2(-2260, 690)
 
 [node name="P2" type="Marker2D" parent="Spawns/Floor2"]
-position = Vector2(-1288, 533)
+position = Vector2(-1288, 371)
 
 [node name="P3" type="Marker2D" parent="Spawns/Floor2"]
-position = Vector2(78, 787)
+position = Vector2(86, 615)
 
 [node name="P4" type="Marker2D" parent="Spawns/Floor2"]
-position = Vector2(884, 1021)
+position = Vector2(876, 889)
 
 [node name="P5" type="Marker2D" parent="Spawns/Floor2"]
-position = Vector2(1580, 1017)
+position = Vector2(1580, 883)
 
 [node name="P6" type="Marker2D" parent="Spawns/Floor2"]
-position = Vector2(2385, 672)
+position = Vector2(2382, 533)
 
 [node name="Floor3" type="Node2D" parent="Spawns"]
 position = Vector2(11051, 589)
 
 [node name="P1" type="Marker2D" parent="Spawns/Floor3"]
-position = Vector2(-1816, 142)
+position = Vector2(-1816, -10)
 
 [node name="P2" type="Marker2D" parent="Spawns/Floor3"]
-position = Vector2(-1388, 325)
+position = Vector2(-1383, 219)
 
 [node name="P3" type="Marker2D" parent="Spawns/Floor3"]
-position = Vector2(-997, 592)
+position = Vector2(-982, 448)
 
 [node name="P4" type="Marker2D" parent="Spawns/Floor3"]
-position = Vector2(487, 595)
+position = Vector2(507, 428)
 
 [node name="P5" type="Marker2D" parent="Spawns/Floor3"]
-position = Vector2(885, 572)
+position = Vector2(872, 418)
 
 [node name="P6" type="Marker2D" parent="Spawns/Floor3"]
-position = Vector2(1336, 573)
+position = Vector2(1336, 398)
 
 [node name="Floor4" type="Node2D" parent="Spawns"]
 position = Vector2(16614, 545)
 
 [node name="P1" type="Marker2D" parent="Spawns/Floor4"]
-position = Vector2(1853, 77)
+position = Vector2(1831, -189)
 
 [node name="P2" type="Marker2D" parent="Spawns/Floor4"]
-position = Vector2(2528, -928)
+position = Vector2(2528, -1113)
 
 [node name="P3" type="Marker2D" parent="Spawns/Floor4"]
-position = Vector2(2599, -1722)
+position = Vector2(2588, -1820)
 
 [node name="P4" type="Marker2D" parent="Spawns/Floor4"]
-position = Vector2(3407, -659)
+position = Vector2(3412, -735)
 
 [node name="P5" type="Marker2D" parent="Spawns/Floor4"]
-position = Vector2(1714, -1326)
+position = Vector2(1687, -1635)
 
 [node name="P6" type="Marker2D" parent="Spawns/Floor4"]
-position = Vector2(3469, -1905)
+position = Vector2(3404, -2247)
 
 [node name="PlayerSpawn" type="Marker2D" parent="Spawns/Floor4"]
 position = Vector2(1025, 776)
@@ -1599,7 +1551,7 @@ position = Vector2(12875, 1354)
 position = Vector2(19239, -1542)
 
 [node name="PointLight2D" type="PointLight2D" parent="."]
-position = Vector2(19546, -4829.7505)
+position = Vector2(19541, -4973)
 scale = Vector2(104.59372, 235.07031)
 energy = 0.5
 blend_mode = 1
