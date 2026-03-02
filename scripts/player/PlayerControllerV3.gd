@@ -183,7 +183,9 @@ var _roll_speed: float = 0.0
 @export var drop_through_allowed_floor_names: PackedStringArray = PackedStringArray(["Platforms"])
 
 @export_group("Moving Platform Stability")
-@export var elevator_floor_grace_seconds: float = 0.12
+@export var elevator_floor_grace_seconds: float = 0.30
+@export var elevator_ground_probe_feet_offset: float = 18.0
+@export var elevator_ground_probe_distance: float = 28.0
 
 # Testing/Debug inputs
 @export_group("Debug/Testing Inputs")
@@ -340,6 +342,10 @@ func _physics_process(delta: float) -> void:
 func _update_slope_ground_adhesion() -> void:
 	if not enable_slope_ground_adhesion:
 		return
+	# Moving elevators should not be affected by slope snap logic.
+	if _should_force_elevator_grounded():
+		floor_snap_length = 0.0
+		return
 
 	floor_max_angle = deg_to_rad(slope_floor_max_angle_deg)
 
@@ -490,6 +496,25 @@ func _is_dropthrough_blocked_platform_node(node: Node) -> bool:
 
 func _should_force_ground_stability() -> bool:
 	return _elevator_floor_grace_left > 0.0
+
+func _is_elevator_directly_below() -> bool:
+	var space_state: PhysicsDirectSpaceState2D = get_world_2d().direct_space_state
+	var from: Vector2 = global_position + Vector2(0.0, elevator_ground_probe_feet_offset)
+	var to: Vector2 = from + Vector2(0.0, maxf(elevator_ground_probe_distance, 4.0))
+	var query: PhysicsRayQueryParameters2D = PhysicsRayQueryParameters2D.create(from, to)
+	query.exclude = [self]
+	query.collide_with_areas = false
+	query.collide_with_bodies = true
+	var hit: Dictionary = space_state.intersect_ray(query)
+	if hit.is_empty():
+		return false
+	var collider_obj: Variant = hit.get("collider", null)
+	if collider_obj is Node:
+		return _is_dropthrough_blocked_platform_node(collider_obj as Node)
+	return false
+
+func _should_force_elevator_grounded() -> bool:
+	return _should_force_ground_stability() or _is_elevator_directly_below()
 
 func _is_dropthrough_platform_node(node: Node) -> bool:
 	if node == null:
@@ -698,7 +723,7 @@ func process_state(delta: float) -> void:
 			_handle_ground_movement()
 			
 			# Use coyote timer as floor buffer to prevent slope stuttering
-			if not is_on_floor() and _coyote_timer.time_left <= 0.0 and not _should_force_ground_stability():
+			if not is_on_floor() and _coyote_timer.time_left <= 0.0 and not _should_force_elevator_grounded():
 				switch_state(STATE.FALL)
 			elif Input.is_action_just_pressed(input_defend) and _can_use_defend():
 				switch_state(STATE.DEFEND)
@@ -723,7 +748,7 @@ func process_state(delta: float) -> void:
 			_handle_ground_movement()
 			
 			# Use coyote timer as floor buffer to prevent slope stuttering
-			if not is_on_floor() and _coyote_timer.time_left <= 0.0 and not _should_force_ground_stability():
+			if not is_on_floor() and _coyote_timer.time_left <= 0.0 and not _should_force_elevator_grounded():
 				switch_state(STATE.FALL)
 			elif Input.is_action_just_pressed(input_defend) and _can_use_defend():
 				switch_state(STATE.DEFEND)
@@ -748,7 +773,7 @@ func process_state(delta: float) -> void:
 			_handle_sprint(delta)
 			
 			# Use coyote timer as floor buffer to prevent slope stuttering
-			if not is_on_floor() and _coyote_timer.time_left <= 0.0 and not _should_force_ground_stability():
+			if not is_on_floor() and _coyote_timer.time_left <= 0.0 and not _should_force_elevator_grounded():
 				switch_state(STATE.FALL)
 			elif Input.is_action_just_pressed(input_defend) and _can_use_defend():
 				switch_state(STATE.DEFEND)
@@ -790,6 +815,12 @@ func process_state(delta: float) -> void:
 				switch_state(STATE.HEAVY_ATTACK)
 		
 		STATE.FALL:
+			# Elevator contact can briefly flicker floor checks while riding up/down.
+			# Keep fall/gravity from jittering the player during that grace window.
+			if _should_force_elevator_grounded() and not Input.is_action_pressed(input_jump):
+				switch_state(STATE.IDLE if Input.get_axis(input_move_left, input_move_right) == 0 else STATE.WALK)
+				return
+
 			velocity.y = move_toward(velocity.y, FALL_VELOCITY, FALL_GRAVITY * delta)
 			
 			# Air movement - same for all characters (no speed multiplier)
@@ -887,7 +918,7 @@ func process_state(delta: float) -> void:
 			_handle_sprint(delta)
 			
 			# Use coyote timer as floor buffer to prevent slope stuttering
-			if not is_on_floor() and _coyote_timer.time_left <= 0.0 and not _should_force_ground_stability():
+			if not is_on_floor() and _coyote_timer.time_left <= 0.0 and not _should_force_elevator_grounded():
 				switch_state(STATE.FALL)
 			elif not _is_sprinting or velocity.x * _facing_direction >= SPRINT_VELOCITY * _get_speed_multiplier():
 				switch_state(STATE.WALK if Input.get_axis(input_move_left, input_move_right) != 0 else STATE.IDLE)

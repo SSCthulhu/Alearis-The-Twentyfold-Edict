@@ -132,6 +132,7 @@ perfect_window = 0.14
 
 [node name="Camera2D" type="Camera2D" parent="."]
 offset = Vector2(0, -450)
+process_callback = 0
 limit_left = -1550
 limit_top = -4800
 limit_right = 1550
