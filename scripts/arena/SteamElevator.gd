@@ -4,6 +4,7 @@ class_name SteamElevator
 signal player_entered  # Emitted when player enters the elevator
 signal player_exited   # Emitted when player exits the elevator
 signal teleport_completed  # Emitted when launch+teleport+fade sequence is fully complete
+signal teleport_ready_for_fade_in  # Emitted after reposition, before fade-in resumes gameplay
 
 # References
 @export var animated_sprite_path: NodePath = ^"AnimatedSprite2D"
@@ -332,6 +333,9 @@ func _launch_sequence() -> void:
 	
 	# Make player visible
 	_set_player_visible(true)
+
+	# Let floor/world controllers switch to arena camera while the screen is still white.
+	teleport_ready_for_fade_in.emit()
 	
 	# Step 4: Fade IN from white
 	if _fade_rect != null:

@@ -11,6 +11,12 @@ class_name EnemySkeletonGolem
 @export var slam_cooldown: float = 10.0  # Ensure slam happens every ~10 seconds
 @export var basic_attack_cooldown: float = 2.0
 
+# Golem-specific melee telegraph tuning (larger than standard melee enemies)
+@export var golem_telegraph_width_px: float = 360.0
+@export var golem_telegraph_height_px: float = 140.0
+@export var golem_telegraph_forward_bias_px: float = 120.0
+@export var golem_telegraph_y_offset_px: float = -52.0
+
 # Ranged immunity
 @export var melee_damage_range: float = 100.0  # Player must be within 100px to damage golem
 
@@ -49,6 +55,12 @@ func _ready() -> void:
 	# Golem stats
 	max_hp = 200
 	move_speed = 100.0  # Slower than player but faster than other enemies
+	
+	# Match telegraph readability to golem size/reach.
+	telegraph_width_px = golem_telegraph_width_px
+	telegraph_height_px = golem_telegraph_height_px
+	telegraph_forward_bias_px = golem_telegraph_forward_bias_px
+	telegraph_y_offset_px = golem_telegraph_y_offset_px
 	
 	# Initialize casting helper
 	add_child(_casting_helper)
@@ -218,9 +230,18 @@ func _perform_basic_attack() -> void:
 	# Allow slam to be chosen again after basic attack
 	_can_choose_slam = true
 	
+	# Reuse base melee telegraph/flash for readability.
+	var dir: int = _facing_dir
+	var hit_delay: float = maxf(attack_hit_time, 0.01)
+	_show_melee_telegraph(dir, hit_delay)
+	_play_melee_windup_flash(hit_delay)
+	
 	# Spawn hitbox after delay
 	if attack_hit_time > 0.0:
 		await get_tree().create_timer(attack_hit_time).timeout
+	
+	_hide_melee_telegraph()
+	_stop_melee_windup_flash()
 	
 	if _death_started or _target == null or not is_instance_valid(_target):
 		return

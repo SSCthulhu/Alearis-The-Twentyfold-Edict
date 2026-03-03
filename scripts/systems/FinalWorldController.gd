@@ -10,9 +10,27 @@ extends Node
 @export var victory_screen_path: NodePath = ^"../FinalVictoryScreen"
 @export var debug_logs: bool = true
 
+@export_group("Final Boss Arena Camera")
+@export var enable_final_boss_arena_camera: bool = true
+@export var final_boss_arena_camera_path: NodePath = ^"../BossArenaCamera"
+@export var final_boss_camera_left: float = -2200.0
+@export var final_boss_camera_right: float = 2200.0
+@export var final_boss_camera_top: float = -1200.0
+@export var final_boss_camera_bottom: float = 2200.0
+@export var final_boss_camera_transition_time: float = 0.75
+@export var final_boss_camera_live_tuning: bool = false
+@export var final_boss_camera_use_manual_center: bool = false
+@export var final_boss_camera_center: Vector2 = Vector2(0.0, 700.0)
+@export var final_boss_camera_auto_fit_zoom: bool = true
+@export var final_boss_camera_fit_padding_px: float = 80.0
+@export var final_boss_camera_min_zoom: float = 0.5
+@export var final_boss_camera_max_zoom: float = 1.0
+
 var _boss: Node2D = null
 var _fade_rect: ColorRect = null
 var _victory_screen: CanvasLayer = null
+var _final_boss_camera_activated: bool = false
+var _final_boss_camera_ref: Camera2D = null
 
 func _ready() -> void:
 	if debug_logs:
@@ -53,6 +71,9 @@ func _ready() -> void:
 	
 	# Replace boss with correct final boss
 	call_deferred("_setup_final_boss")
+
+func _process(_delta: float) -> void:
+	_update_final_boss_camera_live_tuning()
 
 func _setup_final_boss() -> void:
 	"""Replace default boss with the selected final boss"""
@@ -148,6 +169,9 @@ func _complete_setup() -> void:
 	
 	# Wait a frame for everything to settle
 	await get_tree().process_frame
+
+	# Set arena camera while fade is still black.
+	_activate_final_boss_arena_camera()
 	
 	# Fade in
 	if _fade_rect != null:
@@ -188,6 +212,96 @@ func _complete_setup() -> void:
 	
 	if debug_logs:
 		pass
+
+func _activate_final_boss_arena_camera() -> void:
+	if not enable_final_boss_arena_camera:
+		return
+	if _final_boss_camera_activated:
+		return
+	_final_boss_camera_activated = true
+
+	var boss_cam: Camera2D = get_node_or_null(final_boss_arena_camera_path) as Camera2D
+	if boss_cam == null:
+		push_warning("[FinalWorldController] Final boss arena camera not found: %s" % String(final_boss_arena_camera_path))
+		return
+	_final_boss_camera_ref = boss_cam
+
+	var player: Node2D = get_node_or_null("../Player") as Node2D
+	if player != null:
+		var player_cam: Camera2D = player.get_node_or_null("Camera2D") as Camera2D
+		if player_cam != null:
+			boss_cam.global_position = player_cam.global_position
+			boss_cam.zoom = player_cam.zoom
+		else:
+			boss_cam.global_position = player.global_position
+			boss_cam.zoom = Vector2.ONE
+
+	boss_cam.limit_left = int(final_boss_camera_left)
+	boss_cam.limit_right = int(final_boss_camera_right)
+	boss_cam.limit_top = int(final_boss_camera_top)
+	boss_cam.limit_bottom = int(final_boss_camera_bottom)
+	boss_cam.position_smoothing_enabled = false
+	boss_cam.enabled = true
+	boss_cam.make_current()
+
+	var center: Vector2 = _get_final_boss_camera_target_center()
+	var target_zoom: Vector2 = _get_final_boss_arena_fit_zoom()
+	var duration: float = maxf(final_boss_camera_transition_time, 0.01)
+	var tween: Tween = create_tween()
+	tween.set_pause_mode(Tween.TWEEN_PAUSE_PROCESS)
+	tween.set_trans(Tween.TRANS_SINE)
+	tween.set_ease(Tween.EASE_IN_OUT)
+	tween.tween_property(boss_cam, "global_position", center, duration)
+	if final_boss_camera_auto_fit_zoom:
+		tween.parallel().tween_property(boss_cam, "zoom", target_zoom, duration)
+
+func _get_final_boss_camera_target_center() -> Vector2:
+	if final_boss_camera_use_manual_center:
+		return final_boss_camera_center
+	return Vector2(
+		(final_boss_camera_left + final_boss_camera_right) * 0.5,
+		(final_boss_camera_top + final_boss_camera_bottom) * 0.5
+	)
+
+func _get_final_boss_arena_fit_zoom() -> Vector2:
+	if not final_boss_camera_auto_fit_zoom:
+		return Vector2.ONE
+	var vp: Viewport = get_viewport()
+	if vp == null:
+		return Vector2.ONE
+	var view_size: Vector2 = vp.get_visible_rect().size
+	var arena_w: float = absf(final_boss_camera_right - final_boss_camera_left) + final_boss_camera_fit_padding_px * 2.0
+	var arena_h: float = absf(final_boss_camera_bottom - final_boss_camera_top) + final_boss_camera_fit_padding_px * 2.0
+	if arena_w <= 1.0 or arena_h <= 1.0:
+		return Vector2.ONE
+	var zx: float = view_size.x / arena_w
+	var zy: float = view_size.y / arena_h
+	var z: float = minf(zx, zy)
+	z = clampf(z, final_boss_camera_min_zoom, final_boss_camera_max_zoom)
+	return Vector2(z, z)
+
+func _update_final_boss_camera_live_tuning() -> void:
+	if not enable_final_boss_arena_camera:
+		return
+	if not final_boss_camera_live_tuning:
+		return
+	if not _final_boss_camera_activated:
+		return
+	if _final_boss_camera_ref == null or not is_instance_valid(_final_boss_camera_ref):
+		_final_boss_camera_ref = get_node_or_null(final_boss_arena_camera_path) as Camera2D
+		if _final_boss_camera_ref == null:
+			return
+	if not _final_boss_camera_ref.is_current():
+		_final_boss_camera_ref.enabled = true
+		_final_boss_camera_ref.make_current()
+	_final_boss_camera_ref.limit_left = int(final_boss_camera_left)
+	_final_boss_camera_ref.limit_right = int(final_boss_camera_right)
+	_final_boss_camera_ref.limit_top = int(final_boss_camera_top)
+	_final_boss_camera_ref.limit_bottom = int(final_boss_camera_bottom)
+	if final_boss_camera_auto_fit_zoom:
+		_final_boss_camera_ref.zoom = _get_final_boss_arena_fit_zoom()
+	if final_boss_camera_use_manual_center:
+		_final_boss_camera_ref.global_position = _get_final_boss_camera_target_center()
 
 func _on_boss_died() -> void:
 	"""Handle final boss death - show victory screen"""

@@ -133,6 +133,8 @@ func _teleport_player() -> void:
 	pass
 	_player.global_position = target_position
 	_player_nearby = false
+	if _floor_progression != null and _floor_progression.has_method("activate_world2_boss_arena_camera"):
+		_floor_progression.call("activate_world2_boss_arena_camera")
 	
 	# Wait 1 second then trigger boss encounter
 	if _floor_progression != null and _floor_progression.has_method("trigger_boss_encounter_after_portal"):

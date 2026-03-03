@@ -59,6 +59,7 @@ var _derived_floor_wall_x: PackedFloat32Array = PackedFloat32Array()
 # -----------------------------
 @export_group("World2 Doorways")
 @export var enable_world2_doors: bool = false
+@export var world2_boss_start_from_portal_only: bool = true
 
 # These are AnimatedSprite2D nodes in your World2 tree:
 # Arena2/Doorways/Floor1Door
@@ -191,6 +192,38 @@ var _orb_flight_completed_once: bool = false
 @export var world1_boss_camera_max_zoom: float = 1.0
 @export var world1_lock_floor4_gate_on_boss_entry: bool = true
 
+@export_group("World2 Boss Arena Camera")
+@export var enable_world2_boss_arena_camera: bool = false
+@export var world2_boss_arena_camera_path: NodePath = ^"../BossArenaCamera"
+@export var world2_boss_camera_left: float = -1524.0
+@export var world2_boss_camera_right: float = 1536.0
+@export var world2_boss_camera_top: float = -22570.0
+@export var world2_boss_camera_bottom: float = -18000.0
+@export var world2_boss_camera_transition_time: float = 0.75
+@export var world2_boss_camera_live_tuning: bool = false
+@export var world2_boss_camera_use_manual_center: bool = false
+@export var world2_boss_camera_center: Vector2 = Vector2(0.0, -20285.0)
+@export var world2_boss_camera_auto_fit_zoom: bool = true
+@export var world2_boss_camera_fit_padding_px: float = 80.0
+@export var world2_boss_camera_min_zoom: float = 0.5
+@export var world2_boss_camera_max_zoom: float = 1.0
+
+@export_group("World3 Boss Arena Camera")
+@export var enable_world3_boss_arena_camera: bool = false
+@export var world3_boss_arena_camera_path: NodePath = ^"../BossArenaCamera"
+@export var world3_boss_camera_left: float = 24000.0
+@export var world3_boss_camera_right: float = 29200.0
+@export var world3_boss_camera_top: float = -6400.0
+@export var world3_boss_camera_bottom: float = -3300.0
+@export var world3_boss_camera_transition_time: float = 0.75
+@export var world3_boss_camera_live_tuning: bool = false
+@export var world3_boss_camera_use_manual_center: bool = false
+@export var world3_boss_camera_center: Vector2 = Vector2(26600.0, -4850.0)
+@export var world3_boss_camera_auto_fit_zoom: bool = true
+@export var world3_boss_camera_fit_padding_px: float = 80.0
+@export var world3_boss_camera_min_zoom: float = 0.5
+@export var world3_boss_camera_max_zoom: float = 1.0
+
 @export_group("Unlock after Floor 1 + Dice Choice")
 @export var unlock_floor_1_platforms: Array[NodePath] = [] # Platform8, Platform9
 
@@ -252,6 +285,10 @@ var _world1_floor3_transition_running: bool = false
 var _world1_floor3_enemy_pause_cache: Dictionary = {}
 var _world1_boss_camera_activated: bool = false
 var _world1_boss_camera_ref: Camera2D = null
+var _world2_boss_camera_activated: bool = false
+var _world2_boss_camera_ref: Camera2D = null
+var _world3_boss_camera_activated: bool = false
+var _world3_boss_camera_ref: Camera2D = null
 
 # -----------------------------
 # World2 door runtime
@@ -605,9 +642,12 @@ func _process(_delta: float) -> void:
 	if floor_progression_mode == 0:
 		# Vertical mode (World2): Position-based trigger.
 		var boss_triggered: bool = (_player != null and _player.global_position.y <= boss_start_y)
+		if enable_world2_doors and world2_boss_start_from_portal_only:
+			boss_triggered = false
 		
 		if not _boss_started and _player != null and boss_triggered and floor4_unlocked:
 			_boss_started = true
+			_activate_world2_boss_arena_camera()
 			pass
 			if _encounter == null:
 				pass
@@ -624,6 +664,7 @@ func _process(_delta: float) -> void:
 			var boss_triggered_x: bool = (_player != null and _player.global_position.x >= boss_start_x)
 			if not _boss_started and boss_triggered_x and floor4_unlocked:
 				_boss_started = true
+				_activate_world3_boss_arena_camera()
 				_activate_world1_boss_arena_camera()
 				if _encounter == null:
 					pass
@@ -635,6 +676,8 @@ func _process(_delta: float) -> void:
 	_update_current_floor_from_player()
 	_try_start_world1_floor3_transition()
 	_update_world1_boss_camera_live_tuning()
+	_update_world2_boss_camera_live_tuning()
+	_update_world3_boss_camera_live_tuning()
 	_sync_runstate_floor()
 	_emit_floor_status_if_changed()
 
@@ -910,6 +953,206 @@ func _update_world1_boss_camera_live_tuning() -> void:
 	# Let you drive framing manually while tuning.
 	if world1_boss_camera_use_manual_center:
 		_world1_boss_camera_ref.global_position = _get_world1_boss_camera_target_center()
+
+func _activate_world2_boss_arena_camera() -> void:
+	if not enable_world2_boss_arena_camera:
+		return
+	if _world2_boss_camera_activated:
+		return
+	_world2_boss_camera_activated = true
+
+	var boss_cam: Camera2D = get_node_or_null(world2_boss_arena_camera_path) as Camera2D
+	if boss_cam == null:
+		push_warning("[Floors] World2 boss arena camera not found: %s" % String(world2_boss_arena_camera_path))
+		return
+	_world2_boss_camera_ref = boss_cam
+	if _player == null:
+		return
+
+	_copy_player_camera_state_to_arena_camera(boss_cam)
+	boss_cam.limit_left = int(world2_boss_camera_left)
+	boss_cam.limit_right = int(world2_boss_camera_right)
+	boss_cam.limit_top = int(world2_boss_camera_top)
+	boss_cam.limit_bottom = int(world2_boss_camera_bottom)
+	boss_cam.position_smoothing_enabled = false
+	boss_cam.enabled = true
+	boss_cam.make_current()
+
+	var center: Vector2 = _get_world2_boss_camera_target_center()
+	var target_zoom: Vector2 = _get_world2_boss_arena_fit_zoom()
+	_tween_boss_camera_to_target(
+		boss_cam,
+		center,
+		target_zoom,
+		world2_boss_camera_transition_time,
+		world2_boss_camera_auto_fit_zoom
+	)
+
+func _get_world2_boss_camera_target_center() -> Vector2:
+	if world2_boss_camera_use_manual_center:
+		return world2_boss_camera_center
+	return Vector2(
+		(world2_boss_camera_left + world2_boss_camera_right) * 0.5,
+		(world2_boss_camera_top + world2_boss_camera_bottom) * 0.5
+	)
+
+func _get_world2_boss_arena_fit_zoom() -> Vector2:
+	if not world2_boss_camera_auto_fit_zoom:
+		return Vector2.ONE
+	var vp: Viewport = get_viewport()
+	if vp == null:
+		return Vector2.ONE
+	var view_size: Vector2 = vp.get_visible_rect().size
+	var arena_w: float = absf(world2_boss_camera_right - world2_boss_camera_left) + world2_boss_camera_fit_padding_px * 2.0
+	var arena_h: float = absf(world2_boss_camera_bottom - world2_boss_camera_top) + world2_boss_camera_fit_padding_px * 2.0
+	if arena_w <= 1.0 or arena_h <= 1.0:
+		return Vector2.ONE
+	var zx: float = view_size.x / arena_w
+	var zy: float = view_size.y / arena_h
+	var z: float = minf(zx, zy)
+	z = clampf(z, world2_boss_camera_min_zoom, world2_boss_camera_max_zoom)
+	return Vector2(z, z)
+
+func _update_world2_boss_camera_live_tuning() -> void:
+	if not enable_world2_boss_arena_camera:
+		return
+	if not world2_boss_camera_live_tuning:
+		return
+	# World2 should not steal camera from traversal/elevator flow.
+	# Only apply live tuning after explicit portal-driven activation.
+	if not _world2_boss_camera_activated:
+		return
+	if _world2_boss_camera_ref == null or not is_instance_valid(_world2_boss_camera_ref):
+		_world2_boss_camera_ref = get_node_or_null(world2_boss_arena_camera_path) as Camera2D
+		if _world2_boss_camera_ref == null:
+			return
+
+	if not _world2_boss_camera_ref.is_current():
+		_world2_boss_camera_ref.enabled = true
+		_world2_boss_camera_ref.make_current()
+
+	_world2_boss_camera_ref.limit_left = int(world2_boss_camera_left)
+	_world2_boss_camera_ref.limit_right = int(world2_boss_camera_right)
+	_world2_boss_camera_ref.limit_top = int(world2_boss_camera_top)
+	_world2_boss_camera_ref.limit_bottom = int(world2_boss_camera_bottom)
+	if world2_boss_camera_auto_fit_zoom:
+		_world2_boss_camera_ref.zoom = _get_world2_boss_arena_fit_zoom()
+	if world2_boss_camera_use_manual_center:
+		_world2_boss_camera_ref.global_position = _get_world2_boss_camera_target_center()
+
+func _activate_world3_boss_arena_camera() -> void:
+	if not enable_world3_boss_arena_camera:
+		return
+	if _world3_boss_camera_activated:
+		return
+	_world3_boss_camera_activated = true
+
+	var boss_cam: Camera2D = get_node_or_null(world3_boss_arena_camera_path) as Camera2D
+	if boss_cam == null:
+		push_warning("[Floors] World3 boss arena camera not found: %s" % String(world3_boss_arena_camera_path))
+		return
+	_world3_boss_camera_ref = boss_cam
+	if _player == null:
+		return
+
+	_copy_player_camera_state_to_arena_camera(boss_cam)
+	boss_cam.limit_left = int(world3_boss_camera_left)
+	boss_cam.limit_right = int(world3_boss_camera_right)
+	boss_cam.limit_top = int(world3_boss_camera_top)
+	boss_cam.limit_bottom = int(world3_boss_camera_bottom)
+	boss_cam.position_smoothing_enabled = false
+	boss_cam.enabled = true
+	boss_cam.make_current()
+
+	var center: Vector2 = _get_world3_boss_camera_target_center()
+	var target_zoom: Vector2 = _get_world3_boss_arena_fit_zoom()
+	_tween_boss_camera_to_target(
+		boss_cam,
+		center,
+		target_zoom,
+		world3_boss_camera_transition_time,
+		world3_boss_camera_auto_fit_zoom
+	)
+
+func _get_world3_boss_camera_target_center() -> Vector2:
+	if world3_boss_camera_use_manual_center:
+		return world3_boss_camera_center
+	return Vector2(
+		(world3_boss_camera_left + world3_boss_camera_right) * 0.5,
+		(world3_boss_camera_top + world3_boss_camera_bottom) * 0.5
+	)
+
+func _get_world3_boss_arena_fit_zoom() -> Vector2:
+	if not world3_boss_camera_auto_fit_zoom:
+		return Vector2.ONE
+	var vp: Viewport = get_viewport()
+	if vp == null:
+		return Vector2.ONE
+	var view_size: Vector2 = vp.get_visible_rect().size
+	var arena_w: float = absf(world3_boss_camera_right - world3_boss_camera_left) + world3_boss_camera_fit_padding_px * 2.0
+	var arena_h: float = absf(world3_boss_camera_bottom - world3_boss_camera_top) + world3_boss_camera_fit_padding_px * 2.0
+	if arena_w <= 1.0 or arena_h <= 1.0:
+		return Vector2.ONE
+	var zx: float = view_size.x / arena_w
+	var zy: float = view_size.y / arena_h
+	var z: float = minf(zx, zy)
+	z = clampf(z, world3_boss_camera_min_zoom, world3_boss_camera_max_zoom)
+	return Vector2(z, z)
+
+func _update_world3_boss_camera_live_tuning() -> void:
+	if not enable_world3_boss_arena_camera:
+		return
+	if not world3_boss_camera_live_tuning:
+		return
+	var in_boss_zone: bool = (_player != null and _player.global_position.x >= boss_start_x)
+	if not _world3_boss_camera_activated and not in_boss_zone:
+		return
+	if _world3_boss_camera_ref == null or not is_instance_valid(_world3_boss_camera_ref):
+		_world3_boss_camera_ref = get_node_or_null(world3_boss_arena_camera_path) as Camera2D
+		if _world3_boss_camera_ref == null:
+			return
+
+	if not _world3_boss_camera_ref.is_current():
+		_world3_boss_camera_ref.enabled = true
+		_world3_boss_camera_ref.make_current()
+
+	_world3_boss_camera_ref.limit_left = int(world3_boss_camera_left)
+	_world3_boss_camera_ref.limit_right = int(world3_boss_camera_right)
+	_world3_boss_camera_ref.limit_top = int(world3_boss_camera_top)
+	_world3_boss_camera_ref.limit_bottom = int(world3_boss_camera_bottom)
+	if world3_boss_camera_auto_fit_zoom:
+		_world3_boss_camera_ref.zoom = _get_world3_boss_arena_fit_zoom()
+	if world3_boss_camera_use_manual_center:
+		_world3_boss_camera_ref.global_position = _get_world3_boss_camera_target_center()
+
+func _copy_player_camera_state_to_arena_camera(boss_cam: Camera2D) -> void:
+	if _player == null or boss_cam == null:
+		return
+	var player_cam: Camera2D = _player.get_node_or_null("Camera2D") as Camera2D
+	if player_cam != null:
+		boss_cam.global_position = player_cam.global_position
+		boss_cam.zoom = player_cam.zoom
+	else:
+		boss_cam.global_position = _player.global_position
+		boss_cam.zoom = Vector2.ONE
+
+func _tween_boss_camera_to_target(
+	boss_cam: Camera2D,
+	target_center: Vector2,
+	target_zoom: Vector2,
+	transition_time: float,
+	tween_zoom: bool
+) -> void:
+	if boss_cam == null:
+		return
+	var duration: float = maxf(transition_time, 0.01)
+	var tween: Tween = create_tween()
+	tween.set_pause_mode(Tween.TWEEN_PAUSE_PROCESS)
+	tween.set_trans(Tween.TRANS_SINE)
+	tween.set_ease(Tween.EASE_IN_OUT)
+	tween.tween_property(boss_cam, "global_position", target_center, duration)
+	if tween_zoom:
+		tween.parallel().tween_property(boss_cam, "zoom", target_zoom, duration)
 
 func _run_world1_floor3_transition() -> void:
 	_set_player_cutscene_motion_lock(true)
@@ -1459,6 +1702,8 @@ func _setup_steam_elevator() -> void:
 		return
 	
 	_steam_elevator.teleport_completed.connect(_on_steam_elevator_teleport_completed)
+	if _steam_elevator.has_signal("teleport_ready_for_fade_in"):
+		_steam_elevator.teleport_ready_for_fade_in.connect(_on_steam_elevator_pre_fade_in)
 	pass
 
 func _on_teleport_area_entered(body: Node2D) -> void:
@@ -1481,6 +1726,7 @@ func trigger_boss_encounter_after_portal() -> void:
 		return
 	
 	_boss_started = true
+	_activate_world2_boss_arena_camera()
 	pass
 	
 	if _encounter == null:
@@ -1496,6 +1742,7 @@ func _on_steam_elevator_teleport_completed() -> void:
 	pass
 	pass
 	_elevator_teleport_completed = true
+	_activate_world3_boss_arena_camera()
 	
 	# Wait 1 second then trigger boss encounter
 	await get_tree().create_timer(1.0).timeout
@@ -1523,6 +1770,16 @@ func _on_steam_elevator_teleport_completed() -> void:
 			pass
 		if not floor4_unlocked:
 			pass
+
+func activate_world2_boss_arena_camera() -> void:
+	_activate_world2_boss_arena_camera()
+
+func activate_world3_boss_arena_camera() -> void:
+	_activate_world3_boss_arena_camera()
+
+func _on_steam_elevator_pre_fade_in() -> void:
+	"""Called while SteamElevator screen is still white, right before fade-in."""
+	_activate_world3_boss_arena_camera()
 
 func _update_world3_teleport_interaction() -> void:
 	if not enable_world3_teleport:

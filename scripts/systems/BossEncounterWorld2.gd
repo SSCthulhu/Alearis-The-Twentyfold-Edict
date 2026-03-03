@@ -10,6 +10,8 @@ class_name BossEncounterWorld2
 signal phase_changed(new_phase: int)
 signal encounter_completed
 
+const RELIC_ROLL_SCREEN_SCENE: PackedScene = preload("res://scenes/ui/RelicDiceRollScreen.tscn")
+
 enum Phase { IMMUNE_COMBAT, PORTAL_CHOICE, DPS }
 
 @export var boss_path: NodePath = ^"../Boss"
@@ -62,6 +64,8 @@ var _player: Node2D = null
 var _victory_ui: Node = null
 var _socket: AscensionSocket = null
 var _phrase_display: Node = null
+var _relic_roll_screen: Node = null
+var _pending_victory_reward_roll: int = -1
 
 var _dps_timer: float = 0.0
 var _active_enemies: Array[Node] = []
@@ -534,9 +538,66 @@ func _end_encounter() -> void:
 	
 	# Show victory UI
 	if _victory_ui and _victory_ui.has_method("open_victory"):
-		_victory_ui.open_victory()
+		_start_relic_roll_then_victory()
 	
 	encounter_completed.emit()
+
+func _ensure_relic_roll_screen() -> Node:
+	if _relic_roll_screen != null and is_instance_valid(_relic_roll_screen):
+		return _relic_roll_screen
+	if RELIC_ROLL_SCREEN_SCENE == null:
+		return null
+	var tree: SceneTree = get_tree()
+	if tree == null or tree.current_scene == null:
+		return null
+	var node: Node = RELIC_ROLL_SCREEN_SCENE.instantiate()
+	tree.current_scene.add_child(node)
+	_relic_roll_screen = node
+	return _relic_roll_screen
+
+func _start_relic_roll_then_victory() -> void:
+	if RunStateSingleton == null:
+		_open_victory_with_pending_roll()
+		return
+
+	var dice_min: int = int(RunStateSingleton.dice_min)
+	var dice_max: int = int(RunStateSingleton.dice_max)
+	_pending_victory_reward_roll = int(RunStateSingleton.call("get_victory_reward_roll"))
+	var target_band: int = int(RunStateSingleton.call("get_target_relic_band_from_roll", _pending_victory_reward_roll))
+
+	var roll_screen: Node = _ensure_relic_roll_screen()
+	if roll_screen == null:
+		_open_victory_with_pending_roll()
+		return
+
+	_on_victory_input_lock_changed(true)
+
+	if roll_screen.has_signal("roll_completed"):
+		if not roll_screen.roll_completed.is_connected(_on_relic_roll_completed_for_victory):
+			roll_screen.roll_completed.connect(_on_relic_roll_completed_for_victory)
+
+	if roll_screen.has_method("prepare_roll"):
+		roll_screen.call("prepare_roll", dice_min, dice_max)
+	if roll_screen.has_method("start_relic_roll"):
+		roll_screen.call("start_relic_roll", dice_min, dice_max, _pending_victory_reward_roll, target_band)
+	else:
+		_open_victory_with_pending_roll()
+
+func _on_relic_roll_completed_for_victory(_result: int) -> void:
+	if _relic_roll_screen != null and is_instance_valid(_relic_roll_screen):
+		if _relic_roll_screen.has_method("fade_out_text_only"):
+			await _relic_roll_screen.call("fade_out_text_only")
+	_open_victory_with_pending_roll()
+	if _relic_roll_screen != null and is_instance_valid(_relic_roll_screen) and _relic_roll_screen.has_method("hide_screen"):
+		_relic_roll_screen.call("hide_screen")
+
+func _open_victory_with_pending_roll() -> void:
+	if _victory_ui == null or not is_instance_valid(_victory_ui):
+		return
+	if _victory_ui.has_method("open_victory"):
+		_victory_ui.call("open_victory", _pending_victory_reward_roll)
+	else:
+		_victory_ui.visible = true
 
 # -----------------------------
 # Victory & World Transition

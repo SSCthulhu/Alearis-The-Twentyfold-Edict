@@ -133,7 +133,13 @@ func _band_weight_mult(target_band: int, relic_band: int) -> float:
 
 	return band_adj_mult if adj else band_off_mult
 
-func _pick_weighted_from(list: Array[RelicData], rng: RandomNumberGenerator, avoid_ids: Dictionary, target_band: int) -> RelicData:
+func _pick_weighted_from(
+	list: Array[RelicData],
+	rng: RandomNumberGenerator,
+	avoid_ids: Dictionary,
+	target_band: int,
+	strict_band_lock: bool
+) -> RelicData:
 	if list.is_empty():
 		return null
 
@@ -143,13 +149,15 @@ func _pick_weighted_from(list: Array[RelicData], rng: RandomNumberGenerator, avo
 			continue
 		if avoid_ids.has(r.id):
 			continue
+		if strict_band_lock and int(r.band) != target_band:
+			continue
 		var w: float = maxf(0.0, r.roll_weight)
 		w *= _band_weight_mult(target_band, int(r.band))
 		total += w
 
 	if total <= 0.0:
 		for r2: RelicData in list:
-			if r2 != null and not avoid_ids.has(r2.id):
+			if r2 != null and not avoid_ids.has(r2.id) and (not strict_band_lock or int(r2.band) == target_band):
 				return r2
 		return null
 
@@ -159,6 +167,8 @@ func _pick_weighted_from(list: Array[RelicData], rng: RandomNumberGenerator, avo
 			continue
 		if avoid_ids.has(r3.id):
 			continue
+		if strict_band_lock and int(r3.band) != target_band:
+			continue
 		var w2: float = maxf(0.0, r3.roll_weight)
 		w2 *= _band_weight_mult(target_band, int(r3.band))
 		if roll < w2:
@@ -166,7 +176,7 @@ func _pick_weighted_from(list: Array[RelicData], rng: RandomNumberGenerator, avo
 		roll -= w2
 
 	for r4: RelicData in list:
-		if r4 != null and not avoid_ids.has(r4.id):
+		if r4 != null and not avoid_ids.has(r4.id) and (not strict_band_lock or int(r4.band) == target_band):
 			return r4
 	return null
 
@@ -178,7 +188,8 @@ func roll_choices(
 	owned_ids: Array[StringName],
 	count: int,
 	rare_bonus: float,
-	target_band: int
+	target_band: int,
+	strict_band_lock: bool = false
 ) -> Array[RelicData]:
 	var out: Array[RelicData] = []
 	if count <= 0:
@@ -195,12 +206,12 @@ func roll_choices(
 			var rar: RelicData.Rarity = roll_rarity(rng, rare_bonus)
 
 			var pool: Array[RelicData] = _get_pool_for_rarity(int(rar))
-			chosen = _pick_weighted_from(pool, rng, avoid, target_band)
+			chosen = _pick_weighted_from(pool, rng, avoid, target_band, strict_band_lock)
 
 			# If exhausted, degrade to common
 			if chosen == null and rar != RelicData.Rarity.COMMON:
 				var common_pool: Array[RelicData] = _get_pool_for_rarity(int(RelicData.Rarity.COMMON))
-				chosen = _pick_weighted_from(common_pool, rng, avoid, target_band)
+				chosen = _pick_weighted_from(common_pool, rng, avoid, target_band, strict_band_lock)
 
 			if chosen != null:
 				break

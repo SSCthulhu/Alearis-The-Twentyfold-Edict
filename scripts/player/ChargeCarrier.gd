@@ -177,9 +177,7 @@ func _pickup(charge: AscensionCharge) -> void:
 	if not carried_charge.consumed.is_connected(_on_carried_charge_consumed):
 		carried_charge.consumed.connect(_on_carried_charge_consumed)
 
-	var use_offset: Vector2 = carry_offset
-	if _hold_point != null and is_instance_valid(_hold_point):
-		use_offset = _hold_point.global_position - _player.global_position
+	var use_offset: Vector2 = _get_facing_hold_offset()
 
 	charge.pickup_to(_player, use_offset)
 
@@ -241,10 +239,34 @@ func _physics_process(_delta: float) -> void:
 
 	var n2d: Node2D = carried_charge as Node2D
 	if n2d != null:
-		n2d.global_position = _hold_point.global_position
+		n2d.global_position = _get_facing_hold_world_position()
 
 # ✅ NEW: if the charge is socketed/consumed while carried, clear carry state
 func _on_carried_charge_consumed() -> void:
 	# carried_charge may already be queued_free by the time this runs; treat as not carrying.
 	carried_charge = null
 	carrying_changed.emit(false)
+
+func _get_player_facing_dir() -> int:
+	if _player == null:
+		return 1
+	if _player.has_method("get_facing_direction"):
+		var facing_v: Variant = _player.call("get_facing_direction")
+		var facing_i: int = int(facing_v)
+		return -1 if facing_i < 0 else 1
+	if "facing" in _player:
+		var facing_prop: int = int(_player.get("facing"))
+		return -1 if facing_prop < 0 else 1
+	return 1
+
+func _get_facing_hold_offset() -> Vector2:
+	var base_offset: Vector2 = carry_offset
+	if _hold_point != null and is_instance_valid(_hold_point):
+		base_offset = _hold_point.global_position - _player.global_position
+	var facing: int = _get_player_facing_dir()
+	return Vector2(absf(base_offset.x) * float(facing), base_offset.y)
+
+func _get_facing_hold_world_position() -> Vector2:
+	if _player == null:
+		return Vector2.ZERO
+	return _player.global_position + _get_facing_hold_offset()

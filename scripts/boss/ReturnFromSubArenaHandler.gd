@@ -92,6 +92,11 @@ func _handle_return(player: Node2D, fade_overlay: ColorRect) -> void:
 	# Reset player velocity to prevent "falling" visual
 	if "velocity" in player:
 		player.velocity = Vector2.ZERO
+
+	# Ensure arena camera is active before fade-in completes on return.
+	var floor_controller: Node = get_node_or_null("../FloorProgressionController")
+	if floor_controller != null and floor_controller.has_method("activate_world2_boss_arena_camera"):
+		floor_controller.call("activate_world2_boss_arena_camera")
 	
 	if debug_logs:
 		pass

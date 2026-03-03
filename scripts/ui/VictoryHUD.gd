@@ -16,9 +16,13 @@ signal input_lock_changed(locked: bool)
 
 @export var header_title_boost_px: int = 18
 @export var header_sub_boost_px: int = 8
+@export var world_complete_font_size_px: int = 84
+@export var roll_context_font_size_px: int = 64
+@export var roll_context_y_offset_design: float = -36.0
 
 # How many relic choices BEFORE modifiers
 @export var base_relic_choices: int = 3
+@export var hard_lock_relic_group: bool = true
 
 # Modifier IDs that increase relic choices
 @export var extra_relic_choice_modifier_ids: Array[StringName] = [
@@ -33,6 +37,7 @@ signal input_lock_changed(locked: bool)
 # RunSummary placement (Victory: under relic row)
 @export var summary_gap_y_design: float = 18.0
 @export var summary_width_cap_pct: float = 0.92 # don’t span whole screen width
+@export var victory_layout_y_offset_design: float = -70.0
 
 # Loaded Fate row placement
 @export var loaded_fate_gap_y_design: float = 10.0
@@ -55,6 +60,8 @@ var _rolled_relics: Array[RelicData] = []
 
 # Cached count for this open (after clamping to what actually rolled)
 var _visible_choice_count: int = 0
+var _display_reward_roll: int = -1
+var _display_target_band: int = int(RelicData.Band.CORE)
 
 # -----------------------------
 # Loaded Fate runtime UI (no scene edits)
@@ -74,7 +81,7 @@ func _ready() -> void:
 	_force_full_rect(_overlay)
 	_force_full_rect(_root)
 
-	_overlay.color = Color(0, 0, 0, 0.45)
+	_overlay.color = Color(0, 0, 0, 1.0)
 	_overlay.mouse_filter = Control.MOUSE_FILTER_STOP
 	_root.mouse_filter = Control.MOUSE_FILTER_STOP
 
@@ -119,7 +126,7 @@ func _ready() -> void:
 # -----------------------------
 # Public API
 # -----------------------------
-func open_victory() -> void:
+func open_victory(precomputed_reward_roll: int = -1) -> void:
 	if _is_open:
 		return
 	_is_open = true
@@ -136,13 +143,23 @@ func open_victory() -> void:
 	var desired_count: int = _get_relic_choice_count()
 	_desired_choice_count_cache = desired_count
 
-	# If Loaded Fate is available, let player choose roll first
+	var has_precomputed_roll: bool = false
+	var reward_roll: int = -1
+	if RunStateSingleton != null and precomputed_reward_roll >= int(RunStateSingleton.dice_min) and precomputed_reward_roll <= int(RunStateSingleton.dice_max):
+		has_precomputed_roll = true
+		reward_roll = precomputed_reward_roll
+		# Keep RunState in sync so downstream systems read the same visible roll.
+		RunStateSingleton.last_roll = reward_roll
+
+	# If Loaded Fate is available, let player choose roll first (only when no precomputed roll was passed in).
 	var loaded_fate_available: bool = false
-	if RunStateSingleton != null and RunStateSingleton.has_method("is_loaded_fate_available_this_world"):
+	if not has_precomputed_roll and RunStateSingleton != null and RunStateSingleton.has_method("is_loaded_fate_available_this_world"):
 		loaded_fate_available = bool(RunStateSingleton.call("is_loaded_fate_available_this_world"))
 
 	if loaded_fate_available:
 		_pending_loaded_fate_choice = true
+		_display_reward_roll = -1
+		_subtitle.text = "Choose your relic"
 
 		var mn: int = int(RunStateSingleton.dice_min)
 		var mx: int = int(RunStateSingleton.dice_max)
@@ -178,7 +195,13 @@ func open_victory() -> void:
 		_loaded_fate_row.visible = false
 
 	# ✅ Reward roll used to select relic band for THIS victory screen
-	var reward_roll: int = int(RunStateSingleton.call("get_victory_reward_roll"))
+	if not has_precomputed_roll:
+		reward_roll = int(RunStateSingleton.call("get_victory_reward_roll"))
+	_display_reward_roll = reward_roll
+	if RunStateSingleton != null and RunStateSingleton.has_method("get_target_relic_band_from_roll"):
+		_display_target_band = int(RunStateSingleton.call("get_target_relic_band_from_roll", reward_roll))
+	_subtitle.text = _build_roll_context_text()
+	_apply_text_style()
 	var _forced_reward_roll: int = int(RunStateSingleton.forced_reward_roll) if ("forced_reward_roll" in RunStateSingleton) else -1
 
 	_roll_relic_choices(desired_count, reward_roll)
@@ -265,6 +288,11 @@ func _on_loaded_fate_lock_pressed() -> void:
 
 	var chosen: int = int(_loaded_fate_spin.value)
 	var final_roll: int = int(RunStateSingleton.call("consume_loaded_fate_roll", chosen))
+	_display_reward_roll = final_roll
+	if RunStateSingleton != null and RunStateSingleton.has_method("get_target_relic_band_from_roll"):
+		_display_target_band = int(RunStateSingleton.call("get_target_relic_band_from_roll", final_roll))
+	_subtitle.text = _build_roll_context_text()
+	_apply_text_style()
 
 	_pending_loaded_fate_choice = false
 	if _loaded_fate_row != null:
@@ -362,7 +390,7 @@ func _roll_relic_choices(choice_count: int, reward_roll: int) -> void:
 
 	pass
 
-	_rolled_relics = RelicDatabaseSingleton.roll_choices(rng, owned, choice_count, rare_bonus, target_band)
+	_rolled_relics = RelicDatabaseSingleton.roll_choices(rng, owned, choice_count, rare_bonus, target_band, hard_lock_relic_group)
 
 	if _rolled_relics.is_empty():
 		push_warning("[VictoryUI] Rolled 0 relics. Check RelicDatabaseSingleton.relics is populated and RelicData.is_valid() passes.")
@@ -512,13 +540,23 @@ func _apply_text_style() -> void:
 	var ui_scale: float = style.ui_scale_for_viewport(get_viewport().get_visible_rect().size, design_height)
 
 	_title.add_theme_color_override("font_color", style.gold_accent)
-	var title_px: int = style.font_size_title(ui_scale) + style.si(header_title_boost_px, ui_scale, 0)
+	var title_px: int
+	if _display_reward_roll >= 0:
+		title_px = style.si(float(world_complete_font_size_px), ui_scale, 12)
+	else:
+		title_px = style.font_size_title(ui_scale) + style.si(header_title_boost_px, ui_scale, 0)
 	_title.add_theme_font_size_override("font_size", title_px)
 	if style.font_title != null:
 		_title.add_theme_font_override("font", style.font_title)
 
 	_subtitle.add_theme_color_override("font_color", style.text_dim)
-	var sub_px: int = style.font_size_body(ui_scale) + style.si(header_sub_boost_px, ui_scale, 0)
+	if _display_reward_roll >= 0:
+		_subtitle.add_theme_color_override("font_color", _band_color_for_display(_display_target_band))
+	var sub_px: int
+	if _display_reward_roll >= 0:
+		sub_px = style.si(float(roll_context_font_size_px), ui_scale, 12)
+	else:
+		sub_px = style.font_size_body(ui_scale) + style.si(header_sub_boost_px, ui_scale, 0)
 	_subtitle.add_theme_font_size_override("font_size", sub_px)
 	if style.font_body != null:
 		_subtitle.add_theme_font_override("font", style.font_body)
@@ -583,13 +621,14 @@ func _apply_layout() -> void:
 	var row_w: float = (card_w * float(visible_count)) + (gap_x * float(maxi(0, visible_count - 1)))
 
 	# Cards start Y
-	var top_y: float = ((vp.y - (header_h + card_h)) * 0.5) + header_h
+	var top_y: float = ((vp.y - (header_h + card_h)) * 0.5) + header_h + style.s(victory_layout_y_offset_design, ui_scale)
 	var origin_x: float = (vp.x - row_w) * 0.5
 	var origin_y: float = top_y - header_h
 
 	# Header centered
 	var center_x: float = vp.x * 0.5
-	_title.position = Vector2(center_x - title_size.x * 0.5, origin_y)
+	var roll_context_offset_y: float = style.s(roll_context_y_offset_design, ui_scale) if _display_reward_roll >= 0 else 0.0
+	_title.position = Vector2(center_x - title_size.x * 0.5, origin_y + roll_context_offset_y)
 	_subtitle.position = Vector2(center_x - sub_size.x * 0.5, origin_y + title_size.y + title_gap)
 
 	# Place Loaded Fate row (centered) under subtitle
@@ -626,7 +665,7 @@ func _apply_layout() -> void:
 # Open animation (less jarring)
 # -----------------------------
 func _play_open_anim() -> void:
-	_overlay.modulate.a = 0.0
+	_overlay.modulate.a = 1.0
 	_root.modulate.a = 0.0
 	_root.scale = Vector2(open_scale_from, open_scale_from)
 
@@ -640,8 +679,7 @@ func _play_open_anim() -> void:
 	if open_delay > 0.0:
 		_tween.tween_interval(open_delay)
 
-	_tween.tween_property(_overlay, "modulate:a", 1.0, open_fade_time)
-	_tween.parallel().tween_property(_root, "modulate:a", 1.0, open_fade_time)
+	_tween.tween_property(_root, "modulate:a", 1.0, open_fade_time)
 	_tween.parallel().tween_property(_root, "scale", Vector2(1.0, 1.0), open_fade_time)
 
 # -----------------------------
@@ -655,3 +693,33 @@ func _force_full_rect(c: Control) -> void:
 	c.offset_top = 0
 	c.offset_right = 0
 	c.offset_bottom = 0
+
+func _band_name_for_display(band: int) -> String:
+	match band:
+		int(RelicData.Band.SURVIVAL):
+			return "SURVIVAL"
+		int(RelicData.Band.CORE):
+			return "CORE"
+		_:
+			return "DAMAGE"
+
+func _build_roll_context_text() -> String:
+	if RunStateSingleton == null or _display_reward_roll < 0:
+		return "Choose your relic"
+	var mn: int = int(RunStateSingleton.dice_min)
+	var mx: int = int(RunStateSingleton.dice_max)
+	return "Roll %d  |  Range %d-%d  |  %s" % [
+		_display_reward_roll,
+		mn,
+		mx,
+		_band_name_for_display(_display_target_band)
+	]
+
+func _band_color_for_display(band: int) -> Color:
+	match band:
+		int(RelicData.Band.SURVIVAL):
+			return Color(0.27, 0.88, 0.42, 1.0)
+		int(RelicData.Band.CORE):
+			return style.gold_accent if style != null else Color(0.86, 0.72, 0.33, 1.0)
+		_:
+			return Color(0.92, 0.22, 0.22, 1.0)

@@ -55,6 +55,19 @@ var _home_initialized: bool = false
 @export var attack_min_cycle_time: float = 0.0
 @export var melee_vertical_range: float = 100.0
 
+# Melee telegraph readability (no-hit support)
+@export var enable_melee_telegraph: bool = true
+@export var telegraph_fill_color: Color = Color(0.95, 0.15, 0.15, 0.30)
+@export var telegraph_width_px: float = 170.0
+@export var telegraph_height_px: float = 64.0
+@export var telegraph_forward_bias_px: float = 70.0
+@export var telegraph_y_offset_px: float = -32.0
+@export var telegraph_fade_in_time: float = 0.08
+@export var telegraph_fade_out_time: float = 0.06
+@export var enable_melee_windup_flash: bool = true
+@export var melee_windup_flash_color: Color = Color(1.0, 0.45, 0.45, 1.0)
+@export var melee_windup_flash_time: float = 0.10
+
 # Attack VFX
 @export var enable_attack_vfx: bool = true  # Toggle to enable/disable attack VFX
 @export var attack_vfx_hit_offset_px: float = 20.0  # Offset from hit target along attack direction
@@ -148,6 +161,10 @@ var _anim_locked: bool = false
 var _death_started: bool = false
 
 var _attack_id: int = 0
+var _melee_telegraph: Polygon2D = null
+var _telegraph_tween: Tween = null
+var _flash_tween: Tween = null
+var _view_default_modulate: Color = Color(1, 1, 1, 1)
 
 
 func _apply_scaling_once() -> void:
@@ -198,6 +215,7 @@ func _ready() -> void:
 			view_3d.stage_animation_finished.connect(_on_anim_finished)
 		_play_anim(anim_idle, false)
 		view_3d.set_facing(_facing_dir)
+		_view_default_modulate = view_3d.modulate
 
 	# ✅ Signals (death only here; DamageNumberEmitter handles damaged signals)
 	if health != null:
@@ -206,6 +224,7 @@ func _ready() -> void:
 	
 	# ⚡ OPTIMIZATION: Cache player reference to avoid tree walks every frame
 	_player_cached = get_tree().get_first_node_in_group("player")
+	_setup_melee_telegraph()
 
 func _on_health_damaged_plain(_amount: int) -> void:
 	_refresh_health_bar()
@@ -423,6 +442,7 @@ func _on_anim_finished(anim_name: StringName) -> void:
 
 	if anim_name == anim_attack:
 		_anim_locked = false
+		_hide_melee_telegraph()
 		return
 
 	if anim_name == anim_hit or anim_name == anim_react:
@@ -469,12 +489,23 @@ func _start_death() -> void:
 		hurtbox.set_deferred("monitoring", false)
 		hurtbox.set_deferred("monitorable", false)
 
+	_hide_melee_telegraph()
+	_stop_melee_windup_flash()
+	if _melee_telegraph != null and is_instance_valid(_melee_telegraph):
+		_melee_telegraph.queue_free()
+		_melee_telegraph = null
+
 	_play_anim(anim_dead, true)
 
 	get_tree().create_timer(2.0).timeout.connect(func() -> void:
 		if is_instance_valid(self):
 			queue_free()
 	)
+
+func _exit_tree() -> void:
+	if _melee_telegraph != null and is_instance_valid(_melee_telegraph):
+		_melee_telegraph.queue_free()
+	_melee_telegraph = null
 
 # -----------------------------
 # Existing logic (unchanged)
@@ -764,6 +795,8 @@ func _try_attack() -> void:
 
 	var hit_delay: float = clampf(attack_hit_time, 0.0, maxf(anim_len, 0.01))
 	var spawn_pos: Vector2 = global_position + Vector2(melee_spawn_forward_px * float(dir), 0.0)
+	_show_melee_telegraph(dir, hit_delay)
+	_play_melee_windup_flash(hit_delay)
 
 	# ✅ TIMING DEBUG: Mark attack animation start
 	var _attack_start_time: float = Time.get_ticks_msec() / 1000.0
@@ -771,6 +804,8 @@ func _try_attack() -> void:
 		pass
 
 	get_tree().create_timer(hit_delay).timeout.connect(func() -> void:
+		_hide_melee_telegraph()
+		_stop_melee_windup_flash()
 		if _death_started:
 			return
 		if my_id != _attack_id:
@@ -1052,3 +1087,70 @@ func _on_attack_damage_confirmed(_target_node: Node, hit_position: Vector2, faci
 	var dir: int = -1 if facing < 0 else 1
 	var spawn_position: Vector2 = hit_position + Vector2(attack_vfx_hit_offset_px * float(dir), 0.0)
 	_spawn_attack_vfx(spawn_position, dir)
+
+func _setup_melee_telegraph() -> void:
+	if _melee_telegraph != null and is_instance_valid(_melee_telegraph):
+		return
+	_melee_telegraph = Polygon2D.new()
+	_melee_telegraph.name = "MeleeTelegraph"
+	_melee_telegraph.visible = false
+	_melee_telegraph.z_as_relative = false
+	_melee_telegraph.z_index = 235
+	_melee_telegraph.color = telegraph_fill_color
+	var half_w: float = maxf(telegraph_width_px * 0.5, 8.0)
+	var half_h: float = maxf(telegraph_height_px * 0.5, 8.0)
+	_melee_telegraph.polygon = PackedVector2Array([
+		Vector2(-half_w, -half_h),
+		Vector2(half_w, -half_h),
+		Vector2(half_w, half_h),
+		Vector2(-half_w, half_h)
+	])
+	var scene_root: Node = get_tree().current_scene
+	if scene_root != null:
+		scene_root.add_child(_melee_telegraph)
+
+func _show_melee_telegraph(dir: int, hit_delay: float) -> void:
+	if not enable_melee_telegraph:
+		return
+	if _melee_telegraph == null or not is_instance_valid(_melee_telegraph):
+		_setup_melee_telegraph()
+		if _melee_telegraph == null or not is_instance_valid(_melee_telegraph):
+			return
+	var side: int = -1 if dir < 0 else 1
+	_melee_telegraph.global_position = global_position + Vector2(telegraph_forward_bias_px * float(side), telegraph_y_offset_px)
+	_melee_telegraph.visible = true
+	_melee_telegraph.modulate.a = 0.0
+	if _telegraph_tween != null and _telegraph_tween.is_valid():
+		_telegraph_tween.kill()
+	var fade_in: float = minf(maxf(telegraph_fade_in_time, 0.01), maxf(hit_delay - 0.01, 0.01))
+	_telegraph_tween = create_tween()
+	_telegraph_tween.tween_property(_melee_telegraph, "modulate:a", telegraph_fill_color.a, fade_in)
+
+func _hide_melee_telegraph() -> void:
+	if _melee_telegraph == null or not is_instance_valid(_melee_telegraph):
+		return
+	if _telegraph_tween != null and _telegraph_tween.is_valid():
+		_telegraph_tween.kill()
+	_telegraph_tween = create_tween()
+	_telegraph_tween.tween_property(_melee_telegraph, "modulate:a", 0.0, maxf(telegraph_fade_out_time, 0.01))
+	_telegraph_tween.tween_callback(func() -> void:
+		if _melee_telegraph != null and is_instance_valid(_melee_telegraph):
+			_melee_telegraph.visible = false
+	)
+
+func _play_melee_windup_flash(hit_delay: float) -> void:
+	if not enable_melee_windup_flash:
+		return
+	if view_3d == null:
+		return
+	_stop_melee_windup_flash()
+	var flash_time: float = minf(maxf(melee_windup_flash_time, 0.01), maxf(hit_delay * 0.6, 0.01))
+	_flash_tween = create_tween()
+	_flash_tween.tween_property(view_3d, "modulate", melee_windup_flash_color, flash_time * 0.5)
+	_flash_tween.tween_property(view_3d, "modulate", _view_default_modulate, flash_time * 0.5)
+
+func _stop_melee_windup_flash() -> void:
+	if _flash_tween != null and _flash_tween.is_valid():
+		_flash_tween.kill()
+	if view_3d != null and is_instance_valid(view_3d):
+		view_3d.modulate = _view_default_modulate
