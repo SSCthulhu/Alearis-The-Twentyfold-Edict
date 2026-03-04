@@ -94,7 +94,7 @@ const PORTAL_COLORS = {
 }
 
 func _ready() -> void:
-	_rng.randomize()
+	_seed_rng_for_world2_boss()
 	
 	_boss = get_node_or_null(boss_path)
 	if _boss == null:
@@ -152,6 +152,14 @@ func _ready() -> void:
 	else:
 		if debug_logs:
 			pass
+
+func _seed_rng_for_world2_boss() -> void:
+	if RunStateSingleton != null and RunStateSingleton.has_method("make_rng_for_domain"):
+		var seeded_rng: RandomNumberGenerator = RunStateSingleton.call("make_rng_for_domain", &"boss_encounter_world2", 0) as RandomNumberGenerator
+		if seeded_rng != null:
+			_rng.seed = seeded_rng.seed
+			return
+	_rng.randomize()
 
 func _restore_encounter_state(portal_data: Node) -> void:
 	# Restore encounter from sub-arena return
@@ -291,7 +299,7 @@ func _pick_enemy_spawn_positions(requested_count: int) -> Array[Vector2]:
 	if not _enemy_spawn_nodes.is_empty():
 		var pool: Array[Node2D] = _enemy_spawn_nodes.duplicate()
 		if randomize_enemy_spawn_points:
-			pool.shuffle()
+			_shuffle_node2d_array(pool)
 		var use_count: int = mini(count, pool.size())
 		for i in range(use_count):
 			var n: Node2D = pool[i]
@@ -426,12 +434,12 @@ func _spawn_portals() -> void:
 		return
 	
 	# Shuffle portal colors
-	var colors = ["void", "light", "shadow"]
-	colors.shuffle()
+	var colors: Array[String] = ["void", "light", "shadow"]
+	_shuffle_string_array(colors)
 	
 	# Shuffle spawn positions
-	var positions = portal_positions.duplicate()
-	positions.shuffle()
+	var positions: Array[Vector2] = portal_positions.duplicate()
+	_shuffle_vector2_array(positions)
 	
 	for i in range(3):
 		var portal = portal_scene.instantiate()
@@ -459,6 +467,27 @@ func _spawn_portals() -> void:
 		
 		if debug_logs:
 			pass
+
+func _shuffle_node2d_array(arr: Array[Node2D]) -> void:
+	for i: int in range(arr.size() - 1, 0, -1):
+		var j: int = _rng.randi_range(0, i)
+		var tmp: Node2D = arr[i]
+		arr[i] = arr[j]
+		arr[j] = tmp
+
+func _shuffle_string_array(arr: Array[String]) -> void:
+	for i: int in range(arr.size() - 1, 0, -1):
+		var j: int = _rng.randi_range(0, i)
+		var tmp: String = arr[i]
+		arr[i] = arr[j]
+		arr[j] = tmp
+
+func _shuffle_vector2_array(arr: Array[Vector2]) -> void:
+	for i: int in range(arr.size() - 1, 0, -1):
+		var j: int = _rng.randi_range(0, i)
+		var tmp: Vector2 = arr[i]
+		arr[i] = arr[j]
+		arr[j] = tmp
 
 func _cleanup_portals() -> void:
 	for p in _active_portals:

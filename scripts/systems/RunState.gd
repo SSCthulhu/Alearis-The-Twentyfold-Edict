@@ -111,18 +111,46 @@ func make_rng_for_victory_relic_choices() -> RandomNumberGenerator:
 	return make_rng_for_victory_relic_choices_for_roll(last_roll)
 
 func make_rng_for_victory_relic_choices_for_roll(reward_roll: int) -> RandomNumberGenerator:
-	# Deterministic per-run + per-world + per-floor + roll used for rewards.
-	# (So reopening VictoryUI gives same choices for the same roll.)
-	var rng := RandomNumberGenerator.new()
+	# Deterministic per-run + per-world + per-floor + reward roll.
+	# (So reopening VictoryUI gives the same options for the same roll.)
+	return make_rng_for_domain(&"victory_relic_choices", reward_roll)
 
-	# Mix values to reduce collisions.
-	var s: int = int(run_seed)
-	s = int(s * 1103515245 + 12345)
-	s ^= (world_index * 10007)
-	s ^= (floor_index * 20011)
-	s ^= (reward_roll * 30011)
+func make_rng_for_domain(domain: StringName, extra: int = 0) -> RandomNumberGenerator:
+	# Single deterministic RNG factory for gameplay roll domains.
+	# Domain examples: "modifier_options", "victory_reward_roll", "final_boss_selection".
+	var rng := RandomNumberGenerator.new()
+	var s: int = _compute_domain_seed(domain, extra)
 	rng.seed = s
 	return rng
+
+func roll_for_domain_in_range(domain: StringName, min_value: int, max_value: int, extra: int = 0) -> int:
+	var lo: int = mini(min_value, max_value)
+	var hi: int = maxi(min_value, max_value)
+	lo = clampi(lo, dice_hard_min, dice_hard_max)
+	hi = clampi(hi, dice_hard_min, dice_hard_max)
+	var rng: RandomNumberGenerator = make_rng_for_domain(domain, extra)
+	return rng.randi_range(lo, hi)
+
+func roll_for_domain_in_current_range(domain: StringName, extra: int = 0) -> int:
+	var rng: RandomNumberGenerator = make_rng_for_domain(domain, extra)
+	return roll_in_range(rng)
+
+func _compute_domain_seed(domain: StringName, extra: int = 0) -> int:
+	_clamp_and_fix()
+	var s: int = int(run_seed)
+	s = _mix_seed(s, world_index)
+	s = _mix_seed(s, floor_index)
+	s = _mix_seed(s, dice_min)
+	s = _mix_seed(s, dice_max)
+	s = _mix_seed(s, last_roll)
+	s = _mix_seed(s, int(hash(String(domain))))
+	s = _mix_seed(s, extra)
+	return s
+
+func _mix_seed(base: int, value: int) -> int:
+	var s: int = base
+	s = int(s ^ (value + 0x9E3779B9 + (s << 6) + (s >> 2)))
+	return s
 
 func get_target_relic_band_from_last_roll() -> int:
 	# Backwards-compatible default: uses last_roll.
@@ -149,9 +177,7 @@ func get_victory_reward_roll() -> int:
 		return last_roll
 
 	# Otherwise: deterministic RNG roll in range.
-	var rng: RandomNumberGenerator = make_rng_for_victory_relic_choices_for_roll(last_roll)
-	# NOTE: the seed already depends on last_roll via make_rng_for_victory_relic_choices_for_roll
-	# but we want an actual reward roll in [dice_min, dice_max].
+	var rng: RandomNumberGenerator = make_rng_for_domain(&"victory_reward_roll", last_roll)
 	last_roll = rng.randi_range(dice_min, dice_max)
 	return last_roll
 

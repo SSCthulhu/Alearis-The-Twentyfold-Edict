@@ -38,7 +38,7 @@ var _rng: RandomNumberGenerator = RandomNumberGenerator.new()
 var _spawned_floors: Array[bool] = [false, false, false, false]  # ✅ Track which floors have spawned
 
 func _ready() -> void:
-	_rng.randomize()
+	_seed_rng_for_spawner(0)
 
 	# ✅ Floor 1 always spawns on ready (no modifier chosen yet)
 	if spawn_all_on_ready:
@@ -73,6 +73,7 @@ func spawn_floor(floor_index: int) -> void:
 		return
 	
 	_spawned_floors[floor_index] = true
+	_seed_rng_for_spawner(floor_index + 1)
 	
 	if debug_spawning:
 		pass
@@ -112,7 +113,7 @@ func spawn_floor(floor_index: int) -> void:
 		push_warning("[Spawner] No Marker2D spawn points under: %s" % floor_node.get_path())
 		return
 
-	points.shuffle()
+	_shuffle_markers(points)
 
 	var desired: int = 1
 	if floor_index < enemies_per_floor.size():
@@ -147,7 +148,7 @@ func spawn_floor(floor_index: int) -> void:
 		var available_indices: Array[int] = []
 		for i in range(count_to_spawn):
 			available_indices.append(i)
-		available_indices.shuffle()
+		_shuffle_ints(available_indices)
 		
 		for i in range(elites_to_spawn):
 			golem_indices.append(available_indices[i])
@@ -178,6 +179,28 @@ func spawn_floor(floor_index: int) -> void:
 	var _regular_count: int = count_to_spawn - elites_to_spawn
 	if debug_spawning:
 		pass
+
+func _seed_rng_for_spawner(extra: int) -> void:
+	if RunStateSingleton != null and RunStateSingleton.has_method("make_rng_for_domain"):
+		var seeded_rng: RandomNumberGenerator = RunStateSingleton.call("make_rng_for_domain", &"floor_enemy_spawner", extra) as RandomNumberGenerator
+		if seeded_rng != null:
+			_rng.seed = seeded_rng.seed
+			return
+	_rng.randomize()
+
+func _shuffle_markers(points: Array[Marker2D]) -> void:
+	for i: int in range(points.size() - 1, 0, -1):
+		var j: int = _rng.randi_range(0, i)
+		var tmp: Marker2D = points[i]
+		points[i] = points[j]
+		points[j] = tmp
+
+func _shuffle_ints(values: Array[int]) -> void:
+	for i: int in range(values.size() - 1, 0, -1):
+		var j: int = _rng.randi_range(0, i)
+		var tmp: int = values[i]
+		values[i] = values[j]
+		values[j] = tmp
 
 func _spawn_enemy_now(parent: Node, spawn_pos: Vector2, group_name: StringName, enemy_pool: Array[PackedScene]) -> void:
 	if parent == null or enemy_pool.is_empty():

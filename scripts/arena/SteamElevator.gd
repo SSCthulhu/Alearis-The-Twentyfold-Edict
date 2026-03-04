@@ -325,17 +325,24 @@ func _launch_sequence() -> void:
 				camera.reset_smoothing()
 				if debug_logs:
 					pass
+
+	# Let world controllers switch to arena camera as early as possible while screen is still white.
+	# This gives the arena camera tween enough hidden time to complete before fade-in finishes.
+	teleport_ready_for_fade_in.emit()
 	
-	# Step 3: Wait for camera to FULLY settle (screen still white)
-	await get_tree().create_timer(0.5).timeout
+	# Step 3: Wait for camera to FULLY settle (screen still white).
+	# Prefer world-configured boss camera transition time so fade-in never starts early.
+	var settle_wait: float = 0.5
+	if _floor_controller != null and _floor_controller.has_method("get_world3_boss_camera_hidden_settle_time"):
+		var required_hidden_time: float = float(_floor_controller.call("get_world3_boss_camera_hidden_settle_time"))
+		# Small buffer prevents 1-frame race conditions between tween completion and fade-in.
+		settle_wait = maxf(settle_wait, required_hidden_time + 0.08)
+	await get_tree().create_timer(settle_wait).timeout
 	if debug_logs:
 		pass
 	
 	# Make player visible
 	_set_player_visible(true)
-
-	# Let floor/world controllers switch to arena camera while the screen is still white.
-	teleport_ready_for_fade_in.emit()
 	
 	# Step 4: Fade IN from white
 	if _fade_rect != null:

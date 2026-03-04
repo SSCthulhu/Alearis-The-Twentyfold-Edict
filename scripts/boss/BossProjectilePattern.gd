@@ -84,8 +84,7 @@ func get_spawn_data(origin: Vector2, target_position: Vector2 = Vector2.ZERO) ->
 
 func _generate_horizontal_line(_origin: Vector2) -> Array:
 	var spawns: Array = []
-	var rng: RandomNumberGenerator = RandomNumberGenerator.new()
-	rng.randomize()
+	var rng: RandomNumberGenerator = _make_pattern_rng(11)
 	
 	for i in range(projectile_count):
 		# Randomly fire left or right
@@ -229,9 +228,10 @@ func _generate_cross(_origin: Vector2) -> Array:
 
 func _generate_random_scatter(_origin: Vector2) -> Array:
 	var spawns: Array = []
+	var rng: RandomNumberGenerator = _make_pattern_rng(29)
 	
 	for i in range(projectile_count):
-		var random_angle: float = randf() * TAU
+		var random_angle: float = rng.randf() * TAU
 		var direction: Vector2 = Vector2(cos(random_angle), sin(random_angle))
 		
 		spawns.append({
@@ -241,6 +241,18 @@ func _generate_random_scatter(_origin: Vector2) -> Array:
 		})
 	
 	return spawns
+
+func _make_pattern_rng(extra: int = 0) -> RandomNumberGenerator:
+	var rng: RandomNumberGenerator = RandomNumberGenerator.new()
+	if RunStateSingleton != null and RunStateSingleton.has_method("make_rng_for_domain"):
+		var key: int = int(hash(pattern_name))
+		key = int(key + projectile_count * 31 + int(pattern_type) * 131 + extra)
+		var seeded_rng: RandomNumberGenerator = RunStateSingleton.call("make_rng_for_domain", &"boss_projectile_pattern", key) as RandomNumberGenerator
+		if seeded_rng != null:
+			rng.seed = seeded_rng.seed
+			return rng
+	rng.randomize()
+	return rng
 
 func _generate_custom(_origin: Vector2) -> Array:
 	var spawns: Array = []

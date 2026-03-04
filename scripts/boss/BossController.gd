@@ -271,7 +271,7 @@ func _get_player() -> Node2D:
 # ============================================================
 
 func _init_projectile_attack() -> void:
-	_projectile_rng.randomize()
+	_seed_projectile_rng()
 	_projectile_attack = get_node_or_null(projectile_attack_path)
 	
 	# Only warn if projectile auto-cast is enabled and the path is set but node not found
@@ -279,6 +279,14 @@ func _init_projectile_attack() -> void:
 		push_warning("[Boss] BossProjectileAttack not found at: ", projectile_attack_path)
 	#else:
 		#print("[Boss] BossProjectileAttack found: ", _projectile_attack.name)
+
+func _seed_projectile_rng() -> void:
+	if RunStateSingleton != null and RunStateSingleton.has_method("make_rng_for_domain"):
+		var seeded_rng: RandomNumberGenerator = RunStateSingleton.call("make_rng_for_domain", &"boss_projectile_scheduler", int(hash(boss_name))) as RandomNumberGenerator
+		if seeded_rng != null:
+			_projectile_rng.seed = seeded_rng.seed
+			return
+	_projectile_rng.randomize()
 
 
 func _init_projectile_scheduler() -> void:

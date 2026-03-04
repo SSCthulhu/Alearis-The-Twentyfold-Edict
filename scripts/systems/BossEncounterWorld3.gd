@@ -52,6 +52,7 @@ var _steam_elevator: Node2D = null
 var _charge_spawn: Node2D = null
 var _relic_roll_screen: Node = null
 var _pending_victory_reward_roll: int = -1
+var _pending_final_boss_roll: int = -1
 
 var _dps_timer: float = 0.0
 var _forge_timer: float = 0.0
@@ -60,6 +61,7 @@ var _ended: bool = false
 var _encounter_active: bool = false
 var _is_forging: bool = false
 var _player_on_elevator: bool = false
+var _final_dice_transition_started: bool = false
 
 func _ready() -> void:
 	# CRITICAL: Set world_index to 3 when World3 loads
@@ -395,6 +397,7 @@ func _on_boss_died() -> void:
 	
 	_ended = true
 	_encounter_active = false
+	_final_dice_transition_started = false
 	
 	if debug_logs:
 		pass
@@ -471,72 +474,53 @@ func _open_victory_with_pending_roll() -> void:
 func _on_victory_proceed() -> void:
 	if not is_inside_tree():
 		return
+	if _final_dice_transition_started:
+		return
 	
 	if debug_logs:
 		pass
 	
-	# Start the dice roll sequence
+	# Fallback path (if proceed arrives before relic_chosen for any reason).
+	_final_dice_transition_started = true
+	if _fade_rect != null:
+		_fade_rect.visible = true
+		_fade_rect.color = Color(0, 0, 0, 1.0)
 	call_deferred("_start_dice_roll_sequence")
 
 func _start_dice_roll_sequence() -> void:
-	"""Fade to black → Dice roll → Show result → Fade out → Load next scene"""
+	"""Start final boss dice roll cinematic (handled inside DiceRollScreen)."""
 	
 	if debug_logs:
 		pass
 	
-	# Step 1: Fade to black (1 second)
-	if _fade_rect != null:
-		_fade_rect.visible = true
-		_fade_rect.color = Color(0, 0, 0, 0)
-		var tween_out := create_tween()
-		tween_out.set_pause_mode(Tween.TWEEN_PAUSE_PROCESS)
-		tween_out.tween_property(_fade_rect, "color:a", 1.0, 1.0)
-		await tween_out.finished
-		if debug_logs:
-			pass
-	else:
-		await get_tree().create_timer(1.0).timeout
-	
-	# Step 2: While screen is BLACK, show dice roll screen (but don't start roll yet)
 	if _dice_roll_screen != null:
-		# Get dice range from RunStateSingleton
 		var dice_min: int = 1
 		var dice_max: int = 20
 		
 		if RunStateSingleton != null:
 			dice_min = int(RunStateSingleton.dice_min)
 			dice_max = int(RunStateSingleton.dice_max)
+			if RunStateSingleton.has_method("roll_for_domain_in_range"):
+				_pending_final_boss_roll = int(RunStateSingleton.call("roll_for_domain_in_range", &"final_boss_selection", dice_min, dice_max, 0))
+			else:
+				_pending_final_boss_roll = randi_range(dice_min, dice_max)
+		else:
+			_pending_final_boss_roll = randi_range(dice_min, dice_max)
 		
-		# Make dice screen visible and show the range
 		_dice_roll_screen.visible = true
 		if _dice_roll_screen.has_method("prepare_roll"):
 			_dice_roll_screen.prepare_roll(dice_min, dice_max)
 		
-		# Wait a frame for dice screen to be ready
-		await get_tree().process_frame
-		
-		# Step 3: Fade from black to reveal dice screen (0.5 seconds)
-		if _fade_rect != null:
-			var tween_in := create_tween()
-			tween_in.set_pause_mode(Tween.TWEEN_PAUSE_PROCESS)
-			tween_in.tween_property(_fade_rect, "color:a", 0.0, 0.5)
-			await tween_in.finished
-			_fade_rect.visible = false
-			if debug_logs:
-				pass
-		
-		# Step 4: Wait 3 seconds before starting the roll
-		if debug_logs:
-			pass
-		await get_tree().create_timer(3.0).timeout
-		
-		# Step 5: Now start the roll animation
 		if _dice_roll_screen.has_method("start_roll"):
 			if debug_logs:
 				pass
-			_dice_roll_screen.start_roll(dice_min, dice_max)
+			_dice_roll_screen.start_roll(dice_min, dice_max, true, _pending_final_boss_roll)
+			# DiceRollScreen now owns the transition black overlay.
+			await get_tree().process_frame
+			if _fade_rect != null:
+				_fade_rect.visible = false
 		
-		# Animation continues in DiceRollScreen, will emit roll_completed when done
+		# Animation continues in DiceRollScreen, will emit roll_completed when done.
 	else:
 		push_error("[BossEncounterWorld3] DiceRollScreen not available!")
 
@@ -548,6 +532,7 @@ func _on_dice_roll_completed(result: int) -> void:
 	# Store result in transition data for FinalWorld to use
 	if FinalBossTransitionData != null:
 		FinalBossTransitionData.set_boss_selection(result)
+		_pending_final_boss_roll = -1
 		if debug_logs:
 			pass
 	else:
@@ -579,6 +564,14 @@ func _on_dice_roll_completed(result: int) -> void:
 		pass
 
 func _on_relic_chosen(_index: int) -> void:
+	if _final_dice_transition_started:
+		return
+	# Start final transition before VictoryUI closes so world does not flash.
+	_final_dice_transition_started = true
+	if _fade_rect != null:
+		_fade_rect.visible = true
+		_fade_rect.color = Color(0, 0, 0, 1.0)
+	call_deferred("_start_dice_roll_sequence")
 	if debug_logs:
 		pass
 

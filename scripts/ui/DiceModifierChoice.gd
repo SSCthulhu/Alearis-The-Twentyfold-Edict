@@ -72,8 +72,6 @@ const GREED_PLUS2 := [
 ]
 
 func _ready() -> void:
-	_rng.randomize()
-
 	for c in [_card_a, _card_b, _card_c, _card_d, _card_e]:
 		if c != null:
 			c.disabled = false
@@ -180,6 +178,7 @@ func open_from_chest(floor_number: int, chest: Node) -> void:
 	_source_chest = chest
 
 	_is_open = true
+	_seed_modifier_rng()
 	_generate_options()
 	_refresh_ui()
 	_refresh_active_mods()
@@ -191,6 +190,14 @@ func open_from_chest(floor_number: int, chest: Node) -> void:
 
 	if pause_game:
 		get_tree().paused = true
+
+func _seed_modifier_rng() -> void:
+	if RunStateSingleton != null and RunStateSingleton.has_method("make_rng_for_domain"):
+		var seeded_rng: RandomNumberGenerator = RunStateSingleton.call("make_rng_for_domain", &"modifier_options", _pending_floor) as RandomNumberGenerator
+		if seeded_rng != null:
+			_rng.seed = seeded_rng.seed
+			return
+	_rng.randomize()
 
 func close() -> void:
 	visible = false

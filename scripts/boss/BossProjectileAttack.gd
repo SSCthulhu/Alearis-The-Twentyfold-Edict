@@ -24,6 +24,7 @@ var _boss: Node2D = null
 var _spawn_point: Node2D = null
 var _boss_visual: Node = null
 var _attack_in_progress: bool = false
+var _rng: RandomNumberGenerator = RandomNumberGenerator.new()
 
 func _ready() -> void:
 	_boss = get_node_or_null(boss_path) as Node2D
@@ -40,6 +41,16 @@ func _ready() -> void:
 	_boss_visual = get_node_or_null(boss_visual_path)
 	if _boss_visual == null and play_animation_on_attack:
 		push_warning("[BossProjectileAttack] Boss visual not found for animations")
+	
+	_seed_rng_for_projectile_attack()
+
+func _seed_rng_for_projectile_attack() -> void:
+	if RunStateSingleton != null and RunStateSingleton.has_method("make_rng_for_domain"):
+		var seeded_rng: RandomNumberGenerator = RunStateSingleton.call("make_rng_for_domain", &"boss_projectile_attack", int(hash(String(get_path())))) as RandomNumberGenerator
+		if seeded_rng != null:
+			_rng.seed = seeded_rng.seed
+			return
+	_rng.randomize()
 
 ## Execute a projectile attack by pattern index
 func execute_attack(pattern_index: int, animation_name: String = "") -> bool:
@@ -74,7 +85,7 @@ func execute_random_attack(animation_name: String = "") -> bool:
 	if attack_patterns.size() == 0:
 		return false
 	
-	var random_index: int = randi() % attack_patterns.size()
+	var random_index: int = _rng.randi_range(0, attack_patterns.size() - 1)
 	return execute_attack(random_index, animation_name)
 
 func _execute_pattern(pattern: BossProjectilePattern, animation_name: String) -> void:
@@ -182,7 +193,7 @@ func _spawn_projectile(direction: Vector2, offset: Vector2, speed: float, damage
 	
 	# Add random scatter perpendicular to direction (creates "lane" scatter)
 	var perpendicular: Vector2 = Vector2(-direction.y, direction.x)  # 90 degree rotation
-	var scatter_amount: float = randf_range(-80.0, 80.0)  # Random offset within lane
+	var scatter_amount: float = _rng.randf_range(-80.0, 80.0)  # Random offset within lane
 	var scatter_offset: Vector2 = perpendicular * scatter_amount
 	
 	projectile.global_position = spawn_pos + offset + scatter_offset

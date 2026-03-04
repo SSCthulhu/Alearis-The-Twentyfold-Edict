@@ -19,6 +19,7 @@
 size = Vector2(185.4844, 362)
 
 [node name="Boss" type="StaticBody2D" groups=["boss"]]
+position = Vector2(0, -182)
 script = ExtResource("1_oajd1")
 max_hp = 1000
 visual_path = NodePath("Clanker3DView")
@@ -34,6 +35,7 @@ require_group = &""
 shape = SubResource("RectangleShape2D_gvkpj")
 
 [node name="Clanker3DView" parent="." instance=ExtResource("3_o7q3i")]
+scale = Vector2(2, 2)
 
 [node name="BossHealth" type="Node" parent="."]
 script = ExtResource("4_ngg4g")

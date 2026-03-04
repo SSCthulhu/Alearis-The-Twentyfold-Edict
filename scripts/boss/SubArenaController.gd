@@ -33,8 +33,6 @@ var _orb_spawned: bool = false  # Prevent duplicate orb spawns
 var _rng: RandomNumberGenerator = RandomNumberGenerator.new()
 
 func _ready() -> void:
-	_rng.randomize()
-	
 	# Wait a frame for scene to fully load
 	await get_tree().process_frame
 	
@@ -68,6 +66,7 @@ func _ready() -> void:
 	_source_scene_path = portal_data.source_scene_path
 	_boss_phase_saved = portal_data.boss_phase
 	_boss_hp_saved = portal_data.boss_hp
+	_seed_rng_for_sub_arena()
 	
 	# Restore player HP immediately
 	var player_health = _player.get_node_or_null("Health")
@@ -143,6 +142,17 @@ func _ready() -> void:
 		_start_correct_portal_sequence()
 	else:
 		_start_wrong_portal_sequence()
+
+func _seed_rng_for_sub_arena() -> void:
+	if RunStateSingleton != null and RunStateSingleton.has_method("make_rng_for_domain"):
+		var extra: int = int(hash(_source_scene_path))
+		if _is_correct_portal:
+			extra += 1
+		var seeded_rng: RandomNumberGenerator = RunStateSingleton.call("make_rng_for_domain", &"sub_arena_controller", extra) as RandomNumberGenerator
+		if seeded_rng != null:
+			_rng.seed = seeded_rng.seed
+			return
+	_rng.randomize()
 
 func _start_correct_portal_sequence() -> void:
 	if debug_logs:

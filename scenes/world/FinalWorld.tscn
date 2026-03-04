@@ -5,7 +5,7 @@
 [ext_resource type="PackedScene" uid="uid://ccrejlifa6gwm" path="res://scenes/enemies/EnemyKnightAdd.tscn" id="3_okjlb"]
 [ext_resource type="PackedScene" uid="uid://deotiruix5irf" path="res://scenes/enemies/EnemySkeletonGolem.tscn" id="4_icygt"]
 [ext_resource type="PackedScene" uid="uid://c1757dykl7ner" path="res://scenes/arena/FinalArena.tscn" id="5_ismk3"]
-[ext_resource type="Script" path="res://scripts/systems/FinalWorldController.gd" id="6_fwctl"]
+[ext_resource type="Script" uid="uid://e57jmjmemfvx" path="res://scripts/systems/FinalWorldController.gd" id="6_fwctl"]
 [ext_resource type="PackedScene" uid="uid://cg8vl5nh3k2fy" path="res://scenes/ui/FinalVictoryScreen.tscn" id="7_fvs"]
 [ext_resource type="PackedScene" uid="uid://c72m65e63bs0o" path="res://scenes/player/player.tscn" id="17_omg0h"]
 [ext_resource type="PackedScene" uid="uid://ojpp3p46grti" path="res://scenes/arena/AscensionSocket.tscn" id="19_bwtbh"]
@@ -16,13 +16,11 @@
 
 [node name="FinalWorldController" type="Node" parent="."]
 script = ExtResource("6_fwctl")
-fade_rect_path = NodePath("../UI/ScreenRoot/HUDRoot/FinalWorldFade")
-victory_screen_path = NodePath("../FinalVictoryScreen")
-debug_logs = true
+boss_spawn_position = Vector2(4, 800)
+final_boss_camera_bottom = 2000.0
 final_boss_camera_live_tuning = true
 final_boss_camera_use_manual_center = true
-final_boss_camera_center = Vector2(0, 700)
-final_boss_camera_min_zoom = 0.65
+final_boss_camera_min_zoom = 0.7
 
 [node name="EncounterController" type="Node" parent="."]
 script = ExtResource("1_n01b3")
@@ -46,8 +44,11 @@ position = Vector2(-11.56, 51.15)
 [node name="CollisionShape2D" parent="Player/InteractArea" index="0"]
 position = Vector2(11.555, -51.155)
 
-[node name="Camera2D" parent="Player" index="9"]
+[node name="Camera2D" parent="Player" index="10"]
 limit_top = -4500
+
+[node name="PlayerCameraController" parent="Player" index="30"]
+floor_progression_path = NodePath("")
 
 [node name="BossArenaCamera" type="Camera2D" parent="."]
 position = Vector2(0, 700)
@@ -56,10 +57,6 @@ limit_left = -2200
 limit_top = -1200
 limit_right = 2200
 limit_bottom = 2200
-
-[node name="PlayerCameraController" parent="Player" index="29"]
-floor_progression_path = NodePath("")
-
 
 [node name="AcensionCharge" parent="." instance=ExtResource("2_rjvsk")]
 position = Vector2(1259, 1285)
@@ -80,6 +77,10 @@ scale = Vector2(1, 1)
 [node name="UI" parent="." instance=ExtResource("21_7bneo")]
 
 [node name="PlayerHUDCluster" parent="UI/ScreenRoot/HUDRoot/BottomRight" index="0"]
+offset_left = -414.8
+offset_top = -175.375
+offset_right = -16.775
+offset_bottom = -16.775
 style = ExtResource("22_bjoim")
 
 [node name="PlayerHUDWiring" parent="UI/ScreenRoot/HUDRoot" index="4"]
@@ -90,10 +91,19 @@ combat_path = NodePath("../../../../Player/Combat")
 floor_controller_path = NodePath("")
 boss_path = NodePath("../../../../Boss")
 
-[node name="FinalWorldFade" type="ColorRect" parent="UI/ScreenRoot/HUDRoot"]
+[node name="LowHealthPostFX" parent="UI/ScreenRoot/HUDRoot/PlayerDamageFeedback" index="0"]
+layout_mode = 3
+
+[node name="LowHealthBorder" parent="UI/ScreenRoot/HUDRoot/PlayerDamageFeedback" index="1"]
+layout_mode = 3
+
+[node name="HitFlash" parent="UI/ScreenRoot/HUDRoot/PlayerDamageFeedback" index="2"]
+layout_mode = 3
+
+[node name="FinalWorldFade" type="ColorRect" parent="UI/ScreenRoot/HUDRoot" index="7"]
 visible = false
 z_index = 1000
-anchors_preset = 15
+layout_mode = 0
 anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
@@ -103,7 +113,6 @@ color = Color(0, 0, 0, 1)
 
 [editable path="Player"]
 [editable path="Player/Visual/Body3DView"]
-[editable path="Boss"]
 [editable path="AcensionCharge"]
 [editable path="AscensionSocket/AscensionSocketA"]
 [editable path="AscensionSocket/AscensionSocketB"]

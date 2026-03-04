@@ -1104,8 +1104,9 @@ func _update_world3_boss_camera_live_tuning() -> void:
 		return
 	if not world3_boss_camera_live_tuning:
 		return
-	var in_boss_zone: bool = (_player != null and _player.global_position.x >= boss_start_x)
-	if not _world3_boss_camera_activated and not in_boss_zone:
+	# World3 should not steal camera from cave/approach flow.
+	# Only apply live tuning after explicit SteamElevator-driven activation.
+	if not _world3_boss_camera_activated:
 		return
 	if _world3_boss_camera_ref == null or not is_instance_valid(_world3_boss_camera_ref):
 		_world3_boss_camera_ref = get_node_or_null(world3_boss_arena_camera_path) as Camera2D
@@ -1776,6 +1777,11 @@ func activate_world2_boss_arena_camera() -> void:
 
 func activate_world3_boss_arena_camera() -> void:
 	_activate_world3_boss_arena_camera()
+
+func get_world3_boss_camera_hidden_settle_time() -> float:
+	if not enable_world3_boss_arena_camera:
+		return 0.0
+	return maxf(world3_boss_camera_transition_time, 0.0)
 
 func _on_steam_elevator_pre_fade_in() -> void:
 	"""Called while SteamElevator screen is still white, right before fade-in."""

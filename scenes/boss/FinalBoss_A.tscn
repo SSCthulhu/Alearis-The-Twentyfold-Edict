@@ -34,6 +34,7 @@ require_group = &""
 shape = SubResource("RectangleShape2D_gvkpj")
 
 [node name="Clanker3DView" parent="." instance=ExtResource("3_3m355")]
+scale = Vector2(2, 2)
 
 [node name="BossHealth" type="Node" parent="."]
 script = ExtResource("4_xtuhs")

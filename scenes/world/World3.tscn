@@ -734,7 +734,7 @@ shape = SubResource("RectangleShape2D_f8odf")
 debug_logs = false
 
 [node name="ChargeSpawn" type="Marker2D" parent="Arena"]
-position = Vector2(26228, -5056)
+position = Vector2(26756, -4614)
 
 [node name="BossEncounterWorld3" type="Node" parent="."]
 script = ExtResource("18_ctfyx")
@@ -781,9 +781,13 @@ orb_finish_y_padding = 1200.0
 orb_autopilot_speed = 1200.0
 orb_autopilot_arc_height = 1200.0
 enable_world3_boss_arena_camera = true
+world3_boss_camera_left = 25000.0
+world3_boss_camera_right = 29800.0
+world3_boss_camera_bottom = -4600.0
 world3_boss_camera_live_tuning = true
 world3_boss_camera_use_manual_center = true
-world3_boss_camera_min_zoom = 0.6
+world3_boss_camera_center = Vector2(26974, -4850)
+world3_boss_camera_min_zoom = 0.7
 unlock_floor_1_platforms = Array[NodePath]([NodePath(""), NodePath("")])
 unlock_floor_2_platforms = Array[NodePath]([NodePath("")])
 unlock_floor_3_platforms = Array[NodePath]([NodePath("")])
@@ -836,16 +840,13 @@ limit_right = 29200
 limit_bottom = -3300
 
 [node name="Boss" parent="." instance=ExtResource("26_rr44v")]
-position = Vector2(26974, -4860)
+position = Vector2(26998, -5031)
 
 [node name="CollisionShape2D" parent="Boss/Hurtbox" index="0"]
-position = Vector2(0, 85)
-
-[node name="Clanker3DView" parent="Boss" index="1"]
-scale = Vector2(1.25, 1.25)
+position = Vector2(-0.5, 168)
 
 [node name="AscensionSocket" type="Node2D" parent="."]
-position = Vector2(25497, -4639)
+position = Vector2(26176, -4669)
 
 [node name="AscensionSocketA" parent="AscensionSocket" instance=ExtResource("27_xpg0q")]
 scale = Vector2(1, 1)
@@ -854,10 +855,10 @@ debug_socket = true
 [node name="UI" parent="." instance=ExtResource("29_x3lom")]
 
 [node name="PlayerHUDCluster" parent="UI/ScreenRoot/HUDRoot/BottomRight" index="0"]
-offset_left = -414.8
-offset_top = -175.375
-offset_right = -16.775
-offset_bottom = -16.775
+offset_left = -684.5333
+offset_top = -289.41666
+offset_right = -27.683332
+offset_bottom = -27.683332
 style = ExtResource("30_pghea")
 
 [node name="PlayerHUDWiring" parent="UI/ScreenRoot/HUDRoot" index="4"]

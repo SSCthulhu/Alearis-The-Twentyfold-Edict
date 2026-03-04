@@ -101,7 +101,7 @@ func _ready() -> void:
 	set_process(false)
 
 	add_to_group("encounter")
-	_rng.randomize()
+	_seed_rng_for_encounter()
 
 	# Victory UI hookup
 	_victory_ui = get_node_or_null(victory_ui_path)
@@ -157,6 +157,14 @@ func _ready() -> void:
 
 	if start_on_ready:
 		call_deferred("_begin_encounter")
+
+func _seed_rng_for_encounter() -> void:
+	if RunStateSingleton != null and RunStateSingleton.has_method("make_rng_for_domain"):
+		var seeded_rng: RandomNumberGenerator = RunStateSingleton.call("make_rng_for_domain", &"encounter_controller", 0) as RandomNumberGenerator
+		if seeded_rng != null:
+			_rng.seed = seeded_rng.seed
+			return
+	_rng.randomize()
 
 
 func _on_tree_exiting() -> void:

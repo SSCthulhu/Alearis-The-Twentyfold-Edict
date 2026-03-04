@@ -289,7 +289,7 @@ tile_set = SubResource("TileSet_awieb")
 
 [node name="Cloud3" type="Node2D" parent="Arena"]
 modulate = Color(1, 1, 1, 0.7254902)
-position = Vector2(-28, -21672)
+position = Vector2(-113.99999, -21844)
 scale = Vector2(0.7, 0.7)
 
 [node name="TileMapLayer3" type="TileMapLayer" parent="Arena/Cloud3"]
@@ -392,8 +392,15 @@ limit_right = 1536
 limit_bottom = -18000
 
 [node name="Boss" parent="." instance=ExtResource("13_ys2ak")]
-position = Vector2(0, -21246)
+position = Vector2(0, -21467)
 collision_mask = 3
+
+[node name="Hurtbox" parent="Boss" index="0"]
+position = Vector2(-2, 35)
+
+[node name="CollisionShape2D" parent="Boss/Hurtbox" index="0"]
+position = Vector2(-10, 61)
+scale = Vector2(1.2593155, 1.1105946)
 
 [node name="AscensionSocket" type="Node2D" parent="."]
 
@@ -405,10 +412,10 @@ debug_socket = true
 [node name="UI" parent="." instance=ExtResource("16_devdu")]
 
 [node name="PlayerHUDCluster" parent="UI/ScreenRoot/HUDRoot/BottomRight" index="0"]
-offset_left = -414.8
-offset_top = -175.375
-offset_right = -16.775
-offset_bottom = -16.775
+offset_left = -684.5333
+offset_top = -289.41666
+offset_right = -27.683332
+offset_bottom = -27.683332
 style = ExtResource("17_o5lv8")
 
 [node name="PlayerHUDWiring" parent="UI/ScreenRoot/HUDRoot" index="4"]

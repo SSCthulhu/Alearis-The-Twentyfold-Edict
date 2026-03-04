@@ -1290,7 +1290,7 @@ scale = Vector2(4, 20)
 texture = ExtResource("11_82dmi")
 
 [node name="ForgePlatform" type="Node2D" parent="Geometry"]
-position = Vector2(28052, -4618)
+position = Vector2(27681, -4610)
 script = ExtResource("8_apxbq")
 forge_mode = true
 
