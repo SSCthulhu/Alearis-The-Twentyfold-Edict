@@ -1,0 +1,20 @@
+[gd_resource type="Resource" script_class="DiceMeterEventData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/systems/DiceMeterEventData.gd" id="1_event"]
+
+[resource]
+script = ExtResource("1_event")
+id = &"dm_danger_void_spike_rain"
+display_name = "Void Spike Rain"
+brief_text = "+12% Enemy Damage, 3x Arena Spike Bursts (5s)"
+description = "Briefly rains telegraphed void spikes around the arena."
+min_roll = 2
+max_roll = 3
+band = 0
+effect_id = &"spawn_void_spike_rain"
+duration_seconds = 5.0
+effect_params = {
+"burst_count": 6,
+"radius": 450.0
+}
+weight = 1.0

@@ -1,0 +1,21 @@
+[gd_resource type="Resource" script_class="DiceMeterEventData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/systems/DiceMeterEventData.gd" id="1_event"]
+
+[resource]
+script = ExtResource("1_event")
+id = &"dm_strong_orb_resonance"
+display_name = "Orb Resonance"
+brief_text = "+20% Player Damage, -18% Cooldowns, -8% Enemy Damage (8s)"
+description = "A high-roll surge: strong burst window and control."
+min_roll = 17
+max_roll = 19
+band = 4
+effect_id = &"apply_orb_resonance"
+duration_seconds = 8.0
+effect_params = {
+"player_damage_mult": 1.20,
+"cooldown_mult": 0.82,
+"enemy_damage_mult": 0.92
+}
+weight = 1.0

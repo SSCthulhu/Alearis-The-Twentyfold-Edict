@@ -22,6 +22,12 @@ var _health: PlayerHealth = null
 var _was_invuln: bool = false
 var _invuln_start_time: float = -1.0 # < 0 means "haven't started / not currently tracking"
 
+func _get_dice_meter_singleton() -> Node:
+	var tree: SceneTree = get_tree()
+	if tree == null:
+		return null
+	return tree.root.get_node_or_null("DiceMeterSingleton")
+
 func _ready() -> void:
 	process_mode = Node.PROCESS_MODE_INHERIT
 
@@ -114,6 +120,10 @@ func _on_damage_blocked(attempted_damage: int, source: Node) -> void:
 
 	if debug_prints:
 		pass
+
+	var dice_meter: Node = _get_dice_meter_singleton()
+	if dice_meter != null and dice_meter.has_method("on_perfect_dodge"):
+		dice_meter.call("on_perfect_dodge")
 
 	perfect_dodge.emit(source, attempted_damage)
 	

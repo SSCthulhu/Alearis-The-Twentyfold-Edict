@@ -14,6 +14,8 @@ var _hit_targets: Dictionary = {}
 func initialize(direction: Vector2, damage: int) -> void:
 	_direction = direction.normalized()
 	_damage = damage
+	if RunStateSingleton != null and ("enemy_damage_mult" in RunStateSingleton):
+		_damage = maxi(1, int(round(float(_damage) * float(RunStateSingleton.enemy_damage_mult))))
 	
 	# Optionally rotate to face direction
 	if rotate_to_direction:

@@ -1,0 +1,21 @@
+[gd_resource type="Resource" script_class="DiceMeterEventData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/systems/DiceMeterEventData.gd" id="1_event"]
+
+[resource]
+script = ExtResource("1_event")
+id = &"dm_miracle_royal_decree"
+display_name = "Royal Decree"
+brief_text = "Highest-HP Enemy takes 6% Max HP per sec (7s)"
+description = "A sentence is passed. The strongest foe is executed over time."
+min_roll = 20
+max_roll = 20
+band = 5
+effect_id = &"apply_royal_decree"
+duration_seconds = 7.0
+effect_params = {
+"tick_interval": 1.0,
+"tick_percent": 0.06,
+"tick_flat": 8
+}
+weight = 0.8

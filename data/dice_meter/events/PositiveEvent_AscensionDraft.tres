@@ -1,0 +1,24 @@
+[gd_resource type="Resource" script_class="DiceMeterEventData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/systems/DiceMeterEventData.gd" id="1_event"]
+
+[resource]
+script = ExtResource("1_event")
+id = &"dm_positive_ascension_draft"
+display_name = "Ascension Draft"
+brief_text = "+25% Damage, -20% Cooldowns, Enemies -15% Move, +10% Shield (6s)"
+description = "A favorable current lifts your offense and suppresses pressure."
+min_roll = 12
+max_roll = 15
+band = 3
+effect_id = &"apply_ascension_draft"
+duration_seconds = 6.0
+effect_params = {
+"player_damage_mult": 1.25,
+"cooldown_mult": 0.80,
+"slow_mult": 0.85,
+"shield_percent": 0.10,
+"shield_duration": 5.0,
+"shield_cap_percent": 0.20
+}
+weight = 1.0

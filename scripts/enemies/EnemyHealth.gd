@@ -25,6 +25,20 @@ var hp: int = 0
 var _player_cached: Node = null
 var _visual_node_cached: Node2D = null
 
+func _get_dice_meter_singleton() -> Node:
+	var tree: SceneTree = get_tree()
+	if tree == null:
+		return null
+	return tree.root.get_node_or_null("DiceMeterSingleton")
+
+func _is_debug_enemy_death_locked() -> bool:
+	var dice_meter: Node = _get_dice_meter_singleton()
+	if dice_meter == null:
+		return false
+	if not dice_meter.has_method("is_debug_enemy_death_locked"):
+		return false
+	return bool(dice_meter.call("is_debug_enemy_death_locked"))
+
 func _ready() -> void:
 	hp = max_hp
 	
@@ -83,6 +97,14 @@ func take_damage(amount: int, _source: Node = null, tag: StringName = &"", is_cr
 		damaged.emit(amount)
 
 	if hp <= 0:
+		if _is_debug_enemy_death_locked():
+			hp = 1
+			return
+		var dice_meter: Node = _get_dice_meter_singleton()
+		if dice_meter != null and dice_meter.has_method("on_enemy_killed"):
+			var enemy: Node = get_parent()
+			var is_elite: bool = enemy != null and enemy.is_in_group(&"elites")
+			dice_meter.call("on_enemy_killed", is_elite)
 		# print("[EnemyHealth] died emit. amount=", amount, " final_hp=", hp)  # ✅ Disabled for clean logs
 		died.emit()
 

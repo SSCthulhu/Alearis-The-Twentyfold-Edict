@@ -1,0 +1,20 @@
+[gd_resource type="Resource" script_class="DiceMeterEventData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/systems/DiceMeterEventData.gd" id="1_event"]
+
+[resource]
+script = ExtResource("1_event")
+id = &"dm_chaos_cursed_crosswind"
+display_name = "Cursed Crosswind"
+brief_text = "-8% Player Damage, +10% Cooldowns (6s)"
+description = "A brief crosswind distorts movement and projectile lanes."
+min_roll = 4
+max_roll = 8
+band = 1
+effect_id = &"apply_crosswind_pressure"
+duration_seconds = 6.0
+effect_params = {
+"move_drag_mult": 0.82,
+"projectile_drift": 65.0
+}
+weight = 1.0

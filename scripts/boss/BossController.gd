@@ -64,6 +64,20 @@ var _flash_timer: float = 0.0
 var _combat_paused: bool = false
 var _dead: bool = false
 
+func _get_dice_meter_singleton() -> Node:
+	var tree: SceneTree = get_tree()
+	if tree == null:
+		return null
+	return tree.root.get_node_or_null("DiceMeterSingleton")
+
+func _is_debug_enemy_death_locked() -> bool:
+	var dice_meter: Node = _get_dice_meter_singleton()
+	if dice_meter == null:
+		return false
+	if not dice_meter.has_method("is_debug_enemy_death_locked"):
+		return false
+	return bool(dice_meter.call("is_debug_enemy_death_locked"))
+
 
 func _ready() -> void:
 	add_to_group(&"boss")
@@ -197,7 +211,12 @@ func take_damage(amount: int, _source: Node = null, tag: StringName = &"", is_cr
 		pass
 	
 	hp = maxi(hp - amount, 0)
+	if hp <= 0 and _is_debug_enemy_death_locked():
+		hp = 1
 	#print("[Boss] took ", amount, " dmg. HP now=", hp)
+	var dice_meter: Node = _get_dice_meter_singleton()
+	if dice_meter != null and dice_meter.has_method("on_boss_damage"):
+		dice_meter.call("on_boss_damage", float(amount))
 
 	health_changed.emit(hp, max_hp)
 	_flash_hit()

@@ -389,7 +389,18 @@ func _on_charge_socketed(_charge: AscensionCharge) -> void:
 	
 	# Clear reference - socket will consume the charge
 	_active_charge = null
+	_notify_orb_socketed_relics()
 	_set_phase(Phase.DPS)
+
+func _notify_orb_socketed_relics() -> void:
+	var player: Node = get_tree().get_first_node_in_group("player")
+	if player == null:
+		return
+	var rep: Node = player.get_node_or_null("RelicEffectsPlayer")
+	if rep == null:
+		rep = player.find_child("RelicEffectsPlayer", true, false)
+	if rep != null and rep.has_method("on_orb_socketed"):
+		rep.call("on_orb_socketed", self)
 
 func _on_boss_died() -> void:
 	if _ended:

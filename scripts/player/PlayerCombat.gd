@@ -145,9 +145,12 @@ func _cd_mult() -> float:
 	return 1.0
 
 func _get_ultimate_cd_mult_from_relics() -> float:
+	var mult: float = 1.0
+	if RunStateSingleton != null and ("ultimate_cooldown_mult" in RunStateSingleton):
+		mult *= clampf(float(RunStateSingleton.ultimate_cooldown_mult), 0.10, 10.0)
 	if RunStateSingleton != null and ("relic_ultimate_gain_mult" in RunStateSingleton):
-		return clampf(float(RunStateSingleton.relic_ultimate_gain_mult), 0.10, 10.0)
-	return 1.0
+		mult *= clampf(float(RunStateSingleton.relic_ultimate_gain_mult), 0.10, 10.0)
+	return clampf(mult, 0.05, 10.0)
 
 func _get_player_can_attack() -> bool:
 	if _player == null:

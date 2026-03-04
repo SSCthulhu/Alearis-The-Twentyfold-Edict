@@ -1,0 +1,23 @@
+[gd_resource type="Resource" script_class="DiceMeterEventData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/systems/DiceMeterEventData.gd" id="1_event"]
+
+[resource]
+script = ExtResource("1_event")
+id = &"dm_strong_echo_mirror"
+display_name = "Echo Mirror"
+brief_text = "+18% Player Damage, 5 Mirror Pulses (6s)"
+description = "Your strikes leave afterimages that keep hitting the arena."
+min_roll = 16
+max_roll = 19
+band = 4
+effect_id = &"apply_echo_mirror"
+duration_seconds = 6.0
+effect_params = {
+"player_damage_mult": 1.18,
+"pulse_count": 5,
+"pulse_interval": 0.65,
+"pulse_percent": 0.018,
+"pulse_flat": 5
+}
+weight = 1.0

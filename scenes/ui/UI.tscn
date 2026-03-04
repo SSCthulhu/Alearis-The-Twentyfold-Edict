@@ -1,4 +1,4 @@
-[gd_scene load_steps=36 format=3 uid="uid://da2fr6n8vi4x7"]
+[gd_scene load_steps=38 format=3 uid="uid://da2fr6n8vi4x7"]
 
 [ext_resource type="Script" uid="uid://iive4ggyhvyk" path="res://scripts/ui/BossHealthHUD.gd" id="2_8pieq"]
 [ext_resource type="FontFile" uid="uid://c2uf3qbb6s8c1" path="res://fonts/RobotoSerif-Bold.ttf" id="2_wkfse"]
@@ -23,6 +23,8 @@
 [ext_resource type="Script" path="res://scripts/ui/PlayerDamageFeedback.gd" id="21_damagefx"]
 [ext_resource type="Shader" path="res://shaders/low_health_border.gdshader" id="22_lowhp"]
 [ext_resource type="Shader" path="res://shaders/low_health_postfx.gdshader" id="23_lowhppost"]
+[ext_resource type="Script" path="res://scripts/ui/DiceMeterEventBanner.gd" id="24_dm_banner"]
+[ext_resource type="Script" path="res://scripts/ui/DiceMeterActiveEffectHUD.gd" id="25_dm_effect"]
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_q5jec"]
 bg_color = Color(0, 0, 0, 1)
@@ -214,6 +216,57 @@ title_font = ExtResource("9_fhn5e")
 bar_font = ExtResource("5_28fq0")
 boss_name_font_size = 28
 bar_text_font_size = 16
+
+[node name="DiceMeterEventBanner" type="Control" parent="ScreenRoot/HUDRoot"]
+layout_mode = 1
+anchors_preset = 5
+anchor_left = 0.5
+anchor_right = 0.5
+offset_left = -420.0
+offset_top = 255.0
+offset_right = 420.0
+offset_bottom = 405.0
+grow_horizontal = 2
+mouse_filter = 2
+script = ExtResource("24_dm_banner")
+font_override = ExtResource("9_fhn5e")
+
+[node name="EventLabel" type="Label" parent="ScreenRoot/HUDRoot/DiceMeterEventBanner"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_fonts/font = ExtResource("9_fhn5e")
+theme_override_font_sizes/font_size = 50
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="DiceMeterActiveEffectHUD" type="Control" parent="ScreenRoot/HUDRoot"]
+layout_mode = 1
+anchors_preset = 5
+anchor_left = 0.5
+anchor_right = 0.5
+offset_left = -420.0
+offset_top = 415.0
+offset_right = 420.0
+offset_bottom = 495.0
+grow_horizontal = 2
+mouse_filter = 2
+script = ExtResource("25_dm_effect")
+
+[node name="EffectLabel" type="Label" parent="ScreenRoot/HUDRoot/DiceMeterActiveEffectHUD"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_fonts/font = ExtResource("9_fhn5e")
+theme_override_font_sizes/font_size = 30
+horizontal_alignment = 1
+vertical_alignment = 1
 
 [node name="BossStack" type="VBoxContainer" parent="ScreenRoot/HUDRoot/TopCenter"]
 visible = false

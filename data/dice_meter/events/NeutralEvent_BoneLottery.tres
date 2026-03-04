@@ -1,0 +1,23 @@
+[gd_resource type="Resource" script_class="DiceMeterEventData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/systems/DiceMeterEventData.gd" id="1_event"]
+
+[resource]
+script = ExtResource("1_event")
+id = &"dm_neutral_bone_lottery"
+display_name = "Bone Lottery"
+brief_text = "Marked Enemy: -20% Max HP, Nearby Enemies: -8% Max HP (6s)"
+description = "Fate marks one foe and cracks nearby bones in a chain pop."
+min_roll = 9
+max_roll = 11
+band = 2
+effect_id = &"apply_bone_lottery"
+duration_seconds = 6.0
+effect_params = {
+"mark_percent": 0.20,
+"splash_radius": 260.0,
+"splash_percent": 0.08,
+"splash_flat": 10,
+"cooldown_mult": 0.95
+}
+weight = 1.0

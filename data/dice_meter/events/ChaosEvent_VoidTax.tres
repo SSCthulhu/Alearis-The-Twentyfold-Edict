@@ -1,0 +1,23 @@
+[gd_resource type="Resource" script_class="DiceMeterEventData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/systems/DiceMeterEventData.gd" id="1_event"]
+
+[resource]
+script = ExtResource("1_event")
+id = &"dm_chaos_void_tax"
+display_name = "Void Tax"
+brief_text = "Lose 2% Max HP every 0.8s (cannot kill), Void Pulses hit enemies, -15% Cooldowns (6s)"
+description = "Every cast exacts a price, but the arena pays too."
+min_roll = 4
+max_roll = 8
+band = 1
+effect_id = &"apply_void_tax"
+duration_seconds = 6.0
+effect_params = {
+"drain_interval": 0.8,
+"drain_percent": 0.02,
+"enemy_blast_percent": 0.06,
+"enemy_blast_flat": 6,
+"cooldown_mult": 0.85
+}
+weight = 0.9

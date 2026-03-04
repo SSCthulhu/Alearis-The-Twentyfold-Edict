@@ -1,0 +1,20 @@
+[gd_resource type="Resource" script_class="DiceMeterEventData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/systems/DiceMeterEventData.gd" id="1_event"]
+
+[resource]
+script = ExtResource("1_event")
+id = &"dm_strong_chrono_skip"
+display_name = "Chrono Skip"
+brief_text = "Refresh 1 Cooldown (Heavy/Ultimate/Defend), +10% Enemy Damage (4s)"
+description = "Time snaps forward. One key skill is instantly ready."
+min_roll = 16
+max_roll = 19
+band = 4
+effect_id = &"apply_chrono_skip"
+duration_seconds = 4.0
+effect_params = {
+"enemy_damage_mult": 1.10,
+"player_damage_mult": 1.12
+}
+weight = 1.0

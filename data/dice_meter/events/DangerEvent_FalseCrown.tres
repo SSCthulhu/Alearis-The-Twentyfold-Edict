@@ -1,0 +1,23 @@
+[gd_resource type="Resource" script_class="DiceMeterEventData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/systems/DiceMeterEventData.gd" id="1_event"]
+
+[resource]
+script = ExtResource("1_event")
+id = &"dm_danger_false_crown"
+display_name = "False Crown"
+brief_text = "+45% Player Damage, Lose 6% Max HP per sec (cannot kill) (3s)"
+description = "Borrowed power cuts both ways. Burn bright, then pay."
+min_roll = 2
+max_roll = 3
+band = 0
+effect_id = &"apply_false_crown"
+duration_seconds = 3.0
+effect_params = {
+"player_damage_mult": 1.45,
+"drain_interval": 1.0,
+"drain_percent": 0.06,
+"enemy_blast_percent": 0.04,
+"enemy_blast_flat": 4
+}
+weight = 1.0

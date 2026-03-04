@@ -1,0 +1,20 @@
+[gd_resource type="Resource" script_class="DiceMeterEventData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/systems/DiceMeterEventData.gd" id="1_event"]
+
+[resource]
+script = ExtResource("1_event")
+id = &"dm_chaos_gravity_reversal"
+display_name = "Gravity Reversal"
+brief_text = "Enemies -28% Move Speed, -12% Cooldowns (6s)"
+description = "The arena flips tempo and your rotation accelerates."
+min_roll = 4
+max_roll = 8
+band = 1
+effect_id = &"apply_gravity_reversal"
+duration_seconds = 6.0
+effect_params = {
+"slow_mult": 0.72,
+"cooldown_mult": 0.88
+}
+weight = 1.0

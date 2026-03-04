@@ -1,0 +1,20 @@
+[gd_resource type="Resource" script_class="DiceMeterEventData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/systems/DiceMeterEventData.gd" id="1_event"]
+
+[resource]
+script = ExtResource("1_event")
+id = &"dm_neutral_coinflip_tempo"
+display_name = "Coinflip Tempo"
+brief_text = "+5% Player Damage, +5% Enemy Damage (5s)"
+description = "Both sides gain pace; tempo rises without clear advantage."
+min_roll = 9
+max_roll = 12
+band = 2
+effect_id = &"apply_coinflip_tempo"
+duration_seconds = 5.0
+effect_params = {
+"player_damage_mult": 1.05,
+"enemy_damage_mult": 1.05
+}
+weight = 1.0

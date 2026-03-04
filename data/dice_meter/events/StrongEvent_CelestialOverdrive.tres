@@ -1,0 +1,20 @@
+[gd_resource type="Resource" script_class="DiceMeterEventData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/systems/DiceMeterEventData.gd" id="1_event"]
+
+[resource]
+script = ExtResource("1_event")
+id = &"dm_strong_celestial_overdrive"
+display_name = "Celestial Overdrive"
+brief_text = "+25% Player Damage, -12% Enemy Damage (8s)"
+description = "Burst window: elevated output and partial mitigation."
+min_roll = 17
+max_roll = 19
+band = 4
+effect_id = &"apply_celestial_overdrive"
+duration_seconds = 8.0
+effect_params = {
+"damage_mult": 1.25,
+"damage_taken_mult": 0.88
+}
+weight = 1.0

@@ -1,0 +1,20 @@
+[gd_resource type="Resource" script_class="DiceMeterEventData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/systems/DiceMeterEventData.gd" id="1_event"]
+
+[resource]
+script = ExtResource("1_event")
+id = &"dm_chaos_gravity_well"
+display_name = "Gravity Well"
+brief_text = "+12% Cooldowns, Enemies Slowed (6s)"
+description = "Space warps briefly; movement and pace become awkward."
+min_roll = 4
+max_roll = 8
+band = 1
+effect_id = &"apply_gravity_well"
+duration_seconds = 6.0
+effect_params = {
+"cooldown_mult": 1.12,
+"slow_mult": 0.85
+}
+weight = 1.0

@@ -40,6 +40,13 @@ class_name DiceHUD
 # Gold accent (optional usage)
 @export var use_gold_on_max_20: bool = true
 @export var gold_color: Color = Color(0.95, 0.78, 0.20, 1.0)
+@export var meter_ready_glow_enabled: bool = true
+@export var meter_ready_panel_color: Color = Color(0.16, 0.12, 0.03, 0.84)
+@export var meter_ready_border_color: Color = Color(1.0, 0.84, 0.18, 0.95)
+@export var meter_ready_border_width: int = 2
+@export var meter_ready_pulse_min: float = 0.92
+@export var meter_ready_pulse_max: float = 1.08
+@export var meter_ready_pulse_speed: float = 1.1
 
 @export var corner_radius_px: int = 16
 
@@ -56,6 +63,8 @@ class_name DiceHUD
 # Content behavior
 # -----------------------------
 @export var show_last_roll: bool = false
+@export var show_meter_status: bool = true
+@export var meter_ready_text: String = "Dice Meter: READY"
 
 # Optional: if you want to reuse your existing DiceLabel (will be repurposed as VALUE)
 @export var label_path: NodePath = ^"VBoxContainer/DiceLabel"
@@ -66,6 +75,9 @@ class_name DiceHUD
 var _min_value: int = 1
 var _max_value: int = 20
 var _last_roll: int = 0
+var _meter_charge: float = 0.0
+var _meter_max: float = 100.0
+var _meter_ready: bool = false
 
 # -----------------------------
 # Node refs
@@ -75,6 +87,8 @@ var _header_label: Label = null
 var _value_label: Label = null
 var _sub_label: Label = null
 var _sep_top: HSeparator = null
+var _pulse_t: float = 0.0
+var _ready_glow_active: bool = false
 
 
 func _ready() -> void:
@@ -84,6 +98,7 @@ func _ready() -> void:
 	_apply_typography()
 	_apply_layout_metrics()
 	_apply_divider_style()
+	set_process(true)
 
 	# Initial draw (defensive if singleton not ready in editor)
 	if Engine.is_editor_hint():
@@ -93,16 +108,44 @@ func _ready() -> void:
 
 		if not RunStateSingleton.dice_changed.is_connected(_on_dice_changed):
 			RunStateSingleton.dice_changed.connect(_on_dice_changed)
+		_connect_meter_signals()
+		_pull_meter_snapshot()
 
 
 func _exit_tree() -> void:
 	if not Engine.is_editor_hint():
 		if RunStateSingleton != null and RunStateSingleton.dice_changed.is_connected(_on_dice_changed):
 			RunStateSingleton.dice_changed.disconnect(_on_dice_changed)
+		_disconnect_meter_signals()
+
+func _process(delta: float) -> void:
+	if meter_ready_glow_enabled and _ready_glow_active:
+		_pulse_t += delta * meter_ready_pulse_speed
+		var wave: float = 0.5 + (0.5 * sin(_pulse_t * TAU))
+		var s: float = lerpf(meter_ready_pulse_min, meter_ready_pulse_max, wave)
+		scale = Vector2(s, s)
 
 
 func _on_dice_changed(min_value: int, max_value: int, current_roll: int) -> void:
 	_update_text(min_value, max_value, current_roll)
+
+func _on_meter_charge_changed(current_charge: float, max_charge: float) -> void:
+	_meter_charge = current_charge
+	_meter_max = maxf(max_charge, 1.0)
+	_meter_ready = _meter_charge >= _meter_max
+	_set_ready_visual_state(_meter_ready)
+	_update_text(_min_value, _max_value, _last_roll)
+
+func _on_meter_filled() -> void:
+	_meter_ready = true
+	_set_ready_visual_state(true)
+	_update_text(_min_value, _max_value, _last_roll)
+
+func _on_meter_roll_resolved(roll_value: int, _event_id: StringName, _band: int) -> void:
+	_meter_ready = false
+	_last_roll = roll_value
+	_set_ready_visual_state(false)
+	_update_text(_min_value, _max_value, _last_roll)
 
 
 # -----------------------------
@@ -272,6 +315,91 @@ func _update_text(min_value: int, max_value: int, current_roll: int) -> void:
 			_value_label.add_theme_color_override("font_color", value_text_color)
 
 	if _sub_label != null:
-		_sub_label.visible = show_last_roll
-		if show_last_roll:
-			_sub_label.text = "Last Roll: %d" % _last_roll
+		_sub_label.visible = show_last_roll or show_meter_status
+		var meter_text: String = ""
+		if show_meter_status:
+			if _meter_ready:
+				meter_text = meter_ready_text
+			else:
+				var pct: int = int(round((_meter_charge / maxf(_meter_max, 1.0)) * 100.0))
+				meter_text = "Dice Meter: %d%%" % clampi(pct, 0, 100)
+		var roll_text: String = ""
+		if show_last_roll and _last_roll > 0:
+			roll_text = "Last Roll: %d" % _last_roll
+		if meter_text != "" and roll_text != "":
+			_sub_label.text = "%s | %s" % [meter_text, roll_text]
+		elif meter_text != "":
+			_sub_label.text = meter_text
+		else:
+			_sub_label.text = roll_text
+
+func _get_dice_meter_singleton() -> Node:
+	var tree: SceneTree = get_tree()
+	if tree == null:
+		return null
+	return tree.root.get_node_or_null("DiceMeterSingleton")
+
+func _connect_meter_signals() -> void:
+	var dice_meter: Node = _get_dice_meter_singleton()
+	if dice_meter == null:
+		return
+	if dice_meter.has_signal("charge_changed"):
+		if not dice_meter.charge_changed.is_connected(_on_meter_charge_changed):
+			dice_meter.charge_changed.connect(_on_meter_charge_changed)
+	if dice_meter.has_signal("meter_filled"):
+		if not dice_meter.meter_filled.is_connected(_on_meter_filled):
+			dice_meter.meter_filled.connect(_on_meter_filled)
+	if dice_meter.has_signal("roll_resolved"):
+		if not dice_meter.roll_resolved.is_connected(_on_meter_roll_resolved):
+			dice_meter.roll_resolved.connect(_on_meter_roll_resolved)
+
+func _disconnect_meter_signals() -> void:
+	var dice_meter: Node = _get_dice_meter_singleton()
+	if dice_meter == null:
+		return
+	if dice_meter.has_signal("charge_changed"):
+		if dice_meter.charge_changed.is_connected(_on_meter_charge_changed):
+			dice_meter.charge_changed.disconnect(_on_meter_charge_changed)
+	if dice_meter.has_signal("meter_filled"):
+		if dice_meter.meter_filled.is_connected(_on_meter_filled):
+			dice_meter.meter_filled.disconnect(_on_meter_filled)
+	if dice_meter.has_signal("roll_resolved"):
+		if dice_meter.roll_resolved.is_connected(_on_meter_roll_resolved):
+			dice_meter.roll_resolved.disconnect(_on_meter_roll_resolved)
+
+func _pull_meter_snapshot() -> void:
+	var dice_meter: Node = _get_dice_meter_singleton()
+	if dice_meter == null:
+		return
+	if "current_charge" in dice_meter:
+		_meter_charge = float(dice_meter.current_charge)
+	if "max_charge" in dice_meter:
+		_meter_max = maxf(float(dice_meter.max_charge), 1.0)
+	_meter_ready = _meter_charge >= _meter_max
+	_set_ready_visual_state(_meter_ready)
+	_update_text(_min_value, _max_value, _last_roll)
+
+func _set_ready_visual_state(is_meter_ready: bool) -> void:
+	if not meter_ready_glow_enabled:
+		return
+	_ready_glow_active = is_meter_ready
+	if not is_meter_ready:
+		scale = Vector2.ONE
+		_apply_panel_style()
+		return
+	var sb: StyleBoxFlat = StyleBoxFlat.new()
+	sb.bg_color = meter_ready_panel_color
+	sb.corner_radius_top_left = corner_radius_px
+	sb.corner_radius_top_right = corner_radius_px
+	sb.corner_radius_bottom_left = corner_radius_px
+	sb.corner_radius_bottom_right = corner_radius_px
+	sb.border_width_top = meter_ready_border_width
+	sb.border_width_bottom = meter_ready_border_width
+	sb.border_width_left = meter_ready_border_width
+	sb.border_width_right = meter_ready_border_width
+	sb.border_color = meter_ready_border_color
+	sb.content_margin_left = padding_h_px
+	sb.content_margin_right = padding_h_px
+	sb.content_margin_top = padding_v_px
+	sb.content_margin_bottom = padding_v_px
+	add_theme_stylebox_override("panel", sb)

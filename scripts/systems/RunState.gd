@@ -218,6 +218,7 @@ var world_effects: Array[StringName] = []
 var hazard_rise_mult: float = 1.0
 var healing_mult: float = 1.0
 var cooldown_mult: float = 1.0
+var ultimate_cooldown_mult: float = 1.0
 var orb_charge_mult: float = 1.0
 var loot_quality_bonus: float = 0.0
 var shop_price_mult: float = 1.0
@@ -232,6 +233,44 @@ var clean_cuts_enabled: bool = false
 
 func _ready() -> void:
 	load_meta()
+
+func _get_dice_meter_singleton() -> Node:
+	var tree: SceneTree = get_tree()
+	if tree == null:
+		return null
+	return tree.root.get_node_or_null("DiceMeterSingleton")
+
+func _reset_dice_meter_if_available() -> void:
+	var dice_meter: Node = _get_dice_meter_singleton()
+	if dice_meter != null and dice_meter.has_method("reset_meter"):
+		dice_meter.call("reset_meter")
+
+func _apply_dice_meter_debug_range_override_if_enabled() -> void:
+	var dice_meter: Node = _get_dice_meter_singleton()
+	if dice_meter == null:
+		return
+	if not dice_meter.has_method("is_debug_test_mode_enabled"):
+		return
+	if not bool(dice_meter.call("is_debug_test_mode_enabled")):
+		return
+
+	var forced_min: int = dice_hard_min
+	var forced_max: int = dice_hard_max
+	if dice_meter.has_method("get_debug_forced_range"):
+		var v: Variant = dice_meter.call("get_debug_forced_range")
+		if v is Vector2i:
+			var r: Vector2i = v
+			forced_min = r.x
+			forced_max = r.y
+	dice_min = clampi(mini(forced_min, forced_max), dice_hard_min, dice_hard_max)
+	dice_max = clampi(maxi(forced_min, forced_max), dice_hard_min, dice_hard_max)
+	last_roll = clampi(last_roll, dice_min, dice_max)
+
+func set_dice_range_debug_override(min_value: int, max_value: int) -> void:
+	dice_min = clampi(mini(min_value, max_value), dice_hard_min, dice_hard_max)
+	dice_max = clampi(maxi(min_value, max_value), dice_hard_min, dice_hard_max)
+	last_roll = clampi(last_roll, dice_min, dice_max)
+	_emit()
 
 # -----------------------------
 # Run lifecycle
@@ -254,6 +293,7 @@ func reset_on_death_and_retry() -> void:
 	relic_loaded_fate_used_this_world = false
 
 	_emit()
+	_reset_dice_meter_if_available()
 
 func start_new_run(run_seed_override: int = 0) -> void:
 	pass
@@ -265,6 +305,7 @@ func start_new_run(run_seed_override: int = 0) -> void:
 	dice_min = starting_dice_min
 	dice_max = starting_dice_max
 	last_roll = starting_dice_min
+	_apply_dice_meter_debug_range_override_if_enabled()
 	
 	pass
 
@@ -279,6 +320,7 @@ func start_new_run(run_seed_override: int = 0) -> void:
 
 	_emit()
 	pass
+	_reset_dice_meter_if_available()
 
 func _reset_run_modifiers() -> void:
 	enemy_damage_mult = 1.0
@@ -321,6 +363,7 @@ func _reset_world_modifiers_only() -> void:
 	hazard_rise_mult = 1.0
 	healing_mult = 1.0
 	cooldown_mult = 1.0
+	ultimate_cooldown_mult = 1.0
 	orb_charge_mult = 1.0
 	loot_quality_bonus = 0.0
 	shop_price_mult = 1.0
@@ -345,6 +388,7 @@ func advance_world() -> void:
 	# E1: reset per-world usage + clear forced roll
 	relic_loaded_fate_used_this_world = false
 	forced_reward_roll = -1
+	# Intentionally preserve Dice Meter charge across world transitions.
 
 # -----------------------------
 # Dice range operations
@@ -443,6 +487,7 @@ func _apply_effect(id: StringName) -> void:
 			enemy_damage_mult *= 0.90
 		&"m_flow_engine":
 			cooldown_mult *= 0.75
+			ultimate_cooldown_mult *= 0.90
 
 		&"d_overcharged_foes":
 			enemy_damage_mult *= 1.12
@@ -610,7 +655,8 @@ func save_meta() -> void:
 	var data: Dictionary = {
 		"meta_next_start_value": meta_next_start_value,
 		"starting_dice_min": starting_dice_min,
-		"starting_dice_max": starting_dice_max
+		"starting_dice_max": starting_dice_max,
+		"last_run_seed": run_seed
 	}
 	var json_text: String = JSON.stringify(data)
 	var f: FileAccess = FileAccess.open(SAVE_PATH, FileAccess.WRITE)
@@ -640,6 +686,8 @@ func load_meta() -> void:
 		starting_dice_min = int(d["starting_dice_min"])
 	if d.has("starting_dice_max"):
 		starting_dice_max = int(d["starting_dice_max"])
+	if d.has("last_run_seed"):
+		run_seed = int(d["last_run_seed"])
 	pass
 
 func update_starting_dice_range(new_value: int) -> void:

@@ -1,0 +1,20 @@
+[gd_resource type="Resource" script_class="DiceMeterEventData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/systems/DiceMeterEventData.gd" id="1_event"]
+
+[resource]
+script = ExtResource("1_event")
+id = &"dm_danger_hex_barrage"
+display_name = "Hex Barrage"
+brief_text = "+16% Enemy Damage, -12% Player Damage (5s)"
+description = "A brief cursed surge: heavier pressure and weaker offense."
+min_roll = 2
+max_roll = 3
+band = 0
+effect_id = &"apply_hex_barrage"
+duration_seconds = 5.0
+effect_params = {
+"enemy_damage_mult": 1.16,
+"player_damage_mult": 0.88
+}
+weight = 1.0

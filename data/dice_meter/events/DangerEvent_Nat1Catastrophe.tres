@@ -1,0 +1,22 @@
+[gd_resource type="Resource" script_class="DiceMeterEventData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/systems/DiceMeterEventData.gd" id="1_event"]
+
+[resource]
+script = ExtResource("1_event")
+id = &"dm_danger_nat1_catastrophe"
+display_name = "NAT 1: Edict's Rebuke"
+brief_text = "Lose 22% Max HP (cannot kill), -18% Damage, +18% Enemy Damage (6s)"
+description = "The Edict rejects your cast and turns the fight against you."
+min_roll = 1
+max_roll = 1
+band = 0
+effect_id = &"apply_nat1_oof"
+duration_seconds = 6.0
+effect_params = {
+"player_damage_pct": 0.22,
+"player_damage_mult": 0.82,
+"enemy_damage_mult": 1.18,
+"cooldown_mult": 1.15
+}
+weight = 1.0

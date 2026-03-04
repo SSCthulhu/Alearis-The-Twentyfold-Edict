@@ -1,0 +1,19 @@
+[gd_resource type="Resource" script_class="DiceMeterEventData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/systems/DiceMeterEventData.gd" id="1_event"]
+
+[resource]
+script = ExtResource("1_event")
+id = &"dm_positive_frost_snap"
+display_name = "Frost Snap"
+brief_text = "Enemies slowed, safer lanes (6s)"
+description = "An icy pulse slows nearby threats and opens movement windows."
+min_roll = 13
+max_roll = 16
+band = 3
+effect_id = &"apply_enemy_slow_field"
+duration_seconds = 6.0
+effect_params = {
+"slow_mult": 0.68
+}
+weight = 1.0

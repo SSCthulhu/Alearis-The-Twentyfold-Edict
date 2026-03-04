@@ -1,0 +1,20 @@
+[gd_resource type="Resource" script_class="DiceMeterEventData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/systems/DiceMeterEventData.gd" id="1_event"]
+
+[resource]
+script = ExtResource("1_event")
+id = &"dm_neutral_weighted_calm"
+display_name = "Weighted Calm"
+brief_text = "-5% Cooldowns (5s)"
+description = "The field steadies; both sides gain a brief tempo reset."
+min_roll = 9
+max_roll = 12
+band = 2
+effect_id = &"apply_weighted_calm"
+duration_seconds = 5.0
+effect_params = {
+"player_haste_mult": 1.05,
+"enemy_haste_mult": 0.95
+}
+weight = 1.0
