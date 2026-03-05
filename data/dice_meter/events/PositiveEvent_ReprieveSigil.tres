@@ -6,7 +6,7 @@
 script = ExtResource("1_event")
 id = &"dm_positive_reprieve_sigil"
 display_name = "Reprieve Sigil"
-brief_text = "Heal 35% Max HP + 12% Shield now, then +35% Healing, -10% Cooldowns (7s)"
+brief_text = "Heal 45% Max HP + 12% Shield now, then -10% Cooldowns (7s)"
 description = "A brief boon improves sustain and skill rhythm."
 min_roll = 13
 max_roll = 16
@@ -15,10 +15,10 @@ effect_id = &"apply_reprieve_sigil"
 duration_seconds = 7.0
 effect_params = {
 "heal_percent": 0.35,
+"bonus_heal_percent": 0.10,
 "shield_percent": 0.12,
 "shield_duration": 6.0,
 "shield_cap_percent": 0.20,
-"healing_mult": 1.35,
 "cooldown_mult": 0.90
 }
 weight = 1.0

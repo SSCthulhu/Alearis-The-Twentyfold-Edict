@@ -1,21 +1,27 @@
-[gd_resource type="Resource" script_class="DiceMeterEventData" load_steps=2 format=3]
+[gd_resource type="Resource" script_class="DiceMeterEventData" load_steps=2 format=3 uid="uid://cydi6bdrrupw4"]
 
-[ext_resource type="Script" path="res://scripts/systems/DiceMeterEventData.gd" id="1_event"]
+[ext_resource type="Script" uid="uid://bdvf1wo2l545b" path="res://scripts/systems/DiceMeterEventData.gd" id="1_event"]
 
 [resource]
 script = ExtResource("1_event")
 id = &"dm_miracle_royal_decree"
-display_name = "Royal Decree"
-brief_text = "Highest-HP Enemy takes 6% Max HP per sec (7s)"
-description = "A sentence is passed. The strongest foe is executed over time."
+display_name = "NAT 20: Royal Decree"
+brief_text = "Judgment Burst + 10% Arena Cleave + Execute on highest HP target (8s)"
+description = "The Dice passes sentence. The strongest foe is marked for execution while the arena bends to your verdict."
 min_roll = 20
-max_roll = 20
 band = 5
 effect_id = &"apply_royal_decree"
-duration_seconds = 7.0
 effect_params = {
+"cleave_flat": 12,
+"cleave_percent": 0.1,
+"cooldown_mult": 0.85,
+"opening_flat": 20,
+"opening_percent": 0.18,
+"player_damage_mult": 1.3,
+"shield_cap_percent": 0.25,
+"shield_duration": 6.0,
+"shield_percent": 0.12,
+"tick_flat": 12,
 "tick_interval": 1.0,
-"tick_percent": 0.06,
-"tick_flat": 8
+"tick_percent": 0.08
 }
-weight = 0.8

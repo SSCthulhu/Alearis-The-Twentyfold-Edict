@@ -8,6 +8,6 @@ id = &"e1_loaded_fate"
 display_name = "Loaded Fate"
 rarity = 2
 tags = Array[StringName]([&"dice", &"control", &"boss"])
-description_lines = Array[String](["Once per World, choose your", "boss roll result (within range)."])
+description_lines = Array[String](["Once per world, choose your", "reward roll result (within range)."])
 effect_id = &"relic_loaded_fate"
 metadata/_custom_type_script = "uid://dwyhl0a0pqlnn"

@@ -6,6 +6,7 @@
 script = ExtResource("1_m84no")
 id = &"c7_shock_charm"
 display_name = "Shock Charm"
+band = 2
 tags = Array[StringName]([&"aoe", &"proc", &"light"])
 description_lines = Array[String](["Every 8s, your next Light chains", "to 1 extra enemy."])
 effect_id = &"relic_shock_charm"

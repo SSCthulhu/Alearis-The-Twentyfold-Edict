@@ -5,12 +5,18 @@ signal charge_changed(current_charge: float, max_charge: float)
 signal meter_filled()
 signal roll_resolved(roll_value: int, event_id: StringName, band: int)
 
+const RELIC_LOADED_EDGE: StringName = &"r7_loaded_edge"
+const RELIC_BENT_DIE: StringName = &"r8_broken_die"
+const RELIC_BENT_DIE_ALT: StringName = &"r8_bent_die"
+const RELIC_TWIN_FATE: StringName = &"e3_twin_fate"
+
 @export var max_charge: float = 100.0
 @export var charge_per_enemy_kill: float = 8.0
 @export var charge_per_elite_kill: float = 20.0
 @export var charge_per_perfect_dodge: float = 10.0
 @export var boss_damage_step: float = 250.0
 @export var charge_per_boss_damage_step: float = 8.0
+@export var loaded_edge_backlash_percent: float = 0.06
 @export var trigger_action: StringName = &"dice_meter_trigger"
 @export var input_buffer_seconds: float = 0.15
 @export var debug_logs: bool = true
@@ -84,6 +90,11 @@ func set_event_table(table: DiceMeterEventTable) -> void:
 func add_charge(amount: float, _reason: StringName = &"") -> void:
 	if amount <= 0.0:
 		return
+	var run_state: Node = _get_run_state()
+	if run_state != null and ("relic_dice_meter_charge_mult" in run_state):
+		amount *= clampf(float(run_state.get("relic_dice_meter_charge_mult")), 0.0, 10.0)
+	if amount <= 0.0:
+		return
 	var cap: float = maxf(max_charge, 1.0)
 	# Prevent log/UI flood when systems keep reporting charge while meter is full.
 	if current_charge >= cap:
@@ -131,6 +142,10 @@ func trigger_roll(forced_roll: int = -1) -> Dictionary:
 	var event_data: DiceMeterEventData = event_table.pick_event_for_roll(rng, roll)
 	if event_data == null:
 		return {"ok": false, "reason": "no_event_for_roll", "roll": roll}
+	if _has_bent_die_relic() and _is_negative_band(int(event_data.band)):
+		var bent_result: Dictionary = _apply_bent_die_reroll(roll, event_data)
+		roll = int(bent_result.get("roll", roll))
+		event_data = bent_result.get("event_data", event_data) as DiceMeterEventData
 
 	current_charge = 0.0
 	_pending_boss_damage = 0.0
@@ -156,7 +171,17 @@ func trigger_roll(forced_roll: int = -1) -> Dictionary:
 	active_effect_brief_text = event_data.brief_text
 	active_effect_band = int(event_data.band)
 	active_effect_time_left = event_data.duration_seconds
-	_apply_event_result(last_result)
+	var result_to_apply: Dictionary = last_result.duplicate(true)
+	var roll_bounds: Vector2i = _get_meter_roll_bounds()
+	if _has_relic(RELIC_LOADED_EDGE):
+		if roll == roll_bounds.y:
+			var scaled_params: Dictionary = _scale_effect_params(result_to_apply.get("effect_params", {}), 2.0)
+			result_to_apply["effect_params"] = scaled_params
+			_log_debug("Loaded Edge: max roll doubled event power.")
+		elif roll == roll_bounds.x:
+			_apply_player_percent_damage_nonlethal(clampf(loaded_edge_backlash_percent, 0.0, 1.0))
+			_log_debug("Loaded Edge: min roll backlash applied.")
+	_apply_event_result(result_to_apply)
 	roll_resolved.emit(roll, event_data.id, int(event_data.band))
 	_emit_charge_changed()
 	_log_debug("Roll=%d, Event=%s, Band=%d, Effect=%s, Duration=%.2fs" % [
@@ -232,8 +257,8 @@ func _apply_event_result(result: Dictionary) -> void:
 			_apply_temp_mult_to_runstate("player_damage_mult", 1.10, duration)
 		&"apply_reprieve_sigil":
 			_heal_player_percent(float(params.get("heal_percent", 0.35)))
+			_heal_player_percent(float(params.get("bonus_heal_percent", 0.10)))
 			_grant_player_shield_percent(float(params.get("shield_percent", 0.12)), float(params.get("shield_duration", 6.0)), float(params.get("shield_cap_percent", 0.20)))
-			_apply_temp_mult_to_runstate("healing_mult", float(params.get("healing_mult", 1.35)), duration)
 			_apply_temp_mult_to_runstate("cooldown_mult", float(params.get("cooldown_mult", 0.90)), duration)
 		&"apply_enemy_slow_field":
 			_apply_enemy_slow_field(duration, params)
@@ -319,21 +344,14 @@ func _heal_player_percent(percent_of_max: float) -> void:
 
 func _apply_nat20_clip(duration: float, params: Dictionary) -> void:
 	_apply_miracle_effect(duration, params)
-	_apply_floorwide_enemy_damage(float(params.get("blast_percent", 0.30)), int(params.get("blast_flat", 45)))
 	_apply_enemy_slow_field(minf(duration, 6.0), {"slow_mult": float(params.get("slow_mult", 0.65))})
-	_start_echo_pulses(duration, {
-		"pulse_count": int(params.get("pulse_count", 5)),
-		"pulse_interval": float(params.get("pulse_interval", 0.65)),
-		"pulse_percent": float(params.get("pulse_percent", 0.06)),
-		"pulse_flat": int(params.get("pulse_flat", 14))
-	})
 
 func _apply_miracle_effect(duration: float, params: Dictionary) -> void:
 	var run_state := _get_run_state()
 	if run_state != null and run_state.has_method("_full_heal_player"):
 		run_state.call("_full_heal_player")
 	_apply_temp_mult_to_runstate("player_damage_mult", float(params.get("damage_mult", 1.40)), duration)
-	_apply_temp_mult_to_runstate("cooldown_mult", 0.80, duration)
+	_apply_temp_mult_to_runstate("cooldown_mult", float(params.get("cooldown_mult", 0.80)), duration)
 
 	var tree: SceneTree = get_tree()
 	if tree == null:
@@ -347,10 +365,14 @@ func _apply_miracle_effect(duration: float, params: Dictionary) -> void:
 	_grant_player_shield_percent(float(params.get("shield_percent", 0.20)), float(params.get("shield_duration", 8.0)), float(params.get("shield_cap_percent", 0.30)))
 
 func _start_echo_pulses(duration: float, params: Dictionary) -> void:
-	var pulse_count: int = maxi(1, int(params.get("pulse_count", 4)))
+	var pulse_count: int = int(params.get("pulse_count", 4))
+	if pulse_count <= 0:
+		return
 	var pulse_interval: float = maxf(0.1, float(params.get("pulse_interval", 0.7)))
 	var pulse_percent: float = maxf(0.0, float(params.get("pulse_percent", 0.05)))
 	var pulse_flat: int = maxi(0, int(params.get("pulse_flat", 10)))
+	if pulse_percent <= 0.0 and pulse_flat <= 0:
+		return
 	_active_echo_pulses.append({
 		"time_left": 0.08,
 		"interval": pulse_interval,
@@ -399,8 +421,29 @@ func _apply_royal_decree(duration: float, params: Dictionary) -> void:
 	var target: Node = _find_highest_hp_enemy()
 	if target == null:
 		return
+	# NAT 20 execution fantasy: immediate judgment burst + sustained decree on the strongest foe.
+	_apply_damage_to_enemy_node(
+		target,
+		_calc_enemy_damage_value(
+			target,
+			maxf(float(params.get("opening_percent", 0.18)), 0.0),
+			maxi(int(params.get("opening_flat", 20)), 0)
+		),
+		&"dice_meter_royal_decree_opening"
+	)
+	_apply_floorwide_enemy_damage(
+		maxf(float(params.get("cleave_percent", 0.10)), 0.0),
+		maxi(int(params.get("cleave_flat", 12)), 0)
+	)
+	_apply_temp_mult_to_runstate("player_damage_mult", float(params.get("player_damage_mult", 1.30)), duration)
+	_apply_temp_mult_to_runstate("cooldown_mult", float(params.get("cooldown_mult", 0.85)), duration)
+	_grant_player_shield_percent(
+		float(params.get("shield_percent", 0.12)),
+		float(params.get("shield_duration", 6.0)),
+		float(params.get("shield_cap_percent", 0.25))
+	)
 	_active_target_execution_effects.append({
-		"target": target,
+		"target_id": target.get_instance_id(),
 		"time_left": duration,
 		"interval_left": maxf(float(params.get("tick_interval", 1.0)), 0.1),
 		"interval": maxf(float(params.get("tick_interval", 1.0)), 0.1),
@@ -493,7 +536,7 @@ func _tick_target_execution_effects(delta: float) -> void:
 		return
 	for i: int in range(_active_target_execution_effects.size() - 1, -1, -1):
 		var e: Dictionary = _active_target_execution_effects[i]
-		var target: Node = e.get("target", null)
+		var target: Node = _resolve_execution_target_node(e)
 		var time_left: float = float(e.get("time_left", 0.0)) - delta
 		var interval_left: float = float(e.get("interval_left", 0.0)) - delta
 		if target == null or not is_instance_valid(target):
@@ -514,6 +557,19 @@ func _tick_target_execution_effects(delta: float) -> void:
 func _clear_target_execution_effects() -> void:
 	_active_target_execution_effects.clear()
 
+func _resolve_execution_target_node(e: Dictionary) -> Node:
+	var target_id: int = int(e.get("target_id", 0))
+	if target_id == 0:
+		# Legacy fallback for entries created before id-based storage.
+		var legacy: Variant = e.get("target", null)
+		if legacy != null and is_instance_valid(legacy):
+			return legacy as Node
+		return null
+	var obj: Object = instance_from_id(target_id)
+	if obj == null or not is_instance_valid(obj):
+		return null
+	return obj as Node
+
 func _apply_enemy_slow_field(duration: float, params: Dictionary) -> void:
 	var slow_mult: float = clampf(float(params.get("slow_mult", 0.70)), 0.1, 1.0)
 	for enemy: Node in _get_active_enemy_nodes():
@@ -525,7 +581,7 @@ func _apply_enemy_slow_field(duration: float, params: Dictionary) -> void:
 			var base_v: float = float(enemy.get(field_name))
 			enemy.set(field_name, base_v * slow_mult)
 			_active_enemy_slow_effects.append({
-				"node": enemy,
+				"node_id": enemy.get_instance_id(),
 				"field": field_name,
 				"original": base_v,
 				"time_left": duration
@@ -533,13 +589,25 @@ func _apply_enemy_slow_field(duration: float, params: Dictionary) -> void:
 			break
 	_log_debug("Applied enemy slow field x%.2f for %.2fs" % [slow_mult, duration])
 
+func _resolve_slow_effect_node(e: Dictionary) -> Node:
+	var node_id: int = int(e.get("node_id", 0))
+	if node_id != 0:
+		var obj: Object = instance_from_id(node_id)
+		if obj != null and is_instance_valid(obj):
+			return obj as Node
+		return null
+	# Legacy fallback for existing entries created before node_id migration.
+	var legacy: Variant = e.get("node", null)
+	if legacy != null and is_instance_valid(legacy):
+		return legacy as Node
+	return null
+
 func _tick_enemy_slow_effects(delta: float) -> void:
 	if _active_enemy_slow_effects.is_empty():
 		return
 	for i: int in range(_active_enemy_slow_effects.size() - 1, -1, -1):
 		var e: Dictionary = _active_enemy_slow_effects[i]
-		var n_var: Variant = e.get("node", null)
-		var n: Node = n_var as Node if (n_var is Node and is_instance_valid(n_var)) else null
+		var n: Node = _resolve_slow_effect_node(e)
 		# Enemy can be freed mid-effect (death/scene transition). Drop stale entry immediately.
 		if n == null or not is_instance_valid(n):
 			_active_enemy_slow_effects.remove_at(i)
@@ -556,8 +624,7 @@ func _tick_enemy_slow_effects(delta: float) -> void:
 
 func _clear_enemy_slow_effects() -> void:
 	for e: Dictionary in _active_enemy_slow_effects:
-		var n_var: Variant = e.get("node", null)
-		var n: Node = n_var as Node if (n_var is Node and is_instance_valid(n_var)) else null
+		var n: Node = _resolve_slow_effect_node(e)
 		if n == null or not is_instance_valid(n):
 			continue
 		var field_name: String = String(e.get("field", ""))
@@ -875,15 +942,26 @@ func _get_run_state() -> Node:
 	return tree.root.get_node_or_null("RunStateSingleton")
 
 func _resolve_roll_value(forced_roll: int) -> int:
+	var bounds: Vector2i = _get_meter_roll_bounds()
+	var min_roll: int = bounds.x
+	var max_roll: int = bounds.y
 	if RunStateSingleton == null:
 		if forced_roll >= 1:
 			return forced_roll
 		return randi_range(1, 20)
-
-	var min_roll: int = int(RunStateSingleton.dice_min)
-	var max_roll: int = int(RunStateSingleton.dice_max)
 	if forced_roll >= min_roll and forced_roll <= max_roll:
 		return forced_roll
+
+	if _has_relic(RELIC_TWIN_FATE):
+		if RunStateSingleton.has_method("roll_for_domain_in_range"):
+			var a: int = int(RunStateSingleton.call("roll_for_domain_in_range", &"dice_meter_roll_twin_a", min_roll, max_roll, _trigger_count))
+			var b: int = int(RunStateSingleton.call("roll_for_domain_in_range", &"dice_meter_roll_twin_b", min_roll, max_roll, _trigger_count))
+			return mini(a, b)
+		var twin_rng := RandomNumberGenerator.new()
+		twin_rng.randomize()
+		var ra: int = twin_rng.randi_range(min_roll, max_roll)
+		var rb: int = twin_rng.randi_range(min_roll, max_roll)
+		return mini(ra, rb)
 
 	if RunStateSingleton.has_method("roll_for_domain_in_range"):
 		return int(RunStateSingleton.call("roll_for_domain_in_range", &"dice_meter_roll", min_roll, max_roll, _trigger_count))
@@ -892,9 +970,77 @@ func _resolve_roll_value(forced_roll: int) -> int:
 	fallback_rng.randomize()
 	return fallback_rng.randi_range(min_roll, max_roll)
 
+func _get_meter_roll_bounds() -> Vector2i:
+	if RunStateSingleton == null:
+		return Vector2i(1, 20)
+	var mn: int = int(RunStateSingleton.dice_min)
+	var mx: int = int(RunStateSingleton.dice_max)
+	mn = clampi(mini(mn, mx), 1, 20)
+	mx = clampi(maxi(mn, mx), 1, 20)
+	return Vector2i(mn, mx)
+
+func _has_relic(id: StringName) -> bool:
+	if id == &"" or RunStateSingleton == null:
+		return false
+	if not RunStateSingleton.has_method("has_relic"):
+		return false
+	return bool(RunStateSingleton.call("has_relic", id))
+
+func _has_bent_die_relic() -> bool:
+	return _has_relic(RELIC_BENT_DIE) or _has_relic(RELIC_BENT_DIE_ALT)
+
+func _is_negative_band(band: int) -> bool:
+	return band == int(DiceMeterEventData.OutcomeBand.DANGER) or band == int(DiceMeterEventData.OutcomeBand.CHAOS)
+
+func _apply_bent_die_reroll(current_roll: int, current_event_data: DiceMeterEventData) -> Dictionary:
+	var bounds: Vector2i = _get_meter_roll_bounds()
+	var reroll_value: int = current_roll
+	if RunStateSingleton != null and RunStateSingleton.has_method("roll_for_domain_in_range"):
+		reroll_value = int(RunStateSingleton.call("roll_for_domain_in_range", &"dice_meter_bent_die_reroll", bounds.x, bounds.y, _trigger_count))
+	else:
+		var rng := RandomNumberGenerator.new()
+		rng.randomize()
+		reroll_value = rng.randi_range(bounds.x, bounds.y)
+	var reroll_rng: RandomNumberGenerator = _resolve_event_pick_rng_with_salt(reroll_value, 1)
+	var reroll_event_data: DiceMeterEventData = event_table.pick_event_for_roll(reroll_rng, reroll_value)
+	if reroll_event_data == null:
+		return {"roll": current_roll, "event_data": current_event_data}
+	var choose_reroll: bool = false
+	var current_band: int = int(current_event_data.band)
+	var reroll_band: int = int(reroll_event_data.band)
+	if reroll_band > current_band:
+		choose_reroll = true
+	elif reroll_band == current_band and reroll_value > current_roll:
+		choose_reroll = true
+	if choose_reroll:
+		_log_debug("Bent Die: rerolled %d -> %d (band %d -> %d)." % [current_roll, reroll_value, current_band, reroll_band])
+		return {"roll": reroll_value, "event_data": reroll_event_data}
+	_log_debug("Bent Die: rerolled %d -> %d but kept original." % [current_roll, reroll_value])
+	return {"roll": current_roll, "event_data": current_event_data}
+
+func _scale_effect_params(params: Dictionary, factor: float) -> Dictionary:
+	var out: Dictionary = params.duplicate(true)
+	var f: float = maxf(factor, 0.0)
+	for k in out.keys():
+		var key: String = String(k)
+		var v: Variant = out[k]
+		if v is float or v is int:
+			var num: float = float(v)
+			var scaled: float = num * f
+			if key.ends_with("_mult"):
+				scaled = 1.0 + ((num - 1.0) * f)
+			if v is int:
+				out[k] = maxi(0, int(round(scaled)))
+			else:
+				out[k] = scaled
+	return out
+
 func _resolve_event_pick_rng(roll: int) -> RandomNumberGenerator:
+	return _resolve_event_pick_rng_with_salt(roll, 0)
+
+func _resolve_event_pick_rng_with_salt(roll: int, salt: int) -> RandomNumberGenerator:
 	if RunStateSingleton != null and RunStateSingleton.has_method("make_rng_for_domain"):
-		var seeded_rng: RandomNumberGenerator = RunStateSingleton.call("make_rng_for_domain", &"dice_meter_event_pick", (_trigger_count * 100) + roll) as RandomNumberGenerator
+		var seeded_rng: RandomNumberGenerator = RunStateSingleton.call("make_rng_for_domain", &"dice_meter_event_pick", (_trigger_count * 100) + roll + (salt * 997)) as RandomNumberGenerator
 		if seeded_rng != null:
 			return seeded_rng
 

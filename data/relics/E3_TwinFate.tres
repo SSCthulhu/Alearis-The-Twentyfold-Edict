@@ -1,0 +1,13 @@
+[gd_resource type="Resource" script_class="RelicData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/systems/RelicData.gd" id="1_relic"]
+
+[resource]
+script = ExtResource("1_relic")
+id = &"e3_twin_fate"
+display_name = "Twin Fate"
+rarity = 2
+band = 0
+tags = Array[StringName]([&"dice_meter", &"tempo", &"risk"])
+description_lines = Array[String](["Dice Meter rolls two dice in your range.", "Lower result applies. +25% Dice Meter charge gain."])
+effect_id = &"relic_twin_fate"

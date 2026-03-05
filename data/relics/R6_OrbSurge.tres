@@ -7,6 +7,7 @@ script = ExtResource("1_mis4k")
 id = &"r6_orb_surge"
 display_name = "Orb Surge"
 rarity = 1
+band = 2
 tags = Array[StringName]([&"boss", &"attack_speed", &"window", &"orb"])
 description_lines = Array[String](["While boss is vulnerable:", "+20% attack speed."])
 effect_id = &"relic_orb_surge"

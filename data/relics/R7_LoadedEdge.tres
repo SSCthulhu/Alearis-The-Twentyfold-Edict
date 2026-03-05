@@ -1,0 +1,13 @@
+[gd_resource type="Resource" script_class="RelicData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/systems/RelicData.gd" id="1_relic"]
+
+[resource]
+script = ExtResource("1_relic")
+id = &"r7_loaded_edge"
+display_name = "Loaded Edge"
+rarity = 1
+band = 2
+tags = Array[StringName]([&"dice_meter", &"risk", &"burst"])
+description_lines = Array[String](["Dice Meter max roll doubles event power.", "Min roll causes non-lethal backlash."])
+effect_id = &"relic_loaded_edge"

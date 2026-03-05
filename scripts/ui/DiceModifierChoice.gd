@@ -44,20 +44,30 @@ var _source_chest: Node = null
 # Effect pools
 # ---------------------------------------------------------
 const MINOR_BLESSINGS := [
-	&"s_steady_hands", &"s_guarded_footing", &"s_orb_attunement", &"s_skybound_step", &"s_combat_focus"
+	&"s_steady_hands", &"s_guarded_footing", &"s_orb_attunement", &"s_skybound_step", &"s_combat_focus", &"s_vampiric_thread", &"s_burst_runner", &"s_lucky_spark"
 ]
 
 const MAJOR_BLESSINGS := [
-	&"m_ironblood", &"m_flow_engine", &"m_warded_soul", &"m_ritual_of_stability", &"m_kinetic_overdrive"
+	&"m_ironblood", &"m_flow_engine", &"m_warded_soul", &"m_ritual_of_stability", &"m_kinetic_overdrive", &"m_orb_mastery", &"m_battle_hymn", &"m_fated_reservoir"
 ]
 
 const MINOR_DANGERS := [
-	&"p_blood_moon", &"p_siege_lines", &"p_loaded_momentum", &"p_gravity_flux", &"p_ruthless_hunt"
+	&"p_blood_moon", &"p_siege_lines", &"p_loaded_momentum", &"p_gravity_flux", &"p_ruthless_hunt", &"p_hemorrhage_doctrine", &"p_velocity_collapse", &"p_volatile_siphon"
 ]
 
 const MAJOR_DANGERS := [
-	&"x_apex_predators", &"x_no_safe_space", &"x_edge_of_ambition", &"x_execution_order", &"x_dice_vice"
+	&"x_apex_predators", &"x_no_safe_space", &"x_edge_of_ambition", &"x_execution_order", &"x_dice_vice", &"x_predators_edge", &"x_blood_tax", &"x_skull_standard"
 ]
+
+# Modifiers that should never stack with themselves in one world.
+const EXCLUSIVE_MODIFIERS := {
+	&"p_gravity_flux": true,
+	&"p_loaded_momentum": true,
+	&"p_velocity_collapse": true,
+	&"x_edge_of_ambition": true,
+	&"x_blood_tax": true,
+	&"m_ritual_of_stability": true
+}
 
 func _ready() -> void:
 	for c in [_card_a, _card_b, _card_c, _card_d, _card_e]:
@@ -426,12 +436,13 @@ func _to_bb(c: Color) -> String:
 # ---------------------------------------------------------
 func _generate_options() -> void:
 	_options.clear()
+	var active_ids: Array[StringName] = _get_active_modifier_ids()
 
-	var neg2_effect: StringName = _pick_unique(MAJOR_BLESSINGS, [])
-	var neg1_effect: StringName = _pick_unique(MINOR_BLESSINGS, [neg2_effect])
+	var neg2_effect: StringName = _pick_unique(MAJOR_BLESSINGS, [], active_ids)
+	var neg1_effect: StringName = _pick_unique(MINOR_BLESSINGS, [neg2_effect], active_ids)
 
-	var pos1_danger: StringName = _pick_unique(MINOR_DANGERS, [])
-	var pos2_danger: StringName = _pick_unique(MAJOR_DANGERS, [pos1_danger])
+	var pos1_danger: StringName = _pick_unique(MINOR_DANGERS, [], active_ids)
+	var pos2_danger: StringName = _pick_unique(MAJOR_DANGERS, [pos1_danger], active_ids)
 
 	_options.append(_make_option(-2, neg2_effect, &"", "Condense", "Major Boon"))
 	_options.append(_make_option(-1, neg1_effect, &"", "Condense", "Minor Boon"))
@@ -451,14 +462,25 @@ func _make_option(value: int, effect_id: StringName, greed_id: StringName, heade
 		"greed_line": _describe_effect(greed_id)
 	}
 
-func _pick_unique(pool: Array, avoid: Array) -> StringName:
+func _pick_unique(pool: Array, avoid: Array, active_ids: Array[StringName]) -> StringName:
 	if pool.is_empty():
 		return &""
+	var candidates: Array[StringName] = []
+	for p in pool:
+		var id: StringName = StringName(p)
+		if avoid.has(id):
+			continue
+		# Only block duplicates for modifiers explicitly marked exclusive.
+		if EXCLUSIVE_MODIFIERS.has(id) and active_ids.has(id):
+			continue
+		candidates.append(id)
+	if candidates.is_empty():
+		return &""
 	for _i in range(20):
-		var pick: StringName = pool[_rng.randi_range(0, pool.size() - 1)]
+		var pick: StringName = candidates[_rng.randi_range(0, candidates.size() - 1)]
 		if not avoid.has(pick):
 			return pick
-	return StringName(pool[0])
+	return StringName(candidates[0])
 
 # ---------------------------------------------------------
 # Descriptions (your mapping)
@@ -473,24 +495,36 @@ func _describe_effect(id: StringName) -> String:
 		&"s_orb_attunement": return "Orb Attunement: +20% Orb Charge, -5% Cooldowns"
 		&"s_skybound_step": return "Skybound Step: +12% Jump Height, +8% Move Speed"
 		&"s_combat_focus": return "Combat Focus: +10% Damage, -8% Enemy Health"
+		&"s_vampiric_thread": return "Vampiric Thread: Heal 2 HP on kill (4 HP on elite kill)"
+		&"s_burst_runner": return "Burst Runner: Enemy kills grant +20% Move Speed for 2.5s"
+		&"s_lucky_spark": return "Lucky Spark: Elite kills heal 6% Max HP, -3% Cooldowns"
 
 		&"m_ironblood": return "Ironblood: +20% Max HP, -10% Enemy Damage"
 		&"m_flow_engine": return "Flow Engine: -25% Cooldowns, -10% Ultimate Cooldown"
-		&"m_warded_soul": return "Warded Soul: +25% Healing, +15% Orb Charge, -6% Enemy Damage"
-		&"m_ritual_of_stability": return "Ritual of Stability: Heal 8% Max HP each floor, +15% Healing"
+		&"m_warded_soul": return "Warded Soul: Heal 12% Max HP now, +15% Orb Charge, -6% Enemy Damage"
+		&"m_ritual_of_stability": return "Ritual of Stability: Heal 10% now, then 8% Max HP each floor"
 		&"m_kinetic_overdrive": return "Kinetic Overdrive: +15% Move Speed, +18% Jump Height, +12% Attack Speed"
+		&"m_orb_mastery": return "Orb Mastery: +30% Orb Charge, +8% Damage"
+		&"m_battle_hymn": return "Battle Hymn: Perfect Dodges grant +30% Attack Speed and +15% Move Speed (3.5s), heal 2% Max HP, -8% Cooldowns"
+		&"m_fated_reservoir": return "Fated Reservoir: Each cleared floor heals 6% Max HP and grants +4% Damage, -3% Cooldowns (max 4 stacks), +10% Orb Charge"
 
 		&"p_blood_moon": return "Blood Moon: +12% Enemy Damage, +10% Enemy Health"
 		&"p_siege_lines": return "Siege Lines: +18% Enemy Projectile Speed, +5% Enemy Damage"
 		&"p_loaded_momentum": return "Loaded Momentum: +2% Damage per kill (max +20%) until hit, Enemies +8% Damage"
-		&"p_gravity_flux": return "Gravity Flux: Gravity shifts every 10s, Enemies +6% Damage"
+		&"p_gravity_flux": return "Gravity Flux: 10s normal, then moon-bounce (20% gravity, +110% jump), Enemies +10% Damage"
 		&"p_ruthless_hunt": return "Ruthless Hunt: +1 Elite Spawn, +8% Enemy Damage"
+		&"p_hemorrhage_doctrine": return "Hemorrhage Doctrine: Enemy hits inflict stacking bleed (up to 3), Enemies +10% Damage"
+		&"p_velocity_collapse": return "Velocity Collapse: 12s normal, then -30% Move Speed (3s), then +20% Move Speed (3s), Enemies +8% Damage"
+		&"p_volatile_siphon": return "Volatile Siphon: Kills drain 1% Max HP (non-lethal) but grant +10% Attack Speed (3s), Enemies +8% Damage"
 
 		&"x_apex_predators": return "Apex Predators: +20% Enemy Damage, +18% Enemy Health, +1 Elite"
 		&"x_no_safe_space": return "No Safe Space: +30% Enemy Projectile Speed, +15% Enemy Damage"
 		&"x_edge_of_ambition": return "Edge of Ambition: Enemies +25% Damage, Perfect Dodge grants +20% Attack Speed (3s)"
 		&"x_execution_order": return "Execution Order: +2 Elite Spawns, +12% Enemy Damage, +10% Enemy Health"
 		&"x_dice_vice": return "Dice Vice: +18% Enemy Damage, +18% Cooldowns, -10% Orb Charge"
+		&"x_predators_edge": return "Predator's Edge: Enemy hits can Crit (+10% chance, +35% crit damage), Enemies +10% Damage"
+		&"x_blood_tax": return "Blood Tax: Lose 1.5% Max HP every 8s (non-lethal), Enemies +12% Damage"
+		&"x_skull_standard": return "Skull Standard: +1 Elite each combat floor, Enemies +10% Damage and +10% Health"
 
 		_:
 			return "Effect: %s" % String(id)

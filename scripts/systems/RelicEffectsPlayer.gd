@@ -18,7 +18,9 @@ const RELIC_SURGE_CAPACITOR: StringName = &"c8_surge_capacitor"
 const RELIC_ORB_CONDUCTOR: StringName = &"c9_orb_conductor"
 const RELIC_QUICKSTEP_WRAPS: StringName = &"c10_quickstep_wraps"
 const RELIC_VITAL_THREAD: StringName = &"c11_vital_thread"
-const RELIC_HAZARD_BOOTS: StringName = &"c12_hazard_boots"
+const RELIC_FATE_THREADS: StringName = &"c12_fate_threads"
+const RELIC_FATE_THREADS_LEGACY: StringName = &"c12_hazard_boots"
+const RELIC_TWIN_FATE: StringName = &"e3_twin_fate"
 
 const RELIC_GLASS_PACT: StringName = &"r1_glass_pact"
 
@@ -187,9 +189,10 @@ const DAMAGE_TAG_SHOCK: StringName = &"shock"
 @export var glass_pact_damage_taken_mult: float = 1.12
 
 # -----------------------------
-# Hazard Boots tuning (C12)
+# C12 Fate Threads tuning (Dice Meter-focused)
 # -----------------------------
-@export var hazard_boots_hazard_rise_mult: float = 0.90
+@export var fate_threads_dice_meter_charge_mult: float = 1.20
+@export var twin_fate_dice_meter_charge_mult: float = 1.25
 
 # -----------------------------
 # Debug
@@ -553,8 +556,10 @@ func _rebuild_passive_relic_buffs() -> void:
 
 	if _owns_relic(RELIC_ORB_CONDUCTOR):
 		_apply_orb_conductor()
-	if _owns_relic(RELIC_HAZARD_BOOTS):
-		_apply_hazard_boots()
+	if _owns_fate_threads():
+		_apply_c12_dice_meter_focus()
+	if _owns_relic(RELIC_TWIN_FATE):
+		_apply_twin_fate_meter_focus()
 
 	if _health != null and is_instance_valid(_health):
 		if _health.has_method("recompute_max_hp"):
@@ -581,7 +586,7 @@ func _rebuild_passive_relic_buffs() -> void:
 			#" c8_surge=", _owns_relic(RELIC_SURGE_CAPACITOR),
 			#" quickstep=", _owns_relic(RELIC_QUICKSTEP_WRAPS),
 			#" orb=", _owns_relic(RELIC_ORB_CONDUCTOR),
-			#" hazard=", _owns_relic(RELIC_HAZARD_BOOTS),
+			#" c12_meter_focus=", _owns_fate_threads(),
 			#" r4_sanctified=", _owns_relic(RELIC_SANCTIFIED_BARRIER),
 			#" r5_blood_price=", _owns_relic(RELIC_BLOOD_PRICE)
 		#)
@@ -593,8 +598,6 @@ func _reset_runstate_relic_knobs_and_world_multipliers() -> void:
 	# World multipliers you already drive from relics
 	if "orb_charge_mult" in RunStateSingleton:
 		RunStateSingleton.orb_charge_mult = 1.0
-	if "hazard_rise_mult" in RunStateSingleton:
-		RunStateSingleton.hazard_rise_mult = 1.0
 
 	# Relic knobs (run-long) – reset before re-applying owned relics
 	if "relic_defend_duration_bonus" in RunStateSingleton:
@@ -603,6 +606,8 @@ func _reset_runstate_relic_knobs_and_world_multipliers() -> void:
 		RunStateSingleton.relic_ultimate_gain_mult = 1.0
 	if "relic_bleed_damage_mult" in RunStateSingleton:
 		RunStateSingleton.relic_bleed_damage_mult = 1.0
+	if "relic_dice_meter_charge_mult" in RunStateSingleton:
+		RunStateSingleton.relic_dice_meter_charge_mult = 1.0
 
 # -----------------------------
 # Event relics + C7 gating
@@ -931,14 +936,29 @@ func _apply_orb_conductor() -> void:
 		pass
 		#print("[RelicEffectsPlayer] Orb Conductor applied: orb_charge_mult x", mult)
 
-func _apply_hazard_boots() -> void:
+func _apply_c12_dice_meter_focus() -> void:
 	if RunStateSingleton == null:
 		return
-	var mult: float = clampf(hazard_boots_hazard_rise_mult, 0.10, 10.0)
-	RunStateSingleton.hazard_rise_mult = mult
+	var mult: float = clampf(fate_threads_dice_meter_charge_mult, 1.0, 10.0)
+	if "relic_dice_meter_charge_mult" in RunStateSingleton:
+		RunStateSingleton.relic_dice_meter_charge_mult *= mult
 	if debug_logs:
 		pass
-		#print("[RelicEffectsPlayer] Hazard Boots applied: hazard_rise_mult x", mult)
+		#print("[RelicEffectsPlayer] C12 Meter Focus applied: relic_dice_meter_charge_mult x", mult)
+
+func _owns_fate_threads() -> bool:
+	# Accept both current and legacy IDs for save compatibility.
+	return _owns_relic(RELIC_FATE_THREADS) or _owns_relic(RELIC_FATE_THREADS_LEGACY)
+
+func _apply_twin_fate_meter_focus() -> void:
+	if RunStateSingleton == null:
+		return
+	var mult: float = clampf(twin_fate_dice_meter_charge_mult, 1.0, 10.0)
+	if "relic_dice_meter_charge_mult" in RunStateSingleton:
+		RunStateSingleton.relic_dice_meter_charge_mult *= mult
+	if debug_logs:
+		pass
+		#print("[RelicEffectsPlayer] Twin Fate applied: relic_dice_meter_charge_mult x", mult)
 
 func _try_proc_time_slip() -> void:
 	if _time_slip_active:

@@ -1253,6 +1253,9 @@ func _on_modifier_chosen() -> void:
 
 		_apply_platform_unlock_for_floor(idx)
 		floor_unlocked.emit(idx + 1)
+		if RunStateSingleton != null and RunStateSingleton.has_method("on_floor_cleared_for_modifiers"):
+			# idx is zero-based floor index; pass 1-based floor number.
+			RunStateSingleton.call("on_floor_cleared_for_modifiers", idx + 1)
 
 		#print("[Floors] Modifier chosen → opened ceiling for Floor ", idx + 1)
 		

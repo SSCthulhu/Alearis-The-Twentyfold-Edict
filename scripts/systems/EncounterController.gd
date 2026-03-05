@@ -220,6 +220,8 @@ func _begin_encounter() -> void:
 	var elites_to_spawn: int = 0
 	if RunStateSingleton != null and "elites_to_spawn_bonus" in RunStateSingleton:
 		elites_to_spawn = int(RunStateSingleton.elites_to_spawn_bonus)
+		if "elites_per_floor_bonus" in RunStateSingleton:
+			elites_to_spawn += int(RunStateSingleton.elites_per_floor_bonus)
 		#print("[Encounter] _begin_encounter: Checking for elites: elites_to_spawn_bonus = %d" % elites_to_spawn)
 	
 	if golem_scene == null:
@@ -256,6 +258,8 @@ func begin_boss_encounter() -> void:
 	var elites_to_spawn: int = 0
 	if RunStateSingleton != null and "elites_to_spawn_bonus" in RunStateSingleton:
 		elites_to_spawn = int(RunStateSingleton.elites_to_spawn_bonus)
+		if "elites_per_floor_bonus" in RunStateSingleton:
+			elites_to_spawn += int(RunStateSingleton.elites_per_floor_bonus)
 		pass
 	else:
 		pass

@@ -1,4 +1,4 @@
-[gd_scene load_steps=23 format=3 uid="uid://0vnectdvmkih"]
+[gd_scene load_steps=26 format=3 uid="uid://0vnectdvmkih"]
 
 [ext_resource type="Script" uid="uid://l5u48edhkfp8" path="res://scripts/systems/RelicDatabase.gd" id="1_xd0t7"]
 [ext_resource type="Script" uid="uid://dwyhl0a0pqlnn" path="res://scripts/systems/RelicData.gd" id="2_ehi4v"]
@@ -22,7 +22,10 @@
 [ext_resource type="Resource" uid="uid://kmh2ps4aai2i" path="res://data/relics/R6_OrbSurge.tres" id="20_pfxdq"]
 [ext_resource type="Resource" uid="uid://dnwmba1cuh8fi" path="res://data/relics/E1_LoadedFate.tres" id="21_xdnac"]
 [ext_resource type="Resource" uid="uid://csowoxasvecep" path="res://data/relics/E2_AscendantCore.tres" id="22_bbxpn"]
+[ext_resource type="Resource" path="res://data/relics/R7_LoadedEdge.tres" id="23_loaded"]
+[ext_resource type="Resource" path="res://data/relics/R8_BrokenDie.tres" id="24_broken"]
+[ext_resource type="Resource" path="res://data/relics/E3_TwinFate.tres" id="25_twin"]
 
 [node name="RelicDatabaseSingleton" type="Node"]
 script = ExtResource("1_xd0t7")
-relics = Array[ExtResource("2_ehi4v")]([ExtResource("3_1xifl"), ExtResource("4_8qo87"), ExtResource("5_1sfnl"), ExtResource("6_vvojb"), ExtResource("7_enfsc"), ExtResource("8_5asrg"), ExtResource("9_32s47"), ExtResource("10_u0cwp"), ExtResource("11_pfuyq"), ExtResource("12_w54j3"), ExtResource("13_m6f67"), ExtResource("14_n63rj"), ExtResource("15_2xfqs"), ExtResource("16_76ycr"), ExtResource("17_oxy2v"), ExtResource("18_0fxne"), ExtResource("19_eplvb"), ExtResource("20_pfxdq"), ExtResource("21_xdnac"), ExtResource("22_bbxpn")])
+relics = Array[ExtResource("2_ehi4v")]([ExtResource("3_1xifl"), ExtResource("4_8qo87"), ExtResource("5_1sfnl"), ExtResource("6_vvojb"), ExtResource("7_enfsc"), ExtResource("8_5asrg"), ExtResource("9_32s47"), ExtResource("10_u0cwp"), ExtResource("11_pfuyq"), ExtResource("12_w54j3"), ExtResource("13_m6f67"), ExtResource("14_n63rj"), ExtResource("15_2xfqs"), ExtResource("16_76ycr"), ExtResource("17_oxy2v"), ExtResource("18_0fxne"), ExtResource("19_eplvb"), ExtResource("20_pfxdq"), ExtResource("21_xdnac"), ExtResource("22_bbxpn"), ExtResource("23_loaded"), ExtResource("24_broken"), ExtResource("25_twin")])

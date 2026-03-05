@@ -1,31 +1,24 @@
-[gd_resource type="Resource" script_class="DiceMeterEventData" load_steps=2 format=3]
+[gd_resource type="Resource" script_class="DiceMeterEventData" load_steps=2 format=3 uid="uid://d0sl41udgf0bk"]
 
-[ext_resource type="Script" path="res://scripts/systems/DiceMeterEventData.gd" id="1_event"]
+[ext_resource type="Script" uid="uid://bdvf1wo2l545b" path="res://scripts/systems/DiceMeterEventData.gd" id="1_event"]
 
 [resource]
 script = ExtResource("1_event")
 id = &"dm_miracle_twentyfold_grace"
 display_name = "NAT 20: Twentyfold Ascension"
-brief_text = "30% Arena Blast + Full Heal + 20% Shield + Echo Pulses + Slow (10s)"
-description = "Fate crowns the cast: the arena erupts in your favor."
+brief_text = "Full Heal + 30% Shield + Invuln + Heavy Slow + Cooldown Surge (10s)"
+description = "Fate crowns the cast: survival and control surge together in a true ascension moment."
 min_roll = 20
-max_roll = 20
 band = 5
 effect_id = &"apply_nat20_clip"
 duration_seconds = 10.0
 effect_params = {
-"blast_flat": 45,
-"blast_percent": 0.3,
-"damage_mult": 1.4,
+"cooldown_mult": 0.75,
+"damage_mult": 1.0,
 "full_heal": true,
 "invuln_seconds": 2.0,
-"shield_percent": 0.20,
+"shield_cap_percent": 0.4,
 "shield_duration": 8.0,
-"shield_cap_percent": 0.30,
-"pulse_count": 5,
-"pulse_flat": 14,
-"pulse_interval": 0.65,
-"pulse_percent": 0.06,
-"slow_mult": 0.65
+"shield_percent": 0.3,
+"slow_mult": 0.55
 }
-weight = 1.0

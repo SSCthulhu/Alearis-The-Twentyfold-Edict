@@ -335,6 +335,14 @@ func take_damage(amount: int, source: Node = null, ignore_invuln: bool = false) 
 		if combat != null and combat.has_method("is_defending") and bool(combat.call("is_defending")):
 			final_amount = int(round(float(final_amount) * defend_damage_multiplier))
 
+	# World modifiers: enemy crit chance/damage (enemy-origin hits only).
+	if source != null and _is_enemy_damage_source(source):
+		if RunStateSingleton != null:
+			var crit_chance: float = float(RunStateSingleton.get("enemy_crit_chance_add"))
+			if crit_chance > 0.0 and randf() < clampf(crit_chance, 0.0, 0.95):
+				var crit_mult: float = maxf(1.0, float(RunStateSingleton.get("enemy_crit_damage_mult")))
+				final_amount = int(round(float(final_amount) * crit_mult))
+
 	if debug_damage:
 		pass
 		#print("[PlayerHealth] APPLY dmg=", final_amount, " (raw=", amount, ")",
@@ -397,6 +405,20 @@ func take_damage(amount: int, source: Node = null, ignore_invuln: bool = false) 
 		died.emit()
 	else:
 		_apply_world_marked_if_active()
+
+func _is_enemy_damage_source(source: Node) -> bool:
+	if source == null:
+		return false
+	if source.is_in_group("enemies") or source.is_in_group("bosses"):
+		return true
+	var owner_node: Node = source.get_owner()
+	if owner_node != null and (owner_node.is_in_group("enemies") or owner_node.is_in_group("bosses")):
+		return true
+	var parent: Node = source.get_parent()
+	if parent != null and (parent.is_in_group("enemies") or parent.is_in_group("bosses")):
+		return true
+	var cls: String = String(source.get_class()).to_lower()
+	return cls.contains("enemy") or cls.contains("boss")
 
 func revive_full() -> void:
 	_is_dead = false

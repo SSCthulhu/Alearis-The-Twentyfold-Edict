@@ -302,7 +302,9 @@ func _get_active_modifier_ids() -> Array[StringName]:
 		var v = RunStateSingleton.call("get_active_modifier_ids")
 		if v is Array:
 			for x in v:
-				out.append(StringName(x))
+				var id: StringName = StringName(x)
+				if id != &"" and not out.has(id):
+					out.append(id)
 			return out
 
 	for prop_name in ["active_modifier_ids", "applied_modifier_ids", "run_modifier_ids", "modifiers_applied"]:
@@ -310,14 +312,16 @@ func _get_active_modifier_ids() -> Array[StringName]:
 			var arr = RunStateSingleton.get(prop_name)
 			if arr is Array:
 				for x in arr:
-					out.append(StringName(x))
+					var id: StringName = StringName(x)
+					if id != &"" and not out.has(id):
+						out.append(id)
 				return out
 
 	return out
 
 func _pretty_modifier_name(id: StringName) -> String:
 	var s: String = String(id)
-	for p in ["m_", "b_", "d_", "x_", "g_", "bg_"]:
+	for p in ["s_", "m_", "p_", "x_", "b_", "d_", "g_", "bg_"]:
 		if s.begins_with(p):
 			s = s.substr(p.length())
 			break

@@ -1,4 +1,4 @@
-[gd_scene load_steps=109 format=4 uid="uid://0hu6af2x3pya"]
+[gd_scene load_steps=112 format=4 uid="uid://0hu6af2x3pya"]
 
 [ext_resource type="Texture2D" uid="uid://li7yc67s1slj" path="res://art/Worlds2/Winter/Platformer/Brick_01.png" id="1_43buo"]
 [ext_resource type="Texture2D" uid="uid://bf3vvwjwschfq" path="res://art/Worlds2/Winter/Platformer/Brick_02.png" id="2_ydflj"]
@@ -244,6 +244,24 @@ sources/38 = SubResource("TileSetAtlasSource_ifye4")
 sources/39 = SubResource("TileSetAtlasSource_6bht0")
 sources/40 = SubResource("TileSetAtlasSource_agu4q")
 
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_ymh3t"]
+texture = ExtResource("14_o7o4g")
+texture_region_size = Vector2i(128, 128)
+0:0/0 = 0
+0:0/0/physics_layer_0/polygon_0/points = PackedVector2Array(-64, -64, 5.818184, 5.818184, 64, 64, -64, 64)
+
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_rr2xg"]
+texture = ExtResource("17_rr2xg")
+texture_region_size = Vector2i(128, 128)
+0:0/0 = 0
+0:0/0/physics_layer_0/polygon_0/points = PackedVector2Array(-64, -64, 64, -64, 64, 64, -64, 64)
+
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_mcryu"]
+texture = ExtResource("18_mcryu")
+texture_region_size = Vector2i(128, 128)
+0:0/0 = 0
+0:0/0/physics_layer_0/polygon_0/points = PackedVector2Array(-64, -64, 64, -64, 64, 64, -64, 64)
+
 [sub_resource type="CompressedTexture2D" id="CompressedTexture2D_um43q"]
 load_path = "res://.godot/imported/Ground_04.png-39f385c6b87c2b0bc5f081529e582d96.ctex"
 
@@ -287,6 +305,9 @@ sources/32 = SubResource("TileSetAtlasSource_lveyp")
 sources/36 = SubResource("TileSetAtlasSource_g2ycr")
 sources/31 = SubResource("TileSetAtlasSource_muuro")
 sources/27 = SubResource("TileSetAtlasSource_frqk3")
+sources/0 = SubResource("TileSetAtlasSource_ymh3t")
+sources/1 = SubResource("TileSetAtlasSource_rr2xg")
+sources/2 = SubResource("TileSetAtlasSource_mcryu")
 
 [sub_resource type="CompressedTexture2D" id="CompressedTexture2D_43buo"]
 load_path = "res://.godot/imported/Ground-Additional_01.png-e38a7b2889441c5642a85df42601eda4.ctex"
@@ -491,7 +512,7 @@ tile_set = SubResource("TileSet_o7o4g")
 [node name="Walls" type="TileMapLayer" parent="Geometry"]
 z_index = 2
 position = Vector2(0, 199)
-tile_map_data = PackedByteArray("AAARAAkAHwAAAAAAAAARAAoAJAAAAAAAAAARAAsAJAAAAAAAAAARAAwAJAAAAAAAAAARAA0AJAAAAAAAAAAcAAUAGwAAAAAAAAAcAAYAIAAAAAAAAAAcAAcAIAAAAAAAAAAcAAgAIAAAAAAAAAAcAAkAIAAAAAAAAAAcAAoAIAAAAAAAAAAcAAsAIAAAAAAAAAAcAAwAIAAAAAAAAAAcAA0AIAAAAAAAAAAAAAsAGwAAAAAAAAAAAAwAIAAAAAAAAAAAAA0AIAAAAAAAAAA3AAwAJAAAAAAAAAA3AAsAHwAAAAAAAABnAWQAHwAAAAAAAABnAWUAJAAAAAAAAABnAWYAJAAAAAAAAABnAWcAJAAAAAAAAABnAWgAJAAAAAAAAABnAWkAJAAAAAAAAABnAWoAJAAAAAAAAABnAWsAJAAAAAAAAAB8AWQAGwAAAAAAAAB8AWUAIAAAAAAAAAB8AWYAIAAAAAAAAAB8AWcAIAAAAAAAAAB8AWgAIAAAAAAAAAB8AWkAIAAAAAAAAAB8AWoAIAAAAAAAAAB8AWsAIAAAAAAAAABRAWYAIAAAAAAAAABRAWcAIAAAAAAAAABRAWgAIAAAAAAAAABRAWkAIAAAAAAAAABRAWoAIAAAAAAAAABRAWsAIAAAAAAAAABMAWYAJAAAAAAAAABMAWcAJAAAAAAAAABMAWgAJAAAAAAAAABMAWkAJAAAAAAAAABMAWoAJAAAAAAAAABMAWsAJAAAAAAAAABMAWUAHwAAAAAAAABRAWUAGwAAAAAAAAA=")
+tile_map_data = PackedByteArray("AAARAAkAHwAAAAAAAAARAAoAJAAAAAAAAAARAAsAJAAAAAAAAAARAAwAJAAAAAAAAAARAA0AJAAAAAAAAAAcAAUAGwAAAAAAAAAcAAYAIAAAAAAAAAAcAAcAIAAAAAAAAAAcAAgAIAAAAAAAAAAcAAkAIAAAAAAAAAAcAAoAIAAAAAAAAAAcAAsAIAAAAAAAAAAcAAwAIAAAAAAAAAAcAA0AIAAAAAAAAAAAAAsAGwAAAAAAAAAAAAwAIAAAAAAAAAAAAA0AIAAAAAAAAAA3AAwAJAAAAAAAAAA3AAsAHwAAAAAAAABnAWQAHwAAAAAAAABnAWUAJAAAAAAAAABnAWYAJAAAAAAAAABnAWcAJAAAAAAAAABnAWgAJAAAAAAAAABnAWkAJAAAAAAAAABnAWoAJAAAAAAAAABnAWsAJAAAAAAAAAB8AWQAGwAAAAAAAAB8AWUAIAAAAAAAAAB8AWYAIAAAAAAAAAB8AWcAIAAAAAAAAAB8AWgAIAAAAAAAAAB8AWkAIAAAAAAAAAB8AWoAIAAAAAAAAAB8AWsAIAAAAAAAAABRAWYAIAAAAAAAAABRAWcAIAAAAAAAAABRAWgAIAAAAAAAAABRAWkAIAAAAAAAAABRAWoAIAAAAAAAAABRAWsAIAAAAAAAAABMAWYAJAAAAAAAAABMAWcAJAAAAAAAAABMAWgAJAAAAAAAAABMAWkAJAAAAAAAAABMAWoAJAAAAAAAAABMAWsAJAAAAAAAAABMAWUAHwAAAAAAAABRAWUAGwAAAAAAAAAsAAQAAQAAAAAAAAAsAAMAAQAAAAAAAAAsAAIAAgAAAAAAAAAsAAEAAAAAAAAAAAA=")
 tile_set = SubResource("TileSet_rr2xg")
 
 [node name="Platforms" type="TileMapLayer" parent="Geometry"]

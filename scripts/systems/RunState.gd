@@ -26,9 +26,35 @@ var applied_modifier_ids: Array[StringName] = []
 @export var dice_hard_min: int = 1
 @export var dice_hard_max: int = 20
 
+# DEBUG ONLY: Modifier injector (safe to disable for release).
+# Toggle this off for release builds and the injector becomes inert.
+@export var debug_modifier_injector_enabled: bool = false
+@export var debug_modifier_injector_log_actions: bool = true
+
 # Optional: control warning spam for new/unmapped ids
 @export var warn_on_unknown_effects: bool = false
 var _unknown_effects_warned: Dictionary = {} # StringName -> true
+var _debug_modifier_cycle_index: Dictionary = {} # String -> int
+var _debug_toast_layer: CanvasLayer = null
+var _debug_toast_label: Label = null
+var _debug_toast_time_left: float = 0.0
+
+const DEBUG_MINOR_BOONS: Array[StringName] = [
+	&"s_steady_hands", &"s_guarded_footing", &"s_orb_attunement", &"s_skybound_step",
+	&"s_combat_focus", &"s_vampiric_thread", &"s_burst_runner", &"s_lucky_spark"
+]
+const DEBUG_MAJOR_BOONS: Array[StringName] = [
+	&"m_ironblood", &"m_flow_engine", &"m_warded_soul", &"m_ritual_of_stability",
+	&"m_kinetic_overdrive", &"m_orb_mastery", &"m_battle_hymn", &"m_fated_reservoir"
+]
+const DEBUG_MINOR_PERILS: Array[StringName] = [
+	&"p_blood_moon", &"p_siege_lines", &"p_loaded_momentum", &"p_gravity_flux",
+	&"p_ruthless_hunt", &"p_hemorrhage_doctrine", &"p_velocity_collapse", &"p_volatile_siphon"
+]
+const DEBUG_MAJOR_PERILS: Array[StringName] = [
+	&"x_apex_predators", &"x_no_safe_space", &"x_edge_of_ambition", &"x_execution_order",
+	&"x_dice_vice", &"x_predators_edge", &"x_blood_tax", &"x_skull_standard"
+]
 
 # -----------------------------
 # RUN-LONG relic inventory
@@ -193,6 +219,7 @@ var relic_bleed_damage_mult: float = 1.0
 
 var relic_roll_max_charges_bonus: int = 0
 var relic_roll_recharge_mult: float = 1.0 # < 1 faster, > 1 slower
+var relic_dice_meter_charge_mult: float = 1.0
 
 var relic_defend_duration_bonus: float = 0.0
 
@@ -210,11 +237,14 @@ var relic_loaded_fate_used_this_world: bool = false
 var enemy_damage_mult: float = 1.0
 var enemy_health_mult: float = 1.0
 var enemy_projectile_speed_mult: float = 1.0
+var enemy_crit_chance_add: float = 0.0
+var enemy_crit_damage_mult: float = 1.0
 var player_damage_mult: float = 1.0
 var player_health_mult: float = 1.0
 var player_move_speed_mult: float = 1.0
 var player_jump_height_mult: float = 1.0
 var player_gravity_mult: float = 1.0
+var player_flux_jump_height_mult: float = 1.0
 var player_attack_speed_mult: float = 1.0
 
 # World-scoped effects list (flags)
@@ -231,32 +261,226 @@ var extra_shop_slots: int = 0
 var free_shop_rerolls: int = 0
 var rare_relic_bonus: float = 0.0
 var elites_to_spawn_bonus: int = 0
+var elites_per_floor_bonus: int = 0
 
 # World-scoped flags (recognized ids you may reference elsewhere)
 var perfect_step_enabled: bool = false
 var clean_cuts_enabled: bool = false
 var ritual_of_stability_enabled: bool = false
+var _ritual_last_floor_healed: int = 0
 var loaded_momentum_enabled: bool = false
 var loaded_momentum_stacks: int = 0
+var vampiric_thread_enabled: bool = false
 var edge_of_ambition_enabled: bool = false
 var _edge_of_ambition_time_left: float = 0.0
 var gravity_flux_enabled: bool = false
 var _gravity_flux_timer: float = 10.0
 var _gravity_flux_phase: int = 0
+var _base_player_move_speed_mult: float = 1.0
 var _base_player_attack_speed_mult: float = 1.0
+var hemorrhage_doctrine_enabled: bool = false
+var _hemorrhage_stacks: int = 0
+var _hemorrhage_time_left: float = 0.0
+var _hemorrhage_tick_left: float = 1.0
+var velocity_collapse_enabled: bool = false
+var _velocity_collapse_phase: int = 0
+var _velocity_collapse_timer: float = 12.0
+var _burst_runner_enabled: bool = false
+var _burst_runner_time_left: float = 0.0
+var blood_tax_enabled: bool = false
+var _blood_tax_tick_left: float = 8.0
+var _suppress_modifier_damage_callback: bool = false
+var lucky_spark_enabled: bool = false
+var volatile_siphon_enabled: bool = false
+var battle_hymn_enabled: bool = false
+var fated_reservoir_enabled: bool = false
+var _battle_hymn_time_left: float = 0.0
+var _volatile_siphon_time_left: float = 0.0
+var _fated_reservoir_stacks: int = 0
 
 func _ready() -> void:
 	load_meta()
+	process_mode = Node.PROCESS_MODE_ALWAYS
 	set_process(true)
+	set_process_input(true)
+	if debug_modifier_injector_enabled and debug_modifier_injector_log_actions:
+		print("[RunState][Debug Modifier Injector] Enabled. Keys: 6=Clear, 7=Minor Boon, 8=Major Boon, 9=Minor Peril, 0=Major Peril (top row or numpad).")
 
 func _process(delta: float) -> void:
 	_tick_dynamic_world_effects(delta)
+	_tick_debug_toast(delta)
 
 func _get_dice_meter_singleton() -> Node:
 	var tree: SceneTree = get_tree()
 	if tree == null:
 		return null
 	return tree.root.get_node_or_null("DiceMeterSingleton")
+
+func _input(event: InputEvent) -> void:
+	if not debug_modifier_injector_enabled:
+		return
+	var key_event: InputEventKey = event as InputEventKey
+	if key_event == null or (not key_event.pressed) or key_event.echo:
+		return
+	# Hotkeys:
+	# 6 = clear world modifiers
+	# 7 = apply next Minor Boon (-1)
+	# 8 = apply next Major Boon (-2)
+	# 9 = apply next Minor Peril (+1)
+	# 0 = apply next Major Peril (+2)
+	if _debug_event_matches_keys(key_event, [KEY_6, KEY_KP_6]):
+		clear_world_modifiers()
+		_emit()
+		_debug_modifier_log("Cleared all world modifiers")
+		return
+	if _debug_event_matches_keys(key_event, [KEY_7, KEY_KP_7]):
+		_debug_apply_next_modifier("minor_boon", DEBUG_MINOR_BOONS, -1)
+		return
+	if _debug_event_matches_keys(key_event, [KEY_8, KEY_KP_8]):
+		_debug_apply_next_modifier("major_boon", DEBUG_MAJOR_BOONS, -2)
+		return
+	if _debug_event_matches_keys(key_event, [KEY_9, KEY_KP_9]):
+		_debug_apply_next_modifier("minor_peril", DEBUG_MINOR_PERILS, +1)
+		return
+	if _debug_event_matches_keys(key_event, [KEY_0, KEY_KP_0]):
+		_debug_apply_next_modifier("major_peril", DEBUG_MAJOR_PERILS, +2)
+		return
+
+func _debug_event_matches_keys(event: InputEventKey, keys: Array[int]) -> bool:
+	for k: int in keys:
+		if event.keycode == k or event.physical_keycode == k:
+			return true
+	return false
+
+func _debug_apply_next_modifier(pool_key: String, pool: Array[StringName], value: int) -> void:
+	if pool.is_empty():
+		return
+	var idx: int = int(_debug_modifier_cycle_index.get(pool_key, 0))
+	if idx < 0:
+		idx = 0
+	var effect_id: StringName = pool[idx % pool.size()]
+	_debug_modifier_cycle_index[pool_key] = (idx + 1) % pool.size()
+	apply_floor_modifier_payload(value, effect_id, &"")
+	var label: String = _debug_modifier_label(effect_id)
+	var desc: String = _debug_modifier_description(effect_id)
+	_debug_modifier_log("Applied %s (%+d)\n%s" % [label, value, desc])
+
+func _debug_modifier_label(id: StringName) -> String:
+	var s: String = String(id)
+	for p in ["s_", "m_", "p_", "x_", "b_", "d_", "g_", "bg_"]:
+		if s.begins_with(p):
+			s = s.substr(p.length())
+			break
+	s = s.replace("_", " ")
+	var words: PackedStringArray = s.split(" ", false)
+	for i in range(words.size()):
+		var w: String = words[i]
+		if w.length() > 0:
+			words[i] = w.left(1).to_upper() + w.substr(1)
+	return " ".join(words)
+
+func _debug_modifier_description(id: StringName) -> String:
+	match id:
+		&"s_steady_hands": return "-10% Cooldowns"
+		&"s_guarded_footing": return "+8% Damage, -6% Enemy Damage"
+		&"s_orb_attunement": return "+20% Orb Charge, -5% Cooldowns"
+		&"s_skybound_step": return "+12% Jump Height, +8% Move Speed"
+		&"s_combat_focus": return "+10% Damage, -8% Enemy Health"
+		&"s_vampiric_thread": return "Heal 2 HP on kill (4 HP on elite kill)"
+		&"s_burst_runner": return "Enemy kills grant +20% Move Speed for 2.5s"
+		&"s_lucky_spark": return "Elite kills heal 6% Max HP, -3% Cooldowns"
+		&"m_ironblood": return "+20% Max HP, -10% Enemy Damage"
+		&"m_flow_engine": return "-25% Cooldowns, -10% Ultimate Cooldown"
+		&"m_warded_soul": return "Heal 12% Max HP now, +15% Orb Charge, -6% Enemy Damage"
+		&"m_ritual_of_stability": return "Heal 10% now, then 8% Max HP each floor"
+		&"m_kinetic_overdrive": return "+15% Move Speed, +18% Jump Height, +12% Attack Speed"
+		&"m_orb_mastery": return "+30% Orb Charge, +8% Damage"
+		&"m_battle_hymn": return "Perfect Dodge: +30% Attack Speed, +15% Move Speed (3.5s), heal 2%, -8% Cooldowns"
+		&"m_fated_reservoir": return "Each floor: heal 6%, +4% Damage and -3% Cooldowns (max 4), +10% Orb Charge"
+		&"p_blood_moon": return "Enemies +12% Damage, +10% Health"
+		&"p_siege_lines": return "Enemies +18% Projectile Speed, +5% Damage"
+		&"p_loaded_momentum": return "+2% Damage per kill (max +20%) until hit, Enemies +8% Damage"
+		&"p_gravity_flux": return "Gravity cycles to moon-bounce mode, Enemies +10% Damage"
+		&"p_ruthless_hunt": return "+1 Elite Spawn, Enemies +8% Damage"
+		&"p_hemorrhage_doctrine": return "Enemy hits apply stacking bleed (up to 3), Enemies +10% Damage"
+		&"p_velocity_collapse": return "Move Speed cycles: normal -> -30% -> +20%, Enemies +8% Damage"
+		&"p_volatile_siphon": return "Kills drain 1% HP (non-lethal), grant +10% Attack Speed (3s), Enemies +8% Damage"
+		&"x_apex_predators": return "Enemies +20% Damage, +18% Health, +1 Elite"
+		&"x_no_safe_space": return "Enemies +30% Projectile Speed, +15% Damage"
+		&"x_edge_of_ambition": return "Enemies +25% Damage, Perfect Dodge grants +20% Attack Speed (3s)"
+		&"x_execution_order": return "+2 Elite Spawns, Enemies +12% Damage, +10% Health"
+		&"x_dice_vice": return "Enemies +18% Damage, +18% Cooldowns, -10% Orb Charge"
+		&"x_predators_edge": return "Enemy hits can crit (+10% chance, +35% crit damage), Enemies +10% Damage"
+		&"x_blood_tax": return "Lose 1.5% Max HP every 8s (non-lethal), Enemies +12% Damage"
+		&"x_skull_standard": return "+1 Elite each combat floor, Enemies +10% Damage and +10% Health"
+		_:
+			return "Effect active"
+
+func _debug_modifier_log(msg: String) -> void:
+	_show_debug_toast(msg)
+	if not debug_modifier_injector_log_actions:
+		return
+	print("[RunState][Debug Modifier Injector] %s" % msg)
+
+func _ensure_debug_toast() -> void:
+	if _debug_toast_layer != null and is_instance_valid(_debug_toast_layer):
+		return
+	var tree: SceneTree = get_tree()
+	if tree == null or tree.root == null:
+		return
+	_debug_toast_layer = CanvasLayer.new()
+	_debug_toast_layer.name = "DebugModifierToastLayer"
+	_debug_toast_layer.layer = 110
+	_debug_toast_layer.process_mode = Node.PROCESS_MODE_ALWAYS
+	tree.root.add_child(_debug_toast_layer)
+
+	_debug_toast_label = Label.new()
+	_debug_toast_label.name = "DebugModifierToastLabel"
+	_debug_toast_label.process_mode = Node.PROCESS_MODE_ALWAYS
+	_debug_toast_label.visible = false
+	_debug_toast_label.z_index = 999
+	_debug_toast_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_debug_toast_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_debug_toast_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	_debug_toast_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	_debug_toast_label.add_theme_font_size_override("font_size", 24)
+	_debug_toast_label.add_theme_color_override("font_color", Color(1.0, 0.86, 0.2, 1.0))
+	_debug_toast_label.add_theme_color_override("font_shadow_color", Color(0, 0, 0, 0.85))
+	_debug_toast_label.add_theme_constant_override("shadow_offset_x", 2)
+	_debug_toast_label.add_theme_constant_override("shadow_offset_y", 2)
+	_debug_toast_layer.add_child(_debug_toast_label)
+	_layout_debug_toast()
+
+func _layout_debug_toast() -> void:
+	if _debug_toast_label == null or not is_instance_valid(_debug_toast_label):
+		return
+	var vp: Vector2 = get_viewport().get_visible_rect().size
+	var w: float = minf(vp.x * 0.8, 1200.0)
+	_debug_toast_label.position = Vector2((vp.x - w) * 0.5, vp.y * 0.16)
+	_debug_toast_label.size = Vector2(w, 110.0)
+
+func _show_debug_toast(msg: String) -> void:
+	if not debug_modifier_injector_enabled:
+		return
+	_ensure_debug_toast()
+	if _debug_toast_label == null or not is_instance_valid(_debug_toast_label):
+		return
+	_layout_debug_toast()
+	_debug_toast_label.text = "Debug Modifier: %s" % msg
+	_debug_toast_label.modulate = Color(1, 1, 1, 1)
+	_debug_toast_label.visible = true
+	_debug_toast_time_left = 1.6
+
+func _tick_debug_toast(delta: float) -> void:
+	if _debug_toast_label == null or not is_instance_valid(_debug_toast_label):
+		return
+	if _debug_toast_time_left <= 0.0:
+		return
+	_debug_toast_time_left = maxf(_debug_toast_time_left - delta, 0.0)
+	var alpha: float = clampf(_debug_toast_time_left / 1.6, 0.0, 1.0)
+	_debug_toast_label.modulate = Color(1, 1, 1, alpha)
+	if _debug_toast_time_left <= 0.0:
+		_debug_toast_label.visible = false
 
 func _reset_dice_meter_if_available() -> void:
 	var dice_meter: Node = _get_dice_meter_singleton()
@@ -344,12 +568,16 @@ func _reset_run_modifiers() -> void:
 	enemy_damage_mult = 1.0
 	enemy_health_mult = 1.0
 	enemy_projectile_speed_mult = 1.0
+	enemy_crit_chance_add = 0.0
+	enemy_crit_damage_mult = 1.0
 	player_damage_mult = 1.0
 	player_health_mult = 1.0
 	player_move_speed_mult = 1.0
 	player_jump_height_mult = 1.0
 	player_gravity_mult = 1.0
+	player_flux_jump_height_mult = 1.0
 	player_attack_speed_mult = 1.0
+	_base_player_move_speed_mult = 1.0
 
 	_reset_world_modifiers_only()
 	_reset_relic_knobs()
@@ -361,6 +589,7 @@ func _reset_relic_knobs() -> void:
 	relic_bleed_damage_mult = 1.0
 	relic_roll_max_charges_bonus = 0
 	relic_roll_recharge_mult = 1.0
+	relic_dice_meter_charge_mult = 1.0
 	relic_defend_duration_bonus = 0.0
 	relic_orb_charge_mult_bonus = 1.0
 	relic_ultimate_gain_mult = 1.0
@@ -376,9 +605,16 @@ func clear_world_modifiers() -> void:
 	enemy_damage_mult = 1.0
 	enemy_health_mult = 1.0
 	enemy_projectile_speed_mult = 1.0
+	enemy_crit_chance_add = 0.0
+	enemy_crit_damage_mult = 1.0
 	player_damage_mult = 1.0
 	player_health_mult = 1.0
 	player_move_speed_mult = 1.0
+	player_jump_height_mult = 1.0
+	player_gravity_mult = 1.0
+	player_flux_jump_height_mult = 1.0
+	player_attack_speed_mult = 1.0
+	_base_player_move_speed_mult = 1.0
 
 	_reset_world_modifiers_only()
 	_emit()
@@ -396,18 +632,40 @@ func _reset_world_modifiers_only() -> void:
 	free_shop_rerolls = 0
 	rare_relic_bonus = 0.0
 	elites_to_spawn_bonus = 0
+	elites_per_floor_bonus = 0
 
 	perfect_step_enabled = false
 	clean_cuts_enabled = false
 	ritual_of_stability_enabled = false
+	_ritual_last_floor_healed = 0
 	loaded_momentum_enabled = false
 	loaded_momentum_stacks = 0
+	vampiric_thread_enabled = false
 	edge_of_ambition_enabled = false
 	_edge_of_ambition_time_left = 0.0
 	gravity_flux_enabled = false
 	_gravity_flux_timer = 10.0
 	_gravity_flux_phase = 0
 	_base_player_attack_speed_mult = 1.0
+	hemorrhage_doctrine_enabled = false
+	_hemorrhage_stacks = 0
+	_hemorrhage_time_left = 0.0
+	_hemorrhage_tick_left = 1.0
+	velocity_collapse_enabled = false
+	_velocity_collapse_phase = 0
+	_velocity_collapse_timer = 12.0
+	_burst_runner_enabled = false
+	_burst_runner_time_left = 0.0
+	blood_tax_enabled = false
+	_blood_tax_tick_left = 8.0
+	_suppress_modifier_damage_callback = false
+	lucky_spark_enabled = false
+	volatile_siphon_enabled = false
+	battle_hymn_enabled = false
+	fated_reservoir_enabled = false
+	_battle_hymn_time_left = 0.0
+	_volatile_siphon_time_left = 0.0
+	_fated_reservoir_stacks = 0
 
 	_unknown_effects_warned.clear()
 
@@ -506,17 +764,24 @@ func _apply_effect(id: StringName) -> void:
 			cooldown_mult *= 0.95
 		&"s_skybound_step":
 			player_jump_height_mult *= 1.12
-			player_move_speed_mult *= 1.08
+			_base_player_move_speed_mult *= 1.08
 		&"s_tempered_guard":
 			player_health_mult *= 1.12
 			_apply_player_health_multiplier_now()
-			healing_mult *= 1.15
+			_heal_player_percent(0.08)
 		&"s_combat_focus":
 			player_damage_mult *= 1.10
 			enemy_health_mult *= 0.92
+		&"s_vampiric_thread":
+			vampiric_thread_enabled = true
+		&"s_burst_runner":
+			_burst_runner_enabled = true
+		&"s_lucky_spark":
+			lucky_spark_enabled = true
+			cooldown_mult *= 0.97
 
 		&"m_warded_soul":
-			healing_mult *= 1.25
+			_heal_player_percent(0.12)
 			orb_charge_mult *= 1.15
 			enemy_damage_mult *= 0.94
 		&"m_composure_engine":
@@ -528,11 +793,17 @@ func _apply_effect(id: StringName) -> void:
 			player_damage_mult *= 1.08
 		&"m_ritual_of_stability":
 			ritual_of_stability_enabled = true
-			healing_mult *= 1.15
+			_heal_player_percent(0.10)
 		&"m_kinetic_overdrive":
-			player_move_speed_mult *= 1.15
+			_base_player_move_speed_mult *= 1.15
 			player_jump_height_mult *= 1.18
 			_base_player_attack_speed_mult *= 1.12
+		&"m_battle_hymn":
+			battle_hymn_enabled = true
+			cooldown_mult *= 0.92
+		&"m_fated_reservoir":
+			fated_reservoir_enabled = true
+			orb_charge_mult *= 1.10
 
 		&"p_blood_moon":
 			enemy_damage_mult *= 1.12
@@ -543,18 +814,29 @@ func _apply_effect(id: StringName) -> void:
 		&"p_ruthless_hunt":
 			elites_to_spawn_bonus += 1
 			enemy_damage_mult *= 1.08
+		&"p_hemorrhage_doctrine":
+			hemorrhage_doctrine_enabled = true
+			enemy_damage_mult *= 1.10
+		&"p_velocity_collapse":
+			velocity_collapse_enabled = true
+			enemy_damage_mult *= 1.08
+		&"p_volatile_siphon":
+			volatile_siphon_enabled = true
+			enemy_damage_mult *= 1.08
 		&"p_loaded_momentum":
 			loaded_momentum_enabled = true
 			enemy_damage_mult *= 1.08
 		&"p_gravity_flux":
 			gravity_flux_enabled = true
-			enemy_damage_mult *= 1.06
+			_gravity_flux_phase = 1
+			_gravity_flux_timer = 10.0
+			enemy_damage_mult *= 1.10
 		&"p_fractured_orbits":
 			enemy_health_mult *= 1.12
 			cooldown_mult *= 1.10
 		&"p_tight_windows":
-			healing_mult *= 0.80
-			enemy_damage_mult *= 1.10
+			enemy_damage_mult *= 1.12
+			cooldown_mult *= 1.08
 
 		&"x_apex_predators":
 			enemy_damage_mult *= 1.20
@@ -564,7 +846,7 @@ func _apply_effect(id: StringName) -> void:
 			enemy_projectile_speed_mult *= 1.30
 			enemy_damage_mult *= 1.15
 		&"x_attrition_law":
-			healing_mult *= 0.60
+			enemy_damage_mult *= 1.12
 			cooldown_mult *= 1.15
 			enemy_health_mult *= 1.15
 		&"x_execution_order":
@@ -574,6 +856,17 @@ func _apply_effect(id: StringName) -> void:
 		&"x_edge_of_ambition":
 			edge_of_ambition_enabled = true
 			enemy_damage_mult *= 1.25
+		&"x_predators_edge":
+			enemy_crit_chance_add += 0.10
+			enemy_crit_damage_mult *= 1.35
+			enemy_damage_mult *= 1.10
+		&"x_blood_tax":
+			blood_tax_enabled = true
+			enemy_damage_mult *= 1.12
+		&"x_skull_standard":
+			elites_per_floor_bonus += 1
+			enemy_damage_mult *= 1.10
+			enemy_health_mult *= 1.10
 		&"x_dice_vice":
 			enemy_damage_mult *= 1.18
 			cooldown_mult *= 1.18
@@ -583,7 +876,7 @@ func _apply_effect(id: StringName) -> void:
 		&"b_sharpened":
 			player_damage_mult *= 1.12
 		&"b_fleetfoot":
-			player_move_speed_mult *= 1.10
+			_base_player_move_speed_mult *= 1.10
 		&"b_coolheaded":
 			cooldown_mult *= 0.85
 		&"b_heavyhand":
@@ -623,7 +916,7 @@ func _apply_effect(id: StringName) -> void:
 		&"m_second_wind":
 			_register_world_effect(id)
 		&"m_predator":
-			player_move_speed_mult *= 1.10
+			_base_player_move_speed_mult *= 1.10
 		&"m_guardian_shell":
 			_register_world_effect(id)
 		&"m_orb_overcharge":
@@ -649,7 +942,8 @@ func _apply_effect(id: StringName) -> void:
 		&"x_unstable_ground":
 			hazard_rise_mult *= 1.30
 		&"x_cursed_recovery":
-			healing_mult *= 0.60
+			enemy_damage_mult *= 1.08
+			cooldown_mult *= 1.08
 		&"x_marked":
 			_register_world_effect(id)
 		&"x_elite_pack":
@@ -687,6 +981,20 @@ func _apply_effect(id: StringName) -> void:
 # -----------------------------
 func _get_player_node() -> Node:
 	return get_tree().get_first_node_in_group("player")
+
+func _has_active_hostiles() -> bool:
+	var tree: SceneTree = get_tree()
+	if tree == null:
+		return false
+	for node_obj in tree.get_nodes_in_group("enemies"):
+		var node: Node = node_obj as Node
+		if node != null and is_instance_valid(node):
+			return true
+	for node_obj in tree.get_nodes_in_group("bosses"):
+		var node: Node = node_obj as Node
+		if node != null and is_instance_valid(node):
+			return true
+	return false
 
 func _get_health_node(player: Node) -> Node:
 	if player == null:
@@ -772,13 +1080,72 @@ func _heal_player_percent(pct: float) -> void:
 	_write_hp(h, mini(max_hp_val, hp_val + amount))
 	_emit_health_changed_if_possible(h)
 
+func _heal_player_flat(amount: int) -> void:
+	if amount <= 0:
+		return
+	var player: Node = _get_player_node()
+	if player == null:
+		return
+	var h: Node = _get_health_node(player)
+	if h == null:
+		return
+	if h.has_method("heal"):
+		h.call("heal", amount)
+		return
+	var max_hp_val: int = _read_max_hp(h)
+	var hp_val: int = _read_hp(h)
+	if max_hp_val <= 0 or hp_val < 0:
+		return
+	_write_hp(h, mini(max_hp_val, hp_val + amount))
+	_emit_health_changed_if_possible(h)
+
+func _apply_player_percent_damage_from_modifier(pct: float, nonlethal: bool) -> void:
+	var player: Node = _get_player_node()
+	if player == null:
+		return
+	var h: Node = _get_health_node(player)
+	if h == null:
+		return
+	var max_hp_val: int = _read_max_hp(h)
+	var hp_val: int = _read_hp(h)
+	if max_hp_val <= 0 or hp_val <= 0:
+		return
+	var amount: int = maxi(1, int(round(float(max_hp_val) * clampf(pct, 0.0, 1.0))))
+	if nonlethal:
+		amount = mini(amount, maxi(hp_val - 1, 0))
+	if amount <= 0:
+		return
+	_suppress_modifier_damage_callback = true
+	if h.has_method("take_damage"):
+		h.call("take_damage", amount, self, true)
+	else:
+		_write_hp(h, maxi(hp_val - amount, 0))
+		_emit_health_changed_if_possible(h)
+	_suppress_modifier_damage_callback = false
+
 func on_enemy_killed_for_modifiers(_is_elite: bool = false) -> void:
+	if vampiric_thread_enabled:
+		_heal_player_flat(4 if _is_elite else 2)
+	if _burst_runner_enabled:
+		_burst_runner_time_left = 2.5
+	if lucky_spark_enabled:
+		if _is_elite:
+			_heal_player_percent(0.06)
+	if volatile_siphon_enabled:
+		_apply_player_percent_damage_from_modifier(0.01, true)
+		_volatile_siphon_time_left = 3.0
 	if not loaded_momentum_enabled:
 		return
 	loaded_momentum_stacks = mini(loaded_momentum_stacks + 1, 10)
 	_emit()
 
 func on_player_took_hp_damage(_amount: int) -> void:
+	if _suppress_modifier_damage_callback:
+		return
+	if hemorrhage_doctrine_enabled:
+		_hemorrhage_stacks = mini(_hemorrhage_stacks + 1, 3)
+		_hemorrhage_time_left = 4.0
+		_hemorrhage_tick_left = minf(_hemorrhage_tick_left, 1.0)
 	if loaded_momentum_stacks > 0:
 		loaded_momentum_stacks = 0
 	if edge_of_ambition_enabled:
@@ -788,10 +1155,30 @@ func on_player_took_hp_damage(_amount: int) -> void:
 	_emit()
 
 func on_perfect_dodge_for_modifiers() -> void:
+	if battle_hymn_enabled:
+		_battle_hymn_time_left = 3.5
+		_heal_player_percent(0.02)
 	if not edge_of_ambition_enabled:
 		return
 	_edge_of_ambition_time_left = 3.0
 	_tick_dynamic_world_effects(0.0)
+	_emit()
+
+func on_floor_cleared_for_modifiers(floor_number: int) -> void:
+	# Floor number expected as 1-based index within current world.
+	if fated_reservoir_enabled:
+		_heal_player_percent(0.06)
+		if _fated_reservoir_stacks < 4:
+			_fated_reservoir_stacks += 1
+			player_damage_mult *= 1.04
+			cooldown_mult *= 0.97
+	if not ritual_of_stability_enabled:
+		return
+	var f: int = maxi(floor_number, 0)
+	if f <= _ritual_last_floor_healed:
+		return
+	_ritual_last_floor_healed = f
+	_heal_player_percent(0.08)
 	_emit()
 
 func get_loaded_momentum_damage_mult() -> float:
@@ -807,11 +1194,58 @@ func _tick_dynamic_world_effects(delta: float) -> void:
 		if _gravity_flux_timer <= 0.0:
 			_gravity_flux_timer = 10.0
 			_gravity_flux_phase = 1 - _gravity_flux_phase
-		player_gravity_mult = 0.92 if _gravity_flux_phase == 0 else 1.08
+		# Phase 1: normal jump/gravity. Phase 0: moon-bounce mode.
+		if _gravity_flux_phase == 0:
+			player_gravity_mult = 0.20
+			player_flux_jump_height_mult = 2.10
+		else:
+			player_gravity_mult = 1.0
+			player_flux_jump_height_mult = 1.0
 	else:
 		player_gravity_mult = 1.0
+		player_flux_jump_height_mult = 1.0
+	if velocity_collapse_enabled:
+		_velocity_collapse_timer -= delta
+		if _velocity_collapse_timer <= 0.0:
+			_velocity_collapse_phase = (_velocity_collapse_phase + 1) % 3
+			_velocity_collapse_timer = 3.0 if _velocity_collapse_phase > 0 else 12.0
+	if _burst_runner_time_left > 0.0:
+		_burst_runner_time_left = maxf(_burst_runner_time_left - delta, 0.0)
+	if _battle_hymn_time_left > 0.0:
+		_battle_hymn_time_left = maxf(_battle_hymn_time_left - delta, 0.0)
+	if _volatile_siphon_time_left > 0.0:
+		_volatile_siphon_time_left = maxf(_volatile_siphon_time_left - delta, 0.0)
 	var edge_mult: float = 1.20 if (edge_of_ambition_enabled and _edge_of_ambition_time_left > 0.0) else 1.0
-	player_attack_speed_mult = _base_player_attack_speed_mult * edge_mult
+	var hymn_attack_mult: float = 1.30 if _battle_hymn_time_left > 0.0 else 1.0
+	var volatile_attack_mult: float = 1.10 if _volatile_siphon_time_left > 0.0 else 1.0
+	player_attack_speed_mult = _base_player_attack_speed_mult * edge_mult * hymn_attack_mult * volatile_attack_mult
+	var move_mult: float = _base_player_move_speed_mult
+	if velocity_collapse_enabled:
+		if _velocity_collapse_phase == 1:
+			move_mult *= 0.70
+		elif _velocity_collapse_phase == 2:
+			move_mult *= 1.20
+	if _battle_hymn_time_left > 0.0:
+		move_mult *= 1.15
+	if _burst_runner_time_left > 0.0:
+		move_mult *= 1.20
+	player_move_speed_mult = move_mult
+	if hemorrhage_doctrine_enabled and _hemorrhage_stacks > 0:
+		_hemorrhage_time_left = maxf(_hemorrhage_time_left - delta, 0.0)
+		_hemorrhage_tick_left -= delta
+		if _hemorrhage_tick_left <= 0.0:
+			_hemorrhage_tick_left += 1.0
+			_apply_player_percent_damage_from_modifier(0.005 * float(_hemorrhage_stacks), true)
+		if _hemorrhage_time_left <= 0.0:
+			_hemorrhage_stacks = 0
+			_hemorrhage_tick_left = 1.0
+	if blood_tax_enabled:
+		_blood_tax_tick_left -= delta
+		if _blood_tax_tick_left <= 0.0:
+			_blood_tax_tick_left += 8.0
+			if _has_active_hostiles():
+				_apply_player_percent_damage_from_modifier(0.015, true)
+
 
 func _read_hp(h: Node) -> int:
 	if h == null:

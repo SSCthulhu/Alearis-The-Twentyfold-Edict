@@ -15,7 +15,7 @@
 [ext_resource type="PackedScene" uid="uid://bnacyicqqd64r" path="res://scenes/boss/FrostGolem3DView.tscn" id="14_62ceh"]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_gvkpj"]
-size = Vector2(185.4844, 330.0312)
+size = Vector2(185.4844, 383.0156)
 
 [node name="Boss" type="StaticBody2D" groups=["boss"]]
 script = ExtResource("1_trtv8")

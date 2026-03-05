@@ -1014,13 +1014,16 @@ func _get_speed_multiplier() -> float:
 	return run_mult
 
 func _get_jump_height_multiplier() -> float:
+	var mult: float = 1.0
 	if RunStateSingleton != null and ("player_jump_height_mult" in RunStateSingleton):
-		return clampf(float(RunStateSingleton.player_jump_height_mult), 1.0, 2.0)
-	return 1.0
+		mult *= clampf(float(RunStateSingleton.player_jump_height_mult), 1.0, 2.5)
+	if RunStateSingleton != null and ("player_flux_jump_height_mult" in RunStateSingleton):
+		mult *= clampf(float(RunStateSingleton.player_flux_jump_height_mult), 1.0, 3.0)
+	return clampf(mult, 1.0, 3.0)
 
 func _get_gravity_multiplier() -> float:
 	if RunStateSingleton != null and ("player_gravity_mult" in RunStateSingleton):
-		return clampf(float(RunStateSingleton.player_gravity_mult), 0.7, 1.3)
+		return clampf(float(RunStateSingleton.player_gravity_mult), 0.15, 1.6)
 	return 1.0
 
 

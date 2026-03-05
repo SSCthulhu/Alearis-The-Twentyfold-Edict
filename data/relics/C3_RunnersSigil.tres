@@ -6,6 +6,7 @@
 script = ExtResource("1_shbq3")
 id = &"c3_runners_sigil"
 display_name = "Runner’s Sigil"
+band = 0
 tags = Array[StringName]([&"mobility", &"dodge"])
 description_lines = Array[String](["-20% dodge cooldown."])
 effect_id = &"relic_runners_sigil"

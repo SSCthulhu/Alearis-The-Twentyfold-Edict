@@ -237,6 +237,9 @@ limit_bottom = 14535
 position = Vector2(50759, 12794)
 collision_mask = 3
 
+[node name="CollisionShape2D" parent="Boss/Hurtbox" index="0"]
+position = Vector2(0, 26.492188)
+
 [node name="AcensionCharge" parent="." instance=ExtResource("2_n8wkn")]
 position = Vector2(51397, 12593)
 
@@ -261,14 +264,6 @@ offset_right = -16.775
 offset_bottom = -16.775
 style = ExtResource("17_80gak")
 
-[node name="PlayerHUDWiring" parent="UI/ScreenRoot/HUDRoot" index="4"]
-player_path = NodePath("../../../../Player")
-combat_path = NodePath("../../../../Player/Combat")
-
-[node name="EncounterHUDWiring" parent="UI/ScreenRoot/HUDRoot" index="5"]
-floor_controller_path = NodePath("../../../../FloorProgressionController")
-boss_path = NodePath("../../../../Boss")
-
 [node name="ColdNightOverlay" type="ColorRect" parent="UI/ScreenRoot/HUDRoot" index="6"]
 z_index = -8
 layout_mode = 0
@@ -285,6 +280,14 @@ anchor_right = 1.0
 anchor_bottom = 1.0
 mouse_filter = 2
 color = Color(1, 1, 1, 0)
+
+[node name="PlayerHUDWiring" parent="UI/ScreenRoot/HUDRoot" index="8"]
+player_path = NodePath("../../../../Player")
+combat_path = NodePath("../../../../Player/Combat")
+
+[node name="EncounterHUDWiring" parent="UI/ScreenRoot/HUDRoot" index="9"]
+floor_controller_path = NodePath("../../../../FloorProgressionController")
+boss_path = NodePath("../../../../Boss")
 
 [node name="LowHealthPostFX" parent="UI/ScreenRoot/HUDRoot/PlayerDamageFeedback" index="0"]
 layout_mode = 3

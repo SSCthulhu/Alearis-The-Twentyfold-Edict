@@ -130,6 +130,8 @@ func spawn_floor(floor_index: int) -> void:
 	var elites_to_spawn: int = 0
 	if RunStateSingleton != null and "elites_to_spawn_bonus" in RunStateSingleton:
 		elites_to_spawn = int(RunStateSingleton.elites_to_spawn_bonus)
+		if "elites_per_floor_bonus" in RunStateSingleton:
+			elites_to_spawn += int(RunStateSingleton.elites_per_floor_bonus)
 		if debug_spawning:
 			pass
 	else:

@@ -1,0 +1,13 @@
+[gd_resource type="Resource" script_class="RelicData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/systems/RelicData.gd" id="1_relic"]
+
+[resource]
+script = ExtResource("1_relic")
+id = &"r8_broken_die"
+display_name = "Bent Die"
+rarity = 1
+band = 1
+tags = Array[StringName]([&"dice_meter", &"mitigation", &"control"])
+description_lines = Array[String](["If Dice Meter lands on a negative outcome,", "it rerolls once and keeps the better result."])
+effect_id = &"relic_bent_die"

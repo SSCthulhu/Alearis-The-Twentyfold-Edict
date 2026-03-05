@@ -6,6 +6,7 @@
 script = ExtResource("1_7fwtj")
 id = &"c8_surge_capacitor"
 display_name = "Surge Capacitor"
+band = 2
 tags = Array[StringName]([&"mechanic", &"orb"])
 description_lines = Array[String](["Dropping the Ascension Charge grants +12% damage for 4s", "6s internal cooldown"])
 effect_id = &"relic_surge_capacitor"
