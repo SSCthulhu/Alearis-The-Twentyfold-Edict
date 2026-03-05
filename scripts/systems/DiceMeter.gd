@@ -109,9 +109,12 @@ func on_perfect_dodge() -> void:
 func on_boss_damage(amount: float) -> void:
 	if amount <= 0.0:
 		return
-	_pending_boss_damage += amount
 	if boss_damage_step <= 0.0:
 		return
+	# Clamp per-hit contribution so overkill hits (e.g. boss death blow)
+	# cannot flood the meter with multiple milestone grants at once.
+	var contributed: float = minf(amount, boss_damage_step)
+	_pending_boss_damage += contributed
 	while _pending_boss_damage >= boss_damage_step:
 		_pending_boss_damage -= boss_damage_step
 		add_charge(charge_per_boss_damage_step, &"boss_damage_step")
@@ -535,21 +538,26 @@ func _tick_enemy_slow_effects(delta: float) -> void:
 		return
 	for i: int in range(_active_enemy_slow_effects.size() - 1, -1, -1):
 		var e: Dictionary = _active_enemy_slow_effects[i]
+		var n_var: Variant = e.get("node", null)
+		var n: Node = n_var as Node if (n_var is Node and is_instance_valid(n_var)) else null
+		# Enemy can be freed mid-effect (death/scene transition). Drop stale entry immediately.
+		if n == null or not is_instance_valid(n):
+			_active_enemy_slow_effects.remove_at(i)
+			continue
 		var t: float = float(e.get("time_left", 0.0)) - delta
 		if t > 0.0:
 			e["time_left"] = t
 			_active_enemy_slow_effects[i] = e
 			continue
-		var n: Node = e.get("node", null)
-		if n != null and is_instance_valid(n):
-			var field_name: String = String(e.get("field", ""))
-			if field_name != "" and (field_name in n):
-				n.set(field_name, float(e.get("original", n.get(field_name))))
+		var field_name: String = String(e.get("field", ""))
+		if field_name != "" and (field_name in n):
+			n.set(field_name, float(e.get("original", n.get(field_name))))
 		_active_enemy_slow_effects.remove_at(i)
 
 func _clear_enemy_slow_effects() -> void:
 	for e: Dictionary in _active_enemy_slow_effects:
-		var n: Node = e.get("node", null)
+		var n_var: Variant = e.get("node", null)
+		var n: Node = n_var as Node if (n_var is Node and is_instance_valid(n_var)) else null
 		if n == null or not is_instance_valid(n):
 			continue
 		var field_name: String = String(e.get("field", ""))

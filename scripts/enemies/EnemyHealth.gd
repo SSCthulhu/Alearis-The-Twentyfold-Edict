@@ -105,6 +105,8 @@ func take_damage(amount: int, _source: Node = null, tag: StringName = &"", is_cr
 			var enemy: Node = get_parent()
 			var is_elite: bool = enemy != null and enemy.is_in_group(&"elites")
 			dice_meter.call("on_enemy_killed", is_elite)
+			if RunStateSingleton != null and RunStateSingleton.has_method("on_enemy_killed_for_modifiers"):
+				RunStateSingleton.call("on_enemy_killed_for_modifiers", is_elite)
 		# print("[EnemyHealth] died emit. amount=", amount, " final_hp=", hp)  # ✅ Disabled for clean logs
 		died.emit()
 

@@ -44,6 +44,8 @@ var _is_initialized: bool = false  # Track if initial setup is complete
 var _healing_vfx_suppressed_until_sec: float = 0.0
 
 const STAT_MAX_HP_MULT: StringName = &"max_hp_mult"
+const BUFF_MARKED: StringName = &"world_marked_debuff"
+const STAT_DAMAGE_TAKEN_MULT: StringName = &"damage_taken_mult"
 
 @onready var _buffs: PlayerBuffs = get_node_or_null(buffs_path) as PlayerBuffs
 
@@ -373,6 +375,8 @@ func take_damage(amount: int, source: Node = null, ignore_invuln: bool = false) 
 	if final_amount > 0:
 		hp = maxi(hp - final_amount, 0)
 		health_changed.emit(hp, max_hp)
+		if RunStateSingleton != null and RunStateSingleton.has_method("on_player_took_hp_damage"):
+			RunStateSingleton.call("on_player_took_hp_damage", final_amount)
 
 		# IMPORTANT: emit ONLY when HP is reduced (keeps your damage numbers sane)
 		damage_applied.emit(final_amount, source)
@@ -391,6 +395,8 @@ func take_damage(amount: int, source: Node = null, ignore_invuln: bool = false) 
 		_is_dead = true
 		pass
 		died.emit()
+	else:
+		_apply_world_marked_if_active()
 
 func revive_full() -> void:
 	_is_dead = false
@@ -440,3 +446,19 @@ func _spawn_healing_vfx() -> void:
 	# Add as child of player so it follows them (deferred to avoid blocking)
 	player.add_child.call_deferred(vfx)
 	pass
+
+func _apply_world_marked_if_active() -> void:
+	if _buffs == null:
+		return
+	if RunStateSingleton == null:
+		return
+	if not ("world_effects" in RunStateSingleton):
+		return
+	var effects: Variant = RunStateSingleton.world_effects
+	if not (effects is Array):
+		return
+	if not (effects as Array).has(&"x_marked"):
+		return
+	var stats: Dictionary[StringName, float] = {}
+	stats[STAT_DAMAGE_TAKEN_MULT] = 1.15
+	_buffs.add_buff(BUFF_MARKED, 6.0, stats)

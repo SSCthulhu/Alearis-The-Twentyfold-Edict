@@ -364,7 +364,17 @@ func _apply_run_damage_multiplier(base_dmg: int) -> int:
 		var mult: float = float(RunStateSingleton.player_damage_mult)
 		if mult != 1.0:
 			dmg = int(round(float(dmg) * mult))
+	if RunStateSingleton != null and RunStateSingleton.has_method("get_loaded_momentum_damage_mult"):
+		var lm_mult: float = float(RunStateSingleton.call("get_loaded_momentum_damage_mult"))
+		if lm_mult != 1.0:
+			dmg = int(round(float(dmg) * lm_mult))
 	return max(dmg, 1)
+
+func _get_attack_speed_mult() -> float:
+	var run_mult: float = 1.0
+	if RunStateSingleton != null and ("player_attack_speed_mult" in RunStateSingleton):
+		run_mult = clampf(float(RunStateSingleton.player_attack_speed_mult), 0.5, 2.0)
+	return run_mult
 
 func _apply_buffs_outgoing_multiplier(base_dmg: int) -> int:
 	var dmg: int = base_dmg
@@ -462,6 +472,11 @@ func _start_attack(kind: StringName) -> bool:
 
 		_:
 			return false
+
+	var atk_speed_mult: float = _get_attack_speed_mult()
+	if atk_speed_mult > 0.0 and atk_speed_mult != 1.0:
+		windup /= atk_speed_mult
+		recovery /= atk_speed_mult
 
 	_busy = true
 	_current_attack_kind = kind

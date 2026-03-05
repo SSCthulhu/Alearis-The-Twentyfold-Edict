@@ -311,7 +311,7 @@ func _physics_process(delta: float) -> void:
 		if not is_on_floor():
 			if active_state != STATE.FALL:
 				switch_state(STATE.FALL)
-			velocity.y = move_toward(velocity.y, FALL_VELOCITY, FALL_GRAVITY * delta)
+			velocity.y = move_toward(velocity.y, FALL_VELOCITY, FALL_GRAVITY * _get_gravity_multiplier() * delta)
 		else:
 			if velocity.y > 0.0:
 				velocity.y = 0.0
@@ -620,7 +620,7 @@ func _on_state_enter(state: STATE) -> void:
 		STATE.JUMP:
 			if previous_state != STATE.TURNING:
 				_play_animation("jump_start")
-			velocity.y = JUMP_VELOCITY  # NO speed multiplier - all characters jump same height
+			velocity.y = JUMP_VELOCITY * _get_jump_height_multiplier()
 			_coyote_timer.stop()
 			_used_double_jump = false  # Reset on initial jump
 			var _char_name: String = "Unknown"
@@ -633,7 +633,7 @@ func _on_state_enter(state: STATE) -> void:
 		
 		STATE.DOUBLE_JUMP:
 			_play_animation("double_jump_start")  # Play ninja jump start animation
-			velocity.y = DOUBLE_JUMP_VELOCITY  # NO speed multiplier - all characters jump same height
+			velocity.y = DOUBLE_JUMP_VELOCITY * _get_jump_height_multiplier()
 			_can_double_jump = false
 			_is_sprinting = false
 			_used_double_jump = true  # Mark that double jump was used
@@ -821,7 +821,7 @@ func process_state(delta: float) -> void:
 				switch_state(STATE.IDLE if Input.get_axis(input_move_left, input_move_right) == 0 else STATE.WALK)
 				return
 
-			velocity.y = move_toward(velocity.y, FALL_VELOCITY, FALL_GRAVITY * delta)
+			velocity.y = move_toward(velocity.y, FALL_VELOCITY, FALL_GRAVITY * _get_gravity_multiplier() * delta)
 			
 			# Air movement - same for all characters (no speed multiplier)
 			_handle_air_movement()
@@ -877,7 +877,7 @@ func process_state(delta: float) -> void:
 				switch_state(STATE.HEAVY_ATTACK)
 		
 		STATE.DASH:
-			velocity.y = move_toward(velocity.y, FALL_VELOCITY, FALL_GRAVITY * delta)
+			velocity.y = move_toward(velocity.y, FALL_VELOCITY, FALL_GRAVITY * _get_gravity_multiplier() * delta)
 			
 			if Input.is_action_pressed(input_dash):
 				_is_sprinting = true
@@ -1006,8 +1006,21 @@ func _is_input_against_facing() -> bool:
 
 
 func _get_speed_multiplier() -> float:
+	var run_mult: float = 1.0
+	if RunStateSingleton != null and ("player_move_speed_mult" in RunStateSingleton):
+		run_mult = clampf(float(RunStateSingleton.player_move_speed_mult), 0.5, 2.0)
 	if character_data != null:
-		return character_data.move_speed_multiplier
+		return character_data.move_speed_multiplier * run_mult
+	return run_mult
+
+func _get_jump_height_multiplier() -> float:
+	if RunStateSingleton != null and ("player_jump_height_mult" in RunStateSingleton):
+		return clampf(float(RunStateSingleton.player_jump_height_mult), 1.0, 2.0)
+	return 1.0
+
+func _get_gravity_multiplier() -> float:
+	if RunStateSingleton != null and ("player_gravity_mult" in RunStateSingleton):
+		return clampf(float(RunStateSingleton.player_gravity_mult), 0.7, 1.3)
 	return 1.0
 
 
@@ -1297,7 +1310,7 @@ func _start_light_attack() -> void:
 func _process_light_attack(delta: float) -> void:
 	# Apply gravity
 	if not is_on_floor():
-		velocity.y = move_toward(velocity.y, FALL_VELOCITY, FALL_GRAVITY * delta)
+		velocity.y = move_toward(velocity.y, FALL_VELOCITY, FALL_GRAVITY * _get_gravity_multiplier() * delta)
 	
 	# Minimal ground movement
 	velocity.x = move_toward(velocity.x, 0.0, 2600.0 * delta)
@@ -1495,7 +1508,7 @@ func _start_heavy_attack() -> void:
 func _process_heavy_attack(delta: float) -> void:
 	# Apply gravity
 	if not is_on_floor():
-		velocity.y = move_toward(velocity.y, FALL_VELOCITY, FALL_GRAVITY * delta)
+		velocity.y = move_toward(velocity.y, FALL_VELOCITY, FALL_GRAVITY * _get_gravity_multiplier() * delta)
 	
 	# Always update timer
 	_attack_move_timer += delta
@@ -2106,7 +2119,7 @@ func _process_defend(delta: float) -> void:
 	"""Process defensive ability animation state"""
 	# Apply gravity
 	if not is_on_floor():
-		velocity.y = move_toward(velocity.y, FALL_VELOCITY, FALL_GRAVITY * delta)
+		velocity.y = move_toward(velocity.y, FALL_VELOCITY, FALL_GRAVITY * _get_gravity_multiplier() * delta)
 	
 	# Stop horizontal movement
 	velocity.x = move_toward(velocity.x, 0.0, 3000.0 * delta)

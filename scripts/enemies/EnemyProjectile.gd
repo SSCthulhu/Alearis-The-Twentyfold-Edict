@@ -8,6 +8,7 @@ const VfxRenderUtil = preload("res://scripts/vfx/VfxRenderUtil.gd")
 
 var _direction: Vector2 = Vector2.RIGHT
 var _damage: int = 15
+var _speed_mult: float = 1.0
 var _time_alive: float = 0.0
 var _hit_targets: Dictionary = {}
 
@@ -16,6 +17,8 @@ func initialize(direction: Vector2, damage: int) -> void:
 	_damage = damage
 	if RunStateSingleton != null and ("enemy_damage_mult" in RunStateSingleton):
 		_damage = maxi(1, int(round(float(_damage) * float(RunStateSingleton.enemy_damage_mult))))
+	if RunStateSingleton != null and ("enemy_projectile_speed_mult" in RunStateSingleton):
+		_speed_mult = maxf(0.1, float(RunStateSingleton.enemy_projectile_speed_mult))
 	
 	# Optionally rotate to face direction
 	if rotate_to_direction:
@@ -51,7 +54,7 @@ func _physics_process(delta: float) -> void:
 			_try_hit(body)
 			return  # Stop processing after hit
 	
-	global_position += _direction * speed * delta
+	global_position += _direction * speed * _speed_mult * delta
 	_time_alive += delta
 
 func _on_body_entered(body: Node2D) -> void:

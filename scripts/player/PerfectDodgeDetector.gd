@@ -124,6 +124,8 @@ func _on_damage_blocked(attempted_damage: int, source: Node) -> void:
 	var dice_meter: Node = _get_dice_meter_singleton()
 	if dice_meter != null and dice_meter.has_method("on_perfect_dodge"):
 		dice_meter.call("on_perfect_dodge")
+	if RunStateSingleton != null and RunStateSingleton.has_method("on_perfect_dodge_for_modifiers"):
+		RunStateSingleton.call("on_perfect_dodge_for_modifiers")
 
 	perfect_dodge.emit(source, attempted_damage)
 	

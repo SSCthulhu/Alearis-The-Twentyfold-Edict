@@ -209,8 +209,13 @@ var relic_loaded_fate_used_this_world: bool = false
 # -----------------------------
 var enemy_damage_mult: float = 1.0
 var enemy_health_mult: float = 1.0
+var enemy_projectile_speed_mult: float = 1.0
 var player_damage_mult: float = 1.0
 var player_health_mult: float = 1.0
+var player_move_speed_mult: float = 1.0
+var player_jump_height_mult: float = 1.0
+var player_gravity_mult: float = 1.0
+var player_attack_speed_mult: float = 1.0
 
 # World-scoped effects list (flags)
 var world_effects: Array[StringName] = []
@@ -230,9 +235,22 @@ var elites_to_spawn_bonus: int = 0
 # World-scoped flags (recognized ids you may reference elsewhere)
 var perfect_step_enabled: bool = false
 var clean_cuts_enabled: bool = false
+var ritual_of_stability_enabled: bool = false
+var loaded_momentum_enabled: bool = false
+var loaded_momentum_stacks: int = 0
+var edge_of_ambition_enabled: bool = false
+var _edge_of_ambition_time_left: float = 0.0
+var gravity_flux_enabled: bool = false
+var _gravity_flux_timer: float = 10.0
+var _gravity_flux_phase: int = 0
+var _base_player_attack_speed_mult: float = 1.0
 
 func _ready() -> void:
 	load_meta()
+	set_process(true)
+
+func _process(delta: float) -> void:
+	_tick_dynamic_world_effects(delta)
 
 func _get_dice_meter_singleton() -> Node:
 	var tree: SceneTree = get_tree()
@@ -325,8 +343,13 @@ func start_new_run(run_seed_override: int = 0) -> void:
 func _reset_run_modifiers() -> void:
 	enemy_damage_mult = 1.0
 	enemy_health_mult = 1.0
+	enemy_projectile_speed_mult = 1.0
 	player_damage_mult = 1.0
 	player_health_mult = 1.0
+	player_move_speed_mult = 1.0
+	player_jump_height_mult = 1.0
+	player_gravity_mult = 1.0
+	player_attack_speed_mult = 1.0
 
 	_reset_world_modifiers_only()
 	_reset_relic_knobs()
@@ -352,8 +375,10 @@ func clear_world_modifiers() -> void:
 
 	enemy_damage_mult = 1.0
 	enemy_health_mult = 1.0
+	enemy_projectile_speed_mult = 1.0
 	player_damage_mult = 1.0
 	player_health_mult = 1.0
+	player_move_speed_mult = 1.0
 
 	_reset_world_modifiers_only()
 	_emit()
@@ -374,10 +399,21 @@ func _reset_world_modifiers_only() -> void:
 
 	perfect_step_enabled = false
 	clean_cuts_enabled = false
+	ritual_of_stability_enabled = false
+	loaded_momentum_enabled = false
+	loaded_momentum_stacks = 0
+	edge_of_ambition_enabled = false
+	_edge_of_ambition_time_left = 0.0
+	gravity_flux_enabled = false
+	_gravity_flux_timer = 10.0
+	_gravity_flux_phase = 0
+	_base_player_attack_speed_mult = 1.0
 
 	_unknown_effects_warned.clear()
 
 func advance_floor() -> void:
+	if ritual_of_stability_enabled:
+		_heal_player_percent(0.08)
 	floor_index += 1
 
 func advance_world() -> void:
@@ -460,14 +496,104 @@ func _apply_effect(id: StringName) -> void:
 		return
 
 	match id:
+		&"s_steady_hands":
+			cooldown_mult *= 0.90
+		&"s_guarded_footing":
+			player_damage_mult *= 1.08
+			enemy_damage_mult *= 0.94
+		&"s_orb_attunement":
+			orb_charge_mult *= 1.20
+			cooldown_mult *= 0.95
+		&"s_skybound_step":
+			player_jump_height_mult *= 1.12
+			player_move_speed_mult *= 1.08
+		&"s_tempered_guard":
+			player_health_mult *= 1.12
+			_apply_player_health_multiplier_now()
+			healing_mult *= 1.15
+		&"s_combat_focus":
+			player_damage_mult *= 1.10
+			enemy_health_mult *= 0.92
+
+		&"m_warded_soul":
+			healing_mult *= 1.25
+			orb_charge_mult *= 1.15
+			enemy_damage_mult *= 0.94
+		&"m_composure_engine":
+			player_damage_mult *= 1.12
+			enemy_health_mult *= 0.88
+			cooldown_mult *= 0.90
+		&"m_orb_mastery":
+			orb_charge_mult *= 1.30
+			player_damage_mult *= 1.08
+		&"m_ritual_of_stability":
+			ritual_of_stability_enabled = true
+			healing_mult *= 1.15
+		&"m_kinetic_overdrive":
+			player_move_speed_mult *= 1.15
+			player_jump_height_mult *= 1.18
+			_base_player_attack_speed_mult *= 1.12
+
+		&"p_blood_moon":
+			enemy_damage_mult *= 1.12
+			enemy_health_mult *= 1.10
+		&"p_siege_lines":
+			enemy_projectile_speed_mult *= 1.18
+			enemy_damage_mult *= 1.05
+		&"p_ruthless_hunt":
+			elites_to_spawn_bonus += 1
+			enemy_damage_mult *= 1.08
+		&"p_loaded_momentum":
+			loaded_momentum_enabled = true
+			enemy_damage_mult *= 1.08
+		&"p_gravity_flux":
+			gravity_flux_enabled = true
+			enemy_damage_mult *= 1.06
+		&"p_fractured_orbits":
+			enemy_health_mult *= 1.12
+			cooldown_mult *= 1.10
+		&"p_tight_windows":
+			healing_mult *= 0.80
+			enemy_damage_mult *= 1.10
+
+		&"x_apex_predators":
+			enemy_damage_mult *= 1.20
+			enemy_health_mult *= 1.18
+			elites_to_spawn_bonus += 1
+		&"x_no_safe_space":
+			enemy_projectile_speed_mult *= 1.30
+			enemy_damage_mult *= 1.15
+		&"x_attrition_law":
+			healing_mult *= 0.60
+			cooldown_mult *= 1.15
+			enemy_health_mult *= 1.15
+		&"x_execution_order":
+			elites_to_spawn_bonus += 2
+			enemy_damage_mult *= 1.12
+			enemy_health_mult *= 1.10
+		&"x_edge_of_ambition":
+			edge_of_ambition_enabled = true
+			enemy_damage_mult *= 1.25
+		&"x_dice_vice":
+			enemy_damage_mult *= 1.18
+			cooldown_mult *= 1.18
+			orb_charge_mult *= 0.90
+
+		# Backward-compatible legacy ids
 		&"b_sharpened":
 			player_damage_mult *= 1.12
+		&"b_fleetfoot":
+			player_move_speed_mult *= 1.10
 		&"b_coolheaded":
 			cooldown_mult *= 0.85
 		&"b_heavyhand":
 			player_damage_mult *= 1.10
+		&"b_bulwark_start":
+			_register_world_effect(id)
 		&"b_orb_handler":
 			orb_charge_mult *= 1.15
+		&"b_surge_on_kill":
+			_register_world_effect(id)
 
 		&"b_perfect_step":
 			perfect_step_enabled = true
@@ -477,6 +603,8 @@ func _apply_effect(id: StringName) -> void:
 			clean_cuts_enabled = true
 			player_damage_mult *= 1.08
 			_register_world_effect(id)
+		&"b_stagger_training":
+			player_damage_mult *= 1.10
 
 		&"m_berserker_pact":
 			player_damage_mult *= 1.25
@@ -488,6 +616,21 @@ func _apply_effect(id: StringName) -> void:
 		&"m_flow_engine":
 			cooldown_mult *= 0.75
 			ultimate_cooldown_mult *= 0.90
+		&"m_executioner":
+			player_damage_mult *= 1.15
+		&"m_shockwave":
+			_register_world_effect(id)
+		&"m_second_wind":
+			_register_world_effect(id)
+		&"m_predator":
+			player_move_speed_mult *= 1.10
+		&"m_guardian_shell":
+			_register_world_effect(id)
+		&"m_orb_overcharge":
+			orb_charge_mult *= 1.15
+			_register_world_effect(id)
+		&"m_cleanse_mastery":
+			_register_world_effect(id)
 
 		&"d_overcharged_foes":
 			enemy_damage_mult *= 1.12
@@ -498,6 +641,8 @@ func _apply_effect(id: StringName) -> void:
 		&"d_elite_presence":
 			elites_to_spawn_bonus += 1
 			pass
+		&"d_sniper_winds":
+			enemy_projectile_speed_mult *= 1.15
 
 		&"x_brutal_foes":
 			enemy_damage_mult *= 1.22
@@ -505,27 +650,33 @@ func _apply_effect(id: StringName) -> void:
 			hazard_rise_mult *= 1.30
 		&"x_cursed_recovery":
 			healing_mult *= 0.60
+		&"x_marked":
+			_register_world_effect(id)
 		&"x_elite_pack":
 			elites_to_spawn_bonus += 2
 			pass
 
+		# Deprecated currency/shop/loot ids intentionally no-op for now.
 		&"g_loot_quality_small":
-			loot_quality_bonus += 0.10
+			pass
 		&"g_shop_extra_slot":
-			extra_shop_slots += 1
+			pass
 		&"g_shop_free_reroll":
-			free_shop_rerolls += 1
+			pass
 		&"g_rare_relic_chance_small":
-			rare_relic_bonus += 0.05
-
+			pass
 		&"bg_boss_extra_choice":
 			pass
 		&"bg_loot_quality_big":
-			loot_quality_bonus += 0.25
+			pass
 		&"bg_shop_discount":
-			shop_price_mult *= 0.85
+			pass
 		&"bg_rare_relic_chance_big":
-			rare_relic_bonus += 0.15
+			pass
+		&"g_boss_currency":
+			pass
+		&"bg_free_dice_tool":
+			pass
 
 		_:
 			_register_world_effect(id)
@@ -601,6 +752,66 @@ func _emit_health_changed_if_possible(h: Node) -> void:
 		var mx: int = _read_max_hp(h)
 		if cur >= 0 and mx >= 1:
 			h.emit_signal("health_changed", cur, mx)
+
+func _heal_player_percent(pct: float) -> void:
+	var player: Node = _get_player_node()
+	if player == null:
+		return
+	var h: Node = _get_health_node(player)
+	if h == null:
+		return
+	var p: float = clampf(pct, 0.0, 1.0)
+	if h.has_method("heal_percent"):
+		h.call("heal_percent", p)
+		return
+	var max_hp_val: int = _read_max_hp(h)
+	var hp_val: int = _read_hp(h)
+	if max_hp_val <= 0 or hp_val < 0:
+		return
+	var amount: int = maxi(1, int(round(float(max_hp_val) * p)))
+	_write_hp(h, mini(max_hp_val, hp_val + amount))
+	_emit_health_changed_if_possible(h)
+
+func on_enemy_killed_for_modifiers(_is_elite: bool = false) -> void:
+	if not loaded_momentum_enabled:
+		return
+	loaded_momentum_stacks = mini(loaded_momentum_stacks + 1, 10)
+	_emit()
+
+func on_player_took_hp_damage(_amount: int) -> void:
+	if loaded_momentum_stacks > 0:
+		loaded_momentum_stacks = 0
+	if edge_of_ambition_enabled:
+		# Keep this skill-rewarding: taking damage also drops any edge tempo.
+		_edge_of_ambition_time_left = 0.0
+		_tick_dynamic_world_effects(0.0)
+	_emit()
+
+func on_perfect_dodge_for_modifiers() -> void:
+	if not edge_of_ambition_enabled:
+		return
+	_edge_of_ambition_time_left = 3.0
+	_tick_dynamic_world_effects(0.0)
+	_emit()
+
+func get_loaded_momentum_damage_mult() -> float:
+	if not loaded_momentum_enabled:
+		return 1.0
+	return 1.0 + (float(loaded_momentum_stacks) * 0.02)
+
+func _tick_dynamic_world_effects(delta: float) -> void:
+	if edge_of_ambition_enabled and _edge_of_ambition_time_left > 0.0:
+		_edge_of_ambition_time_left = maxf(_edge_of_ambition_time_left - delta, 0.0)
+	if gravity_flux_enabled:
+		_gravity_flux_timer -= delta
+		if _gravity_flux_timer <= 0.0:
+			_gravity_flux_timer = 10.0
+			_gravity_flux_phase = 1 - _gravity_flux_phase
+		player_gravity_mult = 0.92 if _gravity_flux_phase == 0 else 1.08
+	else:
+		player_gravity_mult = 1.0
+	var edge_mult: float = 1.20 if (edge_of_ambition_enabled and _edge_of_ambition_time_left > 0.0) else 1.0
+	player_attack_speed_mult = _base_player_attack_speed_mult * edge_mult
 
 func _read_hp(h: Node) -> int:
 	if h == null:

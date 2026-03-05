@@ -44,31 +44,19 @@ var _source_chest: Node = null
 # Effect pools
 # ---------------------------------------------------------
 const MINOR_BLESSINGS := [
-	&"b_fleetfoot", &"b_sharpened", &"b_coolheaded", &"b_heavyhand", &"b_clean_cuts",
-	&"b_bulwark_start", &"b_surge_on_kill", &"b_perfect_step", &"b_stagger_training", &"b_orb_handler"
+	&"s_steady_hands", &"s_guarded_footing", &"s_orb_attunement", &"s_skybound_step", &"s_combat_focus"
 ]
 
 const MAJOR_BLESSINGS := [
-	&"m_berserker_pact", &"m_ironblood", &"m_flow_engine", &"m_executioner", &"m_shockwave",
-	&"m_second_wind", &"m_predator", &"m_guardian_shell", &"m_orb_overcharge", &"m_cleanse_mastery"
+	&"m_ironblood", &"m_flow_engine", &"m_warded_soul", &"m_ritual_of_stability", &"m_kinetic_overdrive"
 ]
 
 const MINOR_DANGERS := [
-	&"d_overcharged_foes", &"d_reinforced_foes", &"d_hunted", &"d_sniper_winds", &"d_elite_presence"
+	&"p_blood_moon", &"p_siege_lines", &"p_loaded_momentum", &"p_gravity_flux", &"p_ruthless_hunt"
 ]
 
 const MAJOR_DANGERS := [
-	&"x_brutal_foes", &"x_unstable_ground", &"x_cursed_recovery", &"x_marked", &"x_elite_pack"
-]
-
-const GREED_PLUS1 := [
-	&"g_loot_quality_small", &"g_shop_extra_slot", &"g_shop_free_reroll",
-	&"g_boss_currency", &"g_rare_relic_chance_small"
-]
-
-const GREED_PLUS2 := [
-	&"bg_boss_extra_choice", &"bg_loot_quality_big", &"bg_shop_discount",
-	&"bg_free_dice_tool", &"bg_rare_relic_chance_big"
+	&"x_apex_predators", &"x_no_safe_space", &"x_edge_of_ambition", &"x_execution_order", &"x_dice_vice"
 ]
 
 func _ready() -> void:
@@ -445,15 +433,12 @@ func _generate_options() -> void:
 	var pos1_danger: StringName = _pick_unique(MINOR_DANGERS, [])
 	var pos2_danger: StringName = _pick_unique(MAJOR_DANGERS, [pos1_danger])
 
-	var greed1: StringName = _pick_unique(GREED_PLUS1, [])
-	var greed2: StringName = _pick_unique(GREED_PLUS2, [])
-
-	_options.append(_make_option(-2, neg2_effect, &"", "Condense", "Major Blessing"))
-	_options.append(_make_option(-1, neg1_effect, &"", "Condense", "Minor Blessing"))
-	_options.append(_make_option(0, &"", &"", "Stabilize", "Full Heal + Cleanse"))
-	_options[2]["effect_line"] = "Rest Hero: Take a moment to breathe."
-	_options.append(_make_option(+1, pos1_danger, greed1, "Expand +1", "Affliction + Greed"))
-	_options.append(_make_option(+2, pos2_danger, greed2, "Expand +2", "Major Affliction + Big Greed"))
+	_options.append(_make_option(-2, neg2_effect, &"", "Condense", "Major Boon"))
+	_options.append(_make_option(-1, neg1_effect, &"", "Condense", "Minor Boon"))
+	_options.append(_make_option(0, &"", &"", "Stabilize", "Fixed Outcome"))
+	_options[2]["effect_line"] = "Restore: Full Heal only."
+	_options.append(_make_option(+1, pos1_danger, &"", "Expand +1", "Minor Peril"))
+	_options.append(_make_option(+2, pos2_danger, &"", "Expand +2", "Major Peril"))
 
 func _make_option(value: int, effect_id: StringName, greed_id: StringName, header: String, footer: String) -> Dictionary:
 	return {
@@ -483,51 +468,29 @@ func _describe_effect(id: StringName) -> String:
 		return ""
 
 	match id:
-		&"b_fleetfoot": return "Fleetfoot: +10% Movement Speed"
-		&"b_sharpened": return "Sharpened: +12% dmg to non-boss enemies"
-		&"b_coolheaded": return "Coolheaded: -15% cooldowns"
-		&"b_heavyhand": return "Heavy Hand: +18% Heavy dmg"
-		&"b_clean_cuts": return "Clean Cuts: Light Attacks apply Bleed (3 stacks max)"
-		&"b_bulwark_start": return "Bulwark Start: Begin each floor with a +15% HP shield"
-		&"b_surge_on_kill": return "Surge on Kill: Killing an enemy restores 2% Health (cap at 10% pe floor)"
-		&"b_perfect_step": return "Perfect Step: Perfect Dodge grants +15% dmg for 3s (cooldown 5s)"
-		&"b_stagger_training": return "Stagger Training: +20% stagger dmg to boss"
-		&"b_orb_handler": return "Orb Handler: +15% charge speed"
+		&"s_steady_hands": return "Steady Hands: -10% Cooldowns"
+		&"s_guarded_footing": return "Guarded Footing: +8% Damage, -6% Enemy Damage"
+		&"s_orb_attunement": return "Orb Attunement: +20% Orb Charge, -5% Cooldowns"
+		&"s_skybound_step": return "Skybound Step: +12% Jump Height, +8% Move Speed"
+		&"s_combat_focus": return "Combat Focus: +10% Damage, -8% Enemy Health"
 
-		&"m_berserker_pact": return "Berserker Pact: +25% dmg, +10% dmg taken"
-		&"m_ironblood": return "Ironblood: +20% max HP, -10% dmg taken"
-		&"m_flow_engine": return "Flow Engine: -25% cooldowns, +10% ult gain"
-		&"m_executioner": return "Executioner: Heavy deals 35% increased dmg vs enemies below 50% HP"
-		&"m_shockwave": return "Shockwave: Every 6s, next Heavy attack creates a short range AOE shockwave"
-		&"m_second_wind": return "Second Wind: Cheat death once per world, upon death revert to 25% HP and gain invuln for 2s"
-		&"m_predator": return "Predator: +20% Movement Speed for 4s upon killing an enemy"
-		&"m_guardian_shell": return "Guardian Shell: Defensive Ability also grants a 20% max HP shield"
-		&"m_orb_overcharge": return "Orb Overcharge: +3s to Boss DPS window, boss gains 5% dmg after each DPS phase"
-		&"m_cleanse_mastery": return "Cleanse Mastery: Defensive Ability cleanses all debuffs and gain 2s immunity to new debuffs"
+		&"m_ironblood": return "Ironblood: +20% Max HP, -10% Enemy Damage"
+		&"m_flow_engine": return "Flow Engine: -25% Cooldowns, -10% Ultimate Cooldown"
+		&"m_warded_soul": return "Warded Soul: +25% Healing, +15% Orb Charge, -6% Enemy Damage"
+		&"m_ritual_of_stability": return "Ritual of Stability: Heal 8% Max HP each floor, +15% Healing"
+		&"m_kinetic_overdrive": return "Kinetic Overdrive: +15% Move Speed, +18% Jump Height, +12% Attack Speed"
 
-		&"d_overcharged_foes": return "Overcharged Foes: Enemies deal +12% damage"
-		&"d_reinforced_foes": return "Reinforced Foes: Enemies have +18% HP"
-		&"d_hunted": return "Hunted: Hazard rises +15% faster"
-		&"d_sniper_winds": return "Sniper Winds: Enemy projectiles travel 15% faster"
-		&"d_elite_presence": return "Elite Presence: +1 elite spawns"
+		&"p_blood_moon": return "Blood Moon: +12% Enemy Damage, +10% Enemy Health"
+		&"p_siege_lines": return "Siege Lines: +18% Enemy Projectile Speed, +5% Enemy Damage"
+		&"p_loaded_momentum": return "Loaded Momentum: +2% Damage per kill (max +20%) until hit, Enemies +8% Damage"
+		&"p_gravity_flux": return "Gravity Flux: Gravity shifts every 10s, Enemies +6% Damage"
+		&"p_ruthless_hunt": return "Ruthless Hunt: +1 Elite Spawn, +8% Enemy Damage"
 
-		&"x_brutal_foes": return "Brutal Foes: Enemies deal +22% damage"
-		&"x_unstable_ground": return "Unstable Ground: Hazard +30% faster"
-		&"x_cursed_recovery": return "Cursed Recovery: Healing reduced by 40%"
-		&"x_marked": return "Marked: Getting hit applies Marked for 6s, you take 15% damage"
-		&"x_elite_pack": return "Elite Pack: +2 elites spawn"
-
-		&"g_loot_quality_small": return "Greed: +10% loot quality"
-		&"g_shop_extra_slot": return "Greed: Shop offers +1 extra relic choice"
-		&"g_shop_free_reroll": return "Greed: +1 free shop reroll token"
-		&"g_boss_currency": return "Greed: Boss drops 10% more currency"
-		&"g_rare_relic_chance_small": return "Greed: 5% chance for Boss to drop rare Relic"
-
-		&"bg_boss_extra_choice": return "Big Greed: Boss drops +1 extra relic choice"
-		&"bg_loot_quality_big": return "Big Greed: +25% loot quality"
-		&"bg_shop_discount": return "Big Greed: 15% Discount from shop"
-		&"bg_free_dice_tool": return "Big Greed: Gain 1 Dice Tool for free"
-		&"bg_rare_relic_chance_big": return "Big Greed: 15% chance for Boss to drop rare Relic"
+		&"x_apex_predators": return "Apex Predators: +20% Enemy Damage, +18% Enemy Health, +1 Elite"
+		&"x_no_safe_space": return "No Safe Space: +30% Enemy Projectile Speed, +15% Enemy Damage"
+		&"x_edge_of_ambition": return "Edge of Ambition: Enemies +25% Damage, Perfect Dodge grants +20% Attack Speed (3s)"
+		&"x_execution_order": return "Execution Order: +2 Elite Spawns, +12% Enemy Damage, +10% Enemy Health"
+		&"x_dice_vice": return "Dice Vice: +18% Enemy Damage, +18% Cooldowns, -10% Orb Charge"
 
 		_:
 			return "Effect: %s" % String(id)
@@ -543,13 +506,13 @@ func _apply_option(opt: Dictionary) -> void:
 	#print("[DiceChoice] ===== MODIFIER PICKED =====")
 	#print("[DiceChoice] value=%d, effect=%s, greed=%s" % [value, effect_id, greed_id])
 	
-	if effect_id == &"d_elite_presence" or effect_id == &"x_elite_pack":
+	if effect_id == &"d_elite_presence" or effect_id == &"x_elite_pack" or effect_id == &"p_ruthless_hunt" or effect_id == &"x_execution_order":
 		pass
 
 	if RunStateSingleton != null:
 		RunStateSingleton.apply_floor_modifier_payload(value, effect_id, greed_id)
 		
-		if effect_id == &"d_elite_presence" or effect_id == &"x_elite_pack":
+		if effect_id == &"d_elite_presence" or effect_id == &"x_elite_pack" or effect_id == &"p_ruthless_hunt" or effect_id == &"x_execution_order":
 			pass
 	else:
 		pass
