@@ -65,6 +65,7 @@ texture_region_size = Vector2i(1020, 565)
 0:0/0/physics_layer_0/polygon_0/points = PackedVector2Array(-231.81818, 25.681824, 510, -25.681824, 417.2727, 128.40909, -231.81818, 128.40909)
 0:0/0/physics_layer_0/polygon_0/one_way = true
 0:0/0/physics_layer_0/polygon_1/points = PackedVector2Array(-510, 179.77274, -510, 282.5, 46.363647, 282.5, 46.363647, 231.13635)
+0:0/0/physics_layer_0/polygon_1/one_way = true
 
 [sub_resource type="TileSet" id="TileSet_hyqpu"]
 tile_size = Vector2i(1020, 565)
@@ -244,7 +245,7 @@ position = Vector2(-28, 1121)
 [node name="DeathZone" parent="Arena" index="4"]
 activation_y = -14000.0
 player_path = NodePath("../../Player")
-debug_logs = true
+debug_logs = false
 enable_fire_vfx = false
 
 [node name="P1" parent="Arena/Spawns/Floor5" index="0"]
@@ -254,10 +255,10 @@ position = Vector2(-1268, -6211)
 position = Vector2(-1071, -5828)
 
 [node name="P3" parent="Arena/Spawns/Floor5" index="2"]
-position = Vector2(-762, -6418)
+position = Vector2(-775, -6729)
 
 [node name="P4" parent="Arena/Spawns/Floor5" index="3"]
-position = Vector2(-356, -6537)
+position = Vector2(-386, -7000)
 
 [node name="P5" parent="Arena/Spawns/Floor5" index="4"]
 position = Vector2(248, -6215)
@@ -270,16 +271,26 @@ position = Vector2(-158, -15199)
 
 [node name="Cloud1" type="Node2D" parent="Arena"]
 modulate = Color(1, 1, 1, 0.7254902)
-position = Vector2(861, -21414)
+position = Vector2(814, -21384)
 
 [node name="TileMapLayer" type="TileMapLayer" parent="Arena/Cloud1"]
 position = Vector2(394, 181)
 tile_map_data = PackedByteArray(0, 0, 255, 255, 255, 255, 2, 0, 0, 0, 0, 0, 0, 0)
 tile_set = SubResource("TileSet_devdu")
 
+[node name="Cloud4" type="Node2D" parent="Arena"]
+modulate = Color(1, 1, 1, 0.7254902)
+position = Vector2(-1157, -21720)
+scale = Vector2(-0.8, 0.8)
+
+[node name="TileMapLayer" type="TileMapLayer" parent="Arena/Cloud4"]
+position = Vector2(394, 181)
+tile_map_data = PackedByteArray(0, 0, 255, 255, 255, 255, 2, 0, 0, 0, 0, 0, 0, 0)
+tile_set = SubResource("TileSet_devdu")
+
 [node name="Cloud2" type="Node2D" parent="Arena"]
 modulate = Color(1, 1, 1, 0.7254902)
-position = Vector2(-715, -21448)
+position = Vector2(-607, -21451)
 scale = Vector2(0.7, 0.7)
 
 [node name="TileMapLayer2" type="TileMapLayer" parent="Arena/Cloud2"]
@@ -287,13 +298,23 @@ position = Vector2(2187.143, 299.9997)
 tile_map_data = PackedByteArray(0, 0, 253, 255, 255, 255, 0, 0, 0, 0, 0, 0, 0, 0)
 tile_set = SubResource("TileSet_awieb")
 
+[node name="Cloud5" type="Node2D" parent="Arena"]
+modulate = Color(1, 1, 1, 0.7254902)
+position = Vector2(1172, -21924)
+scale = Vector2(-0.9, 0.9)
+
+[node name="TileMapLayer2" type="TileMapLayer" parent="Arena/Cloud5"]
+position = Vector2(2187.143, 299.9997)
+tile_map_data = PackedByteArray(0, 0, 253, 255, 255, 255, 0, 0, 0, 0, 0, 0, 0, 0)
+tile_set = SubResource("TileSet_awieb")
+
 [node name="Cloud3" type="Node2D" parent="Arena"]
 modulate = Color(1, 1, 1, 0.7254902)
-position = Vector2(-113.99999, -21844)
-scale = Vector2(0.7, 0.7)
+position = Vector2(-33, -21812)
+scale = Vector2(0.9, 0.7)
 
 [node name="TileMapLayer3" type="TileMapLayer" parent="Arena/Cloud3"]
-position = Vector2(2598.5715, 287.14313)
+position = Vector2(2570, -88.57117)
 scale = Vector2(0.99999994, 0.99999994)
 tile_map_data = PackedByteArray(0, 0, 253, 255, 255, 255, 1, 0, 0, 0, 0, 0, 0, 0)
 tile_set = SubResource("TileSet_hyqpu")
@@ -350,7 +371,7 @@ enable_world2_boss_arena_camera = true
 world2_boss_camera_bottom = -21000.0
 world2_boss_camera_live_tuning = true
 world2_boss_camera_use_manual_center = true
-world2_boss_camera_min_zoom = 0.7
+world2_boss_camera_min_zoom = 0.73
 unlock_floor_1_platforms = Array[NodePath]([NodePath(""), NodePath("")])
 unlock_floor_2_platforms = Array[NodePath]([NodePath("")])
 unlock_floor_3_platforms = Array[NodePath]([NodePath("")])
@@ -392,15 +413,11 @@ limit_right = 1536
 limit_bottom = -18000
 
 [node name="Boss" parent="." instance=ExtResource("13_ys2ak")]
-position = Vector2(0, -21467)
+position = Vector2(0, -21466)
 collision_mask = 3
 
-[node name="Hurtbox" parent="Boss" index="0"]
-position = Vector2(-2, 35)
-
 [node name="CollisionShape2D" parent="Boss/Hurtbox" index="0"]
-position = Vector2(-10, 61)
-scale = Vector2(1.2593155, 1.1105946)
+position = Vector2(6.5000076, 39)
 
 [node name="AscensionSocket" type="Node2D" parent="."]
 
@@ -418,11 +435,11 @@ offset_right = -27.683332
 offset_bottom = -27.683332
 style = ExtResource("17_o5lv8")
 
-[node name="PlayerHUDWiring" parent="UI/ScreenRoot/HUDRoot" index="4"]
+[node name="PlayerHUDWiring" parent="UI/ScreenRoot/HUDRoot" index="6"]
 player_path = NodePath("../../../../Player")
 combat_path = NodePath("../../../../Player/Combat")
 
-[node name="EncounterHUDWiring" parent="UI/ScreenRoot/HUDRoot" index="5"]
+[node name="EncounterHUDWiring" parent="UI/ScreenRoot/HUDRoot" index="7"]
 floor_controller_path = NodePath("../../../../FloorProgressionController")
 boss_path = NodePath("../../../../Boss")
 

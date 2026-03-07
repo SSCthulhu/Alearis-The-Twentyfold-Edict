@@ -14,7 +14,7 @@ signal stage_animation_finished(anim_name: StringName)
 @export var screen_pixels: Vector2i = Vector2i(256, 256) # how big the character appears in 2D
 
 # Debugging: when true, missing animation names print warnings instead of failing silently.
-@export var debug_print_missing_anims: bool = true
+@export var debug_print_missing_anims: bool = false
 
 # Paths inside your stage scene
 @export var stage_skeleton_root_path: NodePath = ^"FacingPivot"
@@ -60,7 +60,8 @@ func _configure_viewport() -> void:
 	_subviewport.size = viewport_size
 	_subviewport.transparent_bg = true
 	_subviewport.render_target_clear_mode = SubViewport.CLEAR_MODE_ALWAYS
-	_subviewport.render_target_update_mode = SubViewport.UPDATE_ALWAYS
+	# Default to visibility-driven updates to reduce world-wide GPU cost.
+	_subviewport.render_target_update_mode = SubViewport.UPDATE_WHEN_VISIBLE
 
 	_screen_sprite.texture = _subviewport.get_texture()
 	_screen_sprite.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR

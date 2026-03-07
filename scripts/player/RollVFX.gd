@@ -7,7 +7,7 @@ extends Node
 @export var behind_offset: float = 100.0  # Distance behind player to spawn VFX
 @export var offset_y: float = 0.0  # Y offset from player center
 @export var cooldown: float = 0.2  # Anti-spam cooldown
-@export var debug_logs: bool = true
+@export var debug_logs: bool = false
 
 @onready var _player_controller: Node = get_parent()
 

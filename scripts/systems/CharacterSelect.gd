@@ -92,7 +92,6 @@ func _on_reset_confirmed():
 	if RunStateSingleton != null:
 		RunStateSingleton.update_starting_dice_range(10)
 		_update_dice_range_display()
-		print("[CharacterSelect] Dice range reset to 10-10")
 
 
 func _update_dice_range_display():

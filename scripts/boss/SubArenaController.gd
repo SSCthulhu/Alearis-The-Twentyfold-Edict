@@ -7,6 +7,11 @@ class_name SubArenaController
 
 @export var player_path: NodePath = ^"../Player"
 @export var debug_logs: bool = false
+@export var settle_timeout_seconds: float = 2.2
+@export var settle_timeout_fallback_seconds: float = 1.0
+@export var settle_min_stable_time_before_accept: float = 0.28
+@export var lock_charge_drop_until_socketed: bool = true
+@export var enemy_wake_delay_after_fade_in: float = 1.0
 
 # Enemy spawning (for WRONG portal only)
 @export var enemy_scenes: Array[PackedScene] = []
@@ -31,6 +36,25 @@ var _active_enemies: Array[Node] = []
 var _active_orb: AscensionCharge = null
 var _orb_spawned: bool = false  # Prevent duplicate orb spawns
 var _rng: RandomNumberGenerator = RandomNumberGenerator.new()
+var _entry_fade_overlay: ColorRect = null
+var _entry_fade_canvas: CanvasLayer = null
+
+func _enter_tree() -> void:
+	# Keep screen black from scene load until spawn/drop settling completes.
+	var overlay = ColorRect.new()
+	overlay.color = Color(0, 0, 0, 1.0)
+	overlay.anchor_right = 1.0
+	overlay.anchor_bottom = 1.0
+	overlay.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	overlay.z_index = 1000
+
+	var canvas_layer = CanvasLayer.new()
+	canvas_layer.layer = 100
+	canvas_layer.add_child(overlay)
+	get_tree().current_scene.call_deferred("add_child", canvas_layer)
+
+	_entry_fade_overlay = overlay
+	_entry_fade_canvas = canvas_layer
 
 func _ready() -> void:
 	# Wait a frame for scene to fully load
@@ -49,7 +73,15 @@ func _ready() -> void:
 		
 		if _player == null:
 			push_error("[SubArenaController] Player STILL not found after waiting!")
+			if _entry_fade_canvas != null and is_instance_valid(_entry_fade_canvas):
+				_entry_fade_canvas.queue_free()
 			return
+
+	# Ensure gravity/physics can run while hidden in sub-arena entry.
+	if _player.has_method("set_input_locked"):
+		_player.set_input_locked(false)
+	if _player.has_method("set_cutscene_lock"):
+		_player.set_cutscene_lock(false)
 	
 	# Read portal data from global singleton
 	var portal_data = get_node_or_null("/root/PortalTransitionData")
@@ -136,12 +168,37 @@ func _ready() -> void:
 		_player.global_position = player_spawn.global_position
 		if debug_logs:
 			pass
+	# Let one physics tick happen after teleport so floor state updates cleanly.
+	await get_tree().physics_frame
 	
 	# Start appropriate sequence
 	if _is_correct_portal:
 		_start_correct_portal_sequence()
 	else:
 		_start_wrong_portal_sequence()
+	var settle_groups: Array[StringName] = []
+	if not _is_correct_portal:
+		settle_groups = [&"subarena_enemies"]
+	if debug_logs:
+		print("[SubArenaController] Begin settle wait. portal=", "RIGHT" if _is_correct_portal else "WRONG", " player=", _describe_node_settle(_player))
+	var settled: bool = await _wait_for_settle_hidden([_player], settle_groups, settle_timeout_seconds)
+	if not settled and debug_logs:
+		print("[SubArenaController] Settle timeout (primary) before fade-in. Trying fallback wait.")
+	if not settled:
+		settled = await _wait_for_settle_hidden([_player], settle_groups, settle_timeout_fallback_seconds)
+	if not settled and debug_logs:
+		_log_unsettled_targets([_player], settle_groups)
+	if not _is_correct_portal:
+		# Wrong arena only: freeze enemies during reveal, then release 1s later.
+		_set_subarena_enemy_physics_enabled(false)
+	if _entry_fade_overlay != null and is_instance_valid(_entry_fade_overlay):
+		await _fade_screen(_entry_fade_overlay, 1.0, 0.0, 1.2)
+	if _entry_fade_canvas != null and is_instance_valid(_entry_fade_canvas):
+		_entry_fade_canvas.queue_free()
+	if not _is_correct_portal:
+		if enemy_wake_delay_after_fade_in > 0.0:
+			await get_tree().create_timer(enemy_wake_delay_after_fade_in).timeout
+		_set_subarena_enemy_physics_enabled(true)
 
 func _seed_rng_for_sub_arena() -> void:
 	if RunStateSingleton != null and RunStateSingleton.has_method("make_rng_for_domain"):
@@ -265,6 +322,13 @@ func _spawn_orb(fully_charged: bool) -> void:
 func _on_orb_picked_up(_carrier: Node2D) -> void:
 	if debug_logs:
 		pass
+
+	if lock_charge_drop_until_socketed:
+		var charge_carrier: Node = _player.get_node_or_null("ChargeCarrier")
+		if charge_carrier != null and charge_carrier.has_method("set_drop_locked"):
+			charge_carrier.call("set_drop_locked", true)
+			if debug_logs:
+				print("[SubArenaController] Charge drop lock enabled.")
 	
 	# If wrong portal, apply damage debuff
 	if not _is_correct_portal:
@@ -394,6 +458,82 @@ func _fade_screen(overlay: ColorRect, from_alpha: float, to_alpha: float, durati
 	tween.tween_property(overlay, "color:a", to_alpha, duration)
 	
 	await tween.finished
+
+func _wait_for_settle_hidden(nodes: Array[Node], groups: Array[StringName], timeout_seconds: float) -> bool:
+	var timeout: float = maxf(timeout_seconds, 0.0)
+	var elapsed: float = 0.0
+	var min_accept_time: float = maxf(settle_min_stable_time_before_accept, 0.0)
+	var last_log_bucket: int = -1
+	while elapsed < timeout:
+		var settled_now: bool = _all_targets_settled(nodes, groups)
+		if settled_now and elapsed >= min_accept_time:
+			return true
+		if debug_logs:
+			var bucket: int = int(elapsed * 4.0) # every ~0.25s
+			if bucket != last_log_bucket:
+				last_log_bucket = bucket
+				print("[SubArenaController] Settling... t=", snappedf(elapsed, 0.01), " min_accept=", snappedf(min_accept_time, 0.01), " settled_now=", settled_now, " player=", _describe_node_settle(_player))
+		await get_tree().physics_frame
+		elapsed += 1.0 / 60.0
+	var final_settled: bool = _all_targets_settled(nodes, groups)
+	if debug_logs:
+		print("[SubArenaController] Settle wait ended. final_settled=", final_settled, " player=", _describe_node_settle(_player))
+	return final_settled
+
+func _all_targets_settled(nodes: Array[Node], groups: Array[StringName]) -> bool:
+	for n: Node in nodes:
+		if not _is_node_settled(n):
+			return false
+	for g: StringName in groups:
+		var group_nodes: Array[Node] = get_tree().get_nodes_in_group(g)
+		for gn: Node in group_nodes:
+			if not _is_node_settled(gn):
+				return false
+	return true
+
+func _is_node_settled(node: Node) -> bool:
+	if node == null or not is_instance_valid(node):
+		return true
+	var body: CharacterBody2D = node as CharacterBody2D
+	if body != null:
+		return body.is_on_floor()
+	if "velocity" in node:
+		var v: Vector2 = node.get("velocity")
+		return absf(v.y) <= 8.0
+	return true
+
+func _log_unsettled_targets(nodes: Array[Node], groups: Array[StringName]) -> void:
+	if not debug_logs:
+		return
+	for n: Node in nodes:
+		if not _is_node_settled(n):
+			print("[SubArenaController] Unsettled direct target: ", _describe_node_settle(n))
+	for g: StringName in groups:
+		var group_nodes: Array[Node] = get_tree().get_nodes_in_group(g)
+		for gn: Node in group_nodes:
+			if not _is_node_settled(gn):
+				print("[SubArenaController] Unsettled group target [", str(g), "]: ", _describe_node_settle(gn))
+
+func _describe_node_settle(node: Node) -> String:
+	if node == null:
+		return "<null>"
+	if not is_instance_valid(node):
+		return "<invalid>"
+	var body: CharacterBody2D = node as CharacterBody2D
+	if body != null:
+		return "%s floor=%s vel=%s pos=%s" % [body.name, str(body.is_on_floor()), str(body.velocity), str(body.global_position)]
+	if "velocity" in node:
+		return "%s vel=%s" % [node.name, str(node.get("velocity"))]
+	return "%s (no velocity)" % node.name
+
+func _set_subarena_enemy_physics_enabled(enabled: bool) -> void:
+	var group_nodes: Array[Node] = get_tree().get_nodes_in_group(&"subarena_enemies")
+	for n: Node in group_nodes:
+		if n == null or not is_instance_valid(n):
+			continue
+		n.set_physics_process(enabled)
+	if debug_logs:
+		print("[SubArenaController] Subarena enemy physics set to ", "ENABLED" if enabled else "DISABLED")
 
 func _suppress_player_healing_vfx(seconds: float) -> void:
 	if _player == null:

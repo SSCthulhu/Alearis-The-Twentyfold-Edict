@@ -29,7 +29,18 @@ var applied_modifier_ids: Array[StringName] = []
 # DEBUG ONLY: Modifier injector (safe to disable for release).
 # Toggle this off for release builds and the injector becomes inert.
 @export var debug_modifier_injector_enabled: bool = false
-@export var debug_modifier_injector_log_actions: bool = true
+@export var debug_modifier_injector_log_actions: bool = false
+@export_group("Performance Diagnostics")
+@export var perf_diag_enabled: bool = true
+@export var perf_diag_spike_ms_threshold: float = 28.0
+@export var perf_diag_report_cooldown_sec: float = 2.0
+@export var perf_diag_startup_grace_sec: float = 12.0
+@export var perf_diag_use_warning_logs: bool = false
+@export var perf_diag_minor_spike_ms_threshold: float = 12.5
+@export var perf_diag_sample_window_sec: float = 0.5
+@export var perf_diag_min_spikes_to_report: int = 2
+@export var frame_pacing_fps_cap_enabled: bool = true
+@export var frame_pacing_fps_cap_value: int = 165
 
 # Optional: control warning spam for new/unmapped ids
 @export var warn_on_unknown_effects: bool = false
@@ -38,6 +49,13 @@ var _debug_modifier_cycle_index: Dictionary = {} # String -> int
 var _debug_toast_layer: CanvasLayer = null
 var _debug_toast_label: Label = null
 var _debug_toast_time_left: float = 0.0
+var _perf_diag_report_cd_left: float = 0.0
+var _perf_diag_uptime_sec: float = 0.0
+var _perf_diag_window_left: float = 0.0
+var _perf_diag_window_samples: int = 0
+var _perf_diag_window_spikes_minor: int = 0
+var _perf_diag_window_spikes_major: int = 0
+var _perf_diag_window_peak_ms: float = 0.0
 
 const DEBUG_MINOR_BOONS: Array[StringName] = [
 	&"s_steady_hands", &"s_guarded_footing", &"s_orb_attunement", &"s_skybound_step",
@@ -300,6 +318,7 @@ var _fated_reservoir_stacks: int = 0
 
 func _ready() -> void:
 	load_meta()
+	_apply_frame_pacing_cap()
 	process_mode = Node.PROCESS_MODE_ALWAYS
 	set_process(true)
 	set_process_input(true)
@@ -309,6 +328,7 @@ func _ready() -> void:
 func _process(delta: float) -> void:
 	_tick_dynamic_world_effects(delta)
 	_tick_debug_toast(delta)
+	_tick_perf_diag(delta)
 
 func _get_dice_meter_singleton() -> Node:
 	var tree: SceneTree = get_tree()
@@ -421,6 +441,87 @@ func _debug_modifier_log(msg: String) -> void:
 	if not debug_modifier_injector_log_actions:
 		return
 	print("[RunState][Debug Modifier Injector] %s" % msg)
+
+func _tick_perf_diag(delta: float) -> void:
+	if not perf_diag_enabled:
+		return
+	_perf_diag_uptime_sec += maxf(delta, 0.0)
+	if _perf_diag_uptime_sec < maxf(perf_diag_startup_grace_sec, 0.0):
+		return
+
+	if _perf_diag_window_left <= 0.0:
+		_perf_diag_window_left = maxf(perf_diag_sample_window_sec, 0.1)
+		_perf_diag_window_samples = 0
+		_perf_diag_window_spikes_minor = 0
+		_perf_diag_window_spikes_major = 0
+		_perf_diag_window_peak_ms = 0.0
+
+	if _perf_diag_report_cd_left > 0.0:
+		_perf_diag_report_cd_left = maxf(_perf_diag_report_cd_left - delta, 0.0)
+	var frame_ms: float = delta * 1000.0
+	_perf_diag_window_samples += 1
+	_perf_diag_window_peak_ms = maxf(_perf_diag_window_peak_ms, frame_ms)
+
+	var major_thresh: float = maxf(perf_diag_spike_ms_threshold, 1.0)
+	var minor_thresh: float = clampf(perf_diag_minor_spike_ms_threshold, 1.0, major_thresh)
+	if frame_ms >= major_thresh:
+		_perf_diag_window_spikes_major += 1
+	if frame_ms >= minor_thresh:
+		_perf_diag_window_spikes_minor += 1
+
+	_perf_diag_window_left = maxf(_perf_diag_window_left - delta, 0.0)
+	if _perf_diag_window_left > 0.0:
+		return
+
+	var should_report: bool = false
+	if _perf_diag_window_spikes_major > 0:
+		should_report = true
+	elif _perf_diag_window_spikes_minor >= maxi(perf_diag_min_spikes_to_report, 1):
+		should_report = true
+	if not should_report:
+		return
+	if _perf_diag_report_cd_left > 0.0:
+		return
+	_perf_diag_report_cd_left = maxf(perf_diag_report_cooldown_sec, 0.1)
+	var tree: SceneTree = get_tree()
+	if tree == null:
+		return
+	var scene_name: String = "<none>"
+	if tree.current_scene != null:
+		scene_name = String(tree.current_scene.name)
+	# NOTE: group "enemies" typically includes hurtboxes, not AI roots.
+	# Keep it for reference but label it clearly.
+	var enemy_hurtboxes_count: int = tree.get_nodes_in_group("enemies").size()
+	var floor5_count: int = tree.get_nodes_in_group("floor5_enemies").size()
+	var subarena_count: int = tree.get_nodes_in_group("subarena_enemies").size()
+	var rocks_count: int = tree.get_nodes_in_group("orb_flight_rocks").size()
+	var active_rocks_count: int = 0
+	var rocks: Array[Node] = tree.get_nodes_in_group("orb_flight_rocks")
+	for r: Node in rocks:
+		if r != null and is_instance_valid(r) and r.has_method("is_active") and bool(r.call("is_active")):
+			active_rocks_count += 1
+	var floor_number: int = -1
+	var floor_enemies_left: int = -1
+	var floor_ctrl: Node = tree.get_first_node_in_group("floor_progression")
+	if floor_ctrl == null and tree.current_scene != null:
+		floor_ctrl = tree.current_scene.find_child("FloorProgressionController", true, false)
+	if floor_ctrl != null:
+		if floor_ctrl.has_method("get_current_floor_number"):
+			floor_number = int(floor_ctrl.call("get_current_floor_number"))
+		if floor_ctrl.has_method("get_enemies_left_current_floor"):
+			floor_enemies_left = int(floor_ctrl.call("get_enemies_left_current_floor"))
+	var fps: float = float(Engine.get_frames_per_second())
+	var msg: String = "[PerfDiag] peak=%.1fms window=%.2fs samples=%d minor=%d major=%d | fps=%.1f | scene=%s | floor=%d floor_enemies=%d floor5=%d subarena=%d enemy_hurtboxes=%d rocks=%d active_rocks=%d" % [_perf_diag_window_peak_ms, maxf(perf_diag_sample_window_sec, 0.1), _perf_diag_window_samples, _perf_diag_window_spikes_minor, _perf_diag_window_spikes_major, fps, scene_name, floor_number, floor_enemies_left, floor5_count, subarena_count, enemy_hurtboxes_count, rocks_count, active_rocks_count]
+	if perf_diag_use_warning_logs:
+		push_warning(msg)
+	else:
+		print(msg)
+
+func _apply_frame_pacing_cap() -> void:
+	if not frame_pacing_fps_cap_enabled:
+		return
+	var cap: int = maxi(frame_pacing_fps_cap_value, 30)
+	Engine.max_fps = cap
 
 func _ensure_debug_toast() -> void:
 	if _debug_toast_layer != null and is_instance_valid(_debug_toast_layer):

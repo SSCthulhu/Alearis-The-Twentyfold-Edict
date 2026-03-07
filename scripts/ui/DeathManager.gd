@@ -9,7 +9,7 @@ class_name DeathManager
 @export var you_died_label_path: NodePath = ^"../DeathOverlay/YouDied"
 @export var press_enter_label_path: NodePath = ^"../DeathOverlay/PressEnter"
 
-@export var debug_death: bool = true
+@export var debug_death: bool = false
 
 @export var reset_run_on_retry: bool = true
 @export var fade_in_time: float = 0.6

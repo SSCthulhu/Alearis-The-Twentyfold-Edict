@@ -55,6 +55,7 @@ enum Phase { IMMUNE_COMBAT, PORTAL_CHOICE, DPS }
 
 # Phrase system
 @export var phrase_display_path: NodePath = ^"../Boss/PhraseDisplay"
+@export var phrase_debug_logs: bool = false
 
 @export var debug_logs: bool = false
 
@@ -109,6 +110,8 @@ func _ready() -> void:
 	_victory_ui = get_node_or_null(victory_ui_path)
 	_socket = get_node_or_null(ascension_socket_path)
 	_phrase_display = get_node_or_null(phrase_display_path)
+	if phrase_debug_logs:
+		print("[BossEncounterWorld2] PhraseDisplay node: ", "FOUND" if _phrase_display != null else "MISSING", " path=", String(phrase_display_path))
 	_load_enemy_spawn_nodes()
 	
 	pass
@@ -143,7 +146,8 @@ func _ready() -> void:
 	if portal_data == null or not portal_data.is_returning:
 		if RunStateSingleton != null:
 			RunStateSingleton.world_index = 2
-			print("[BossEncounterWorld2] Set world_index to 2 for World2")
+			if debug_logs:
+				print("[BossEncounterWorld2] Set world_index to 2 for World2")
 	if portal_data != null and portal_data.is_returning:
 		# CRITICAL: Wait for Boss._ready() to complete first (it sets HP=max_hp)
 		# Otherwise our restoration gets overwritten
@@ -229,6 +233,12 @@ func _set_phase(new_phase: int) -> void:
 			_start_dps_phase()
 
 func _start_immune_combat_phase() -> void:
+	# New cycle: clear phrase state so first kill always gets a fresh callout.
+	_current_phrase = ""
+	_correct_portal_color = ""
+	if _phrase_display and _phrase_display.has_method("hide_phrase"):
+		_phrase_display.hide_phrase()
+
 	# Boss becomes immune and starts attacking
 	if _boss.has_method("set_vulnerable"):
 		_boss.set_vulnerable(false)
@@ -371,20 +381,12 @@ func _on_enemy_died(_enemy: Node) -> void:
 	if debug_logs:
 		pass
 	
-	# CRITICAL: Show phrase after FIRST enemy dies (dead_count >= 1)
-	if dead_count >= 1 and _phrase_display != null:
-		# Only show once (check if not already shown)
-		if _current_phrase == "":
-			# Pick random phrase
-			var phrase_keys = PHRASES.keys()
-			_correct_portal_color = phrase_keys[_rng.randi_range(0, phrase_keys.size() - 1)]
-			_current_phrase = PHRASES[_correct_portal_color]
-			
-			if debug_logs:
-				pass
-			
-			if _phrase_display.has_method("show_phrase"):
-				_phrase_display.show_phrase(_current_phrase)
+	# Show phrase after FIRST enemy dies.
+	if dead_count >= 1:
+		if phrase_debug_logs:
+			print("[BossEncounterWorld2] First kill reached. dead_count=", dead_count, " all_dead=", all_dead, " current_phrase='", _current_phrase, "'")
+		_ensure_phrase_selected()
+		_try_show_current_phrase()
 	
 	if all_dead:
 		if debug_logs:
@@ -408,17 +410,11 @@ func _cleanup_enemies() -> void:
 	_active_enemies.clear()
 
 func _start_portal_choice_phase() -> void:
-	# Phrase is already shown (generated when first enemy died in _on_enemy_died)
-	# Just verify it exists
+	# Phrase should already be selected after first kill; ensure and show as fallback.
 	if _current_phrase == "":
-		push_warning("[BossEncounterWorld2] Entering portal phase but phrase not set! This shouldn't happen.")
-		# Fallback: generate phrase now
-		var phrase_keys = PHRASES.keys()
-		_correct_portal_color = phrase_keys[_rng.randi_range(0, phrase_keys.size() - 1)]
-		_current_phrase = PHRASES[_correct_portal_color]
-		
-		if _phrase_display and _phrase_display.has_method("show_phrase"):
-			_phrase_display.show_phrase(_current_phrase)
+		push_warning("[BossEncounterWorld2] Entering portal phase with no phrase selected. Selecting fallback.")
+	_ensure_phrase_selected()
+	_try_show_current_phrase()
 	
 	if debug_logs:
 		pass
@@ -427,7 +423,8 @@ func _start_portal_choice_phase() -> void:
 	_spawn_portals()
 
 func _spawn_portals() -> void:
-	_cleanup_portals()
+	# Clear old portals from prior cycle, but do NOT hide phrase here.
+	_cleanup_portals(false)
 	
 	if portal_scene == null:
 		push_error("[BossEncounterWorld2] portal_scene not assigned!")
@@ -489,15 +486,43 @@ func _shuffle_vector2_array(arr: Array[Vector2]) -> void:
 		arr[i] = arr[j]
 		arr[j] = tmp
 
-func _cleanup_portals() -> void:
+func _cleanup_portals(hide_phrase: bool = true) -> void:
 	for p in _active_portals:
 		if p != null and is_instance_valid(p):
 			p.queue_free()
 	_active_portals.clear()
 	
-	# Hide phrase
-	if _phrase_display and _phrase_display.has_method("hide_phrase"):
+	# Hide phrase only when explicitly requested (phase exit / cleanup).
+	if hide_phrase and _phrase_display and _phrase_display.has_method("hide_phrase"):
 		_phrase_display.hide_phrase()
+
+func _ensure_phrase_selected() -> void:
+	if _current_phrase != "" and _correct_portal_color != "":
+		return
+	var phrase_keys: Array = PHRASES.keys()
+	if phrase_keys.is_empty():
+		push_error("[BossEncounterWorld2] PHRASES table is empty.")
+		return
+	_correct_portal_color = String(phrase_keys[_rng.randi_range(0, phrase_keys.size() - 1)])
+	_current_phrase = String(PHRASES[_correct_portal_color])
+	if phrase_debug_logs:
+		print("[BossEncounterWorld2] Phrase selected: ", _current_phrase, " (", _correct_portal_color, ")")
+
+func _try_show_current_phrase() -> void:
+	if _current_phrase == "":
+		if phrase_debug_logs:
+			print("[BossEncounterWorld2] Skipped show_phrase: current phrase empty.")
+		return
+	if _phrase_display == null:
+		_phrase_display = get_node_or_null(phrase_display_path)
+		if phrase_debug_logs:
+			print("[BossEncounterWorld2] Re-resolved PhraseDisplay: ", "FOUND" if _phrase_display != null else "MISSING")
+	if _phrase_display != null and _phrase_display.has_method("show_phrase"):
+		if phrase_debug_logs:
+			print("[BossEncounterWorld2] Calling PhraseDisplay.show_phrase('", _current_phrase, "')")
+		_phrase_display.call("show_phrase", _current_phrase)
+	elif phrase_debug_logs:
+		push_warning("[BossEncounterWorld2] PhraseDisplay unavailable when trying to show phrase.")
 
 func _on_charge_socketed(_charge: AscensionCharge) -> void:
 	if debug_logs:
@@ -653,18 +678,22 @@ func _on_victory_proceed() -> void:
 	var idx: int = 0
 	if RunStateSingleton != null:
 		var current_world = RunStateSingleton.world_index
-		print("[BossEncounterWorld2] Victory proceed - current world_index: ", current_world)
+		if debug_logs:
+			print("[BossEncounterWorld2] Victory proceed - current world_index: ", current_world)
 		idx = clampi(RunStateSingleton.world_index - 1, 0, world_scene_paths.size() - 1)
-		print("[BossEncounterWorld2] Array index calculated: ", idx)
+		if debug_logs:
+			print("[BossEncounterWorld2] Array index calculated: ", idx)
 		pass
 	
 	var next_path: String = world_scene_paths[idx]
-	print("[BossEncounterWorld2] Next scene path: ", next_path)
+	if debug_logs:
+		print("[BossEncounterWorld2] Next scene path: ", next_path)
 	pass
 	
 	# If World3 doesn't exist, repeat World2
 	if not ResourceLoader.exists(next_path):
-		print("[BossEncounterWorld2] WARNING: ", next_path, " does not exist! Falling back to World2")
+		if debug_logs:
+			print("[BossEncounterWorld2] WARNING: ", next_path, " does not exist! Falling back to World2")
 		if debug_logs:
 			pass
 		next_path = "res://scenes/world/World2.tscn"

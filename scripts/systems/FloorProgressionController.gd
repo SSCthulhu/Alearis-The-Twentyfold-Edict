@@ -88,6 +88,7 @@ var _derived_floor_wall_x: PackedFloat32Array = PackedFloat32Array()
 # Where to spawn relative to Floor2Door when arriving
 @export var floor2_spawn_offset: Vector2 = Vector2(0.0, 10.0)
 @export_range(0.0, 0.5, 0.01) var world2_door_interact_buffer_seconds: float = 0.18
+@export_range(0.1, 3.0, 0.05) var world2_door_player_settle_timeout: float = 1.0
 
 # If true, hide doors until unlocked (optional)
 @export var door1_hide_until_unlocked: bool = false
@@ -127,6 +128,7 @@ var _derived_floor_wall_x: PackedFloat32Array = PackedFloat32Array()
 
 # LightBeamStation node in World2
 @export var light_beam_station_path: NodePath = ^"../Arena2/LightBeamStation"
+@export var orb_flight_controller_path: NodePath = ^"../OrbFlightController"
 
 # Marker2D on Floor 3 where player appears when flight completes
 @export var orb_target_spawn_path: NodePath = ^"../Arena2/Spawns/Floor3/PlayerSpawn"
@@ -174,6 +176,12 @@ var _orb_flight_completed_once: bool = false
 @export var world1_floor3_fade_rect_path: NodePath = ^"../UI/ScreenRoot/HUDRoot/Floor3TransitionFade"
 @export var world1_floor3_enemy_unlock_delay: float = 1.0
 @export var world1_floor3_camera_offset: Vector2 = Vector2(0.0, -450.0)
+@export var world1_floor3_use_pre_post_camera_limit_top: bool = true
+@export var world1_floor3_pre_teleport_camera_limit_top: int = -500
+@export var world1_floor3_post_teleport_camera_override_enabled: bool = true
+@export var world1_floor3_post_teleport_camera_live_tuning: bool = false
+@export var world1_floor3_post_teleport_camera_limit_left: int = 41500
+@export var world1_floor3_post_teleport_camera_limit_top: int = 10800
 
 @export_group("World1 Boss Arena Camera")
 @export var enable_world1_boss_arena_camera: bool = false
@@ -223,6 +231,41 @@ var _orb_flight_completed_once: bool = false
 @export var world3_boss_camera_fit_padding_px: float = 80.0
 @export var world3_boss_camera_min_zoom: float = 0.5
 @export var world3_boss_camera_max_zoom: float = 1.0
+
+@export_group("Per-Floor Player Camera Limits")
+@export var enable_per_floor_player_camera_limits: bool = false
+@export var floor_camera_limits_live_tuning: bool = false
+@export var use_explicit_floor_camera_limits: bool = true
+@export_subgroup("Floor 1 Camera Limits")
+@export var floor1_camera_limit_left: int = 0
+@export var floor1_camera_limit_right: int = 0
+@export var floor1_camera_limit_top: int = 0
+@export var floor1_camera_limit_bottom: int = 0
+@export_subgroup("Floor 2 Camera Limits")
+@export var floor2_camera_limit_left: int = 0
+@export var floor2_camera_limit_right: int = 0
+@export var floor2_camera_limit_top: int = 0
+@export var floor2_camera_limit_bottom: int = 0
+@export_subgroup("Floor 3 Camera Limits")
+@export var floor3_camera_limit_left: int = 0
+@export var floor3_camera_limit_right: int = 0
+@export var floor3_camera_limit_top: int = 0
+@export var floor3_camera_limit_bottom: int = 0
+@export_subgroup("Floor 4 Camera Limits")
+@export var floor4_camera_limit_left: int = 0
+@export var floor4_camera_limit_right: int = 0
+@export var floor4_camera_limit_top: int = 0
+@export var floor4_camera_limit_bottom: int = 0
+@export_subgroup("Floor 5 Camera Limits")
+@export var floor5_camera_limit_left: int = 0
+@export var floor5_camera_limit_right: int = 0
+@export var floor5_camera_limit_top: int = 0
+@export var floor5_camera_limit_bottom: int = 0
+@export_subgroup("Legacy Array Limits")
+@export var floor_camera_limit_left: PackedInt32Array = PackedInt32Array()
+@export var floor_camera_limit_right: PackedInt32Array = PackedInt32Array()
+@export var floor_camera_limit_top: PackedInt32Array = PackedInt32Array()
+@export var floor_camera_limit_bottom: PackedInt32Array = PackedInt32Array()
 
 @export_group("Unlock after Floor 1 + Dice Choice")
 @export var unlock_floor_1_platforms: Array[NodePath] = [] # Platform8, Platform9
@@ -282,6 +325,8 @@ var _floor_spawned: PackedByteArray = PackedByteArray([1, 0, 0, 0])  # Floor 1 s
 var _last_floor_number: int = -1
 var _world1_floor3_transition_started: bool = false
 var _world1_floor3_transition_running: bool = false
+var _world1_floor3_post_teleport_camera_active: bool = false
+var _world1_floor3_transition_completed: bool = false
 var _world1_floor3_enemy_pause_cache: Dictionary = {}
 var _world1_boss_camera_activated: bool = false
 var _world1_boss_camera_ref: Camera2D = null
@@ -310,15 +355,19 @@ var _teleport_destination: Node2D = null
 var _teleport_fade_rect: ColorRect = null
 var _teleport_active: bool = false
 var _player_in_teleport_zone: bool = false
+var _world2_portal_pause_cache: Dictionary = {} # Node -> { "process": bool, "physics": bool }
 
 # -----------------------------
 # World3 SteamElevator runtime
 # -----------------------------
 var _steam_elevator: Node2D = null
 var _elevator_teleport_completed: bool = false
+var _last_applied_player_camera_limit_floor: int = -1
 
 func _ready() -> void:
 	add_to_group(&"floors")
+	_world1_floor3_post_teleport_camera_active = false
+	_world1_floor3_transition_completed = false
 
 	_gates.clear()
 	for p: NodePath in gate_paths:
@@ -358,6 +407,7 @@ func _ready() -> void:
 	
 	# World3 SteamElevator connection (for boss activation)
 	_setup_steam_elevator()
+	_apply_per_floor_player_camera_limits(true)
 
 	#print("[Floors] Ready. Groups=", floor_enemy_groups, " Gates=", gate_paths)
 
@@ -382,10 +432,19 @@ func _setup_orb_flight() -> void:
 	if not _light_beam_station.activated.is_connected(_on_light_beam_station_activated):
 		_light_beam_station.activated.connect(_on_light_beam_station_activated)
 
+	# Prewarm controller/pool up front so activation doesn't hitch.
+	if orb_scene != null and rock_scene != null:
+		var prewarmed: OrbFlightController = _ensure_orb_flight_controller()
+		if prewarmed != null and prewarmed.has_method("prewarm_pool"):
+			prewarmed.call("prewarm_pool")
+
 func _on_light_beam_station_activated(_station: LightBeamStation, activator: Node2D) -> void:
 	if not enable_orb_flight:
 		return
-	if _orb_flight != null and is_instance_valid(_orb_flight):
+	var c: OrbFlightController = _ensure_orb_flight_controller()
+	if c == null:
+		return
+	if c.has_method("is_running") and bool(c.call("is_running")):
 		return # already running
 	if _orb_flight_completed_once:
 		return # one-time sequence
@@ -409,47 +468,6 @@ func _on_light_beam_station_activated(_station: LightBeamStation, activator: Nod
 		push_warning("[Floors] OrbFlight: rock_scene is not assigned (OrbFallingRock.tscn).")
 		return
 
-	# Create controller and configure
-	var c := OrbFlightController.new()
-	c.orb_scene = orb_scene
-	c.rock_scene = rock_scene
-
-	c.flight_speed_y = orb_flight_speed_y
-	c.orb_move_speed_x = orb_move_speed_x
-	c.lane_half_width = orb_lane_half_width
-	c.rock_spawn_interval = orb_rock_spawn_interval
-	c.rock_spawn_half_width = orb_rock_spawn_half_width
-	c.rock_spawn_y_offset = orb_rock_spawn_y_offset
-	c.rock_fall_speed = orb_rock_fall_speed
-	c.rock_damage = orb_rock_damage
-	c.match_rock_spawn_to_lane = orb_match_rock_spawn_to_lane
-	c.rock_cleanup_distance = orb_rock_cleanup_distance
-	c.rock_cleanup_interval = orb_rock_cleanup_interval
-	c.max_active_rocks = orb_max_active_rocks
-	c.end_lockout_seconds = orb_end_lockout_seconds
-	c.finish_y_padding = orb_finish_y_padding
-	c.autopilot_speed = orb_autopilot_speed
-	c.autopilot_arc_height = orb_autopilot_arc_height
-	c.autopilot_use_arc = orb_autopilot_use_arc
-
-	# IMPORTANT: target_spawn_path is resolved relative to the controller node.
-	# We add controller to current_scene root, so a relative path like "Arena2/Spawns/Floor3/PlayerSpawn" works.
-	c.target_spawn_path = orb_target_spawn_path
-
-	# Add to scene and start
-	var tree := get_tree()
-	if tree == null or tree.current_scene == null:
-		c.queue_free()
-		return
-
-	tree.current_scene.add_child(c)
-	_orb_flight = c
-
-	if not c.flight_completed.is_connected(_on_orb_flight_completed):
-		c.flight_completed.connect(_on_orb_flight_completed)
-	if not c.flight_cancelled.is_connected(_on_orb_flight_cancelled):
-		c.flight_cancelled.connect(_on_orb_flight_cancelled)
-
 	# Prevent repeat presses during startup
 	if _light_beam_station != null and is_instance_valid(_light_beam_station):
 		_light_beam_station.set_enabled(false)
@@ -467,6 +485,59 @@ func _on_orb_flight_cancelled() -> void:
 	_orb_flight = null
 	if _light_beam_station != null and is_instance_valid(_light_beam_station):
 		_light_beam_station.set_enabled(true)
+
+func _ensure_orb_flight_controller() -> OrbFlightController:
+	if _orb_flight != null and is_instance_valid(_orb_flight):
+		_configure_orb_flight_controller(_orb_flight)
+		return _orb_flight
+
+	var existing: OrbFlightController = get_node_or_null(orb_flight_controller_path) as OrbFlightController
+	if existing != null and is_instance_valid(existing):
+		_orb_flight = existing
+		_configure_orb_flight_controller(_orb_flight)
+		if not _orb_flight.flight_completed.is_connected(_on_orb_flight_completed):
+			_orb_flight.flight_completed.connect(_on_orb_flight_completed)
+		if not _orb_flight.flight_cancelled.is_connected(_on_orb_flight_cancelled):
+			_orb_flight.flight_cancelled.connect(_on_orb_flight_cancelled)
+		return _orb_flight
+
+	var c: OrbFlightController = OrbFlightController.new()
+	var tree: SceneTree = get_tree()
+	if tree == null or tree.current_scene == null:
+		c.queue_free()
+		return null
+	tree.current_scene.add_child(c)
+	_orb_flight = c
+	_configure_orb_flight_controller(_orb_flight)
+	if not _orb_flight.flight_completed.is_connected(_on_orb_flight_completed):
+		_orb_flight.flight_completed.connect(_on_orb_flight_completed)
+	if not _orb_flight.flight_cancelled.is_connected(_on_orb_flight_cancelled):
+		_orb_flight.flight_cancelled.connect(_on_orb_flight_cancelled)
+	return _orb_flight
+
+func _configure_orb_flight_controller(c: OrbFlightController) -> void:
+	if c == null:
+		return
+	c.orb_scene = orb_scene
+	c.rock_scene = rock_scene
+	c.flight_speed_y = orb_flight_speed_y
+	c.orb_move_speed_x = orb_move_speed_x
+	c.lane_half_width = orb_lane_half_width
+	c.rock_spawn_interval = orb_rock_spawn_interval
+	c.rock_spawn_half_width = orb_rock_spawn_half_width
+	c.rock_spawn_y_offset = orb_rock_spawn_y_offset
+	c.rock_fall_speed = orb_rock_fall_speed
+	c.rock_damage = orb_rock_damage
+	c.match_rock_spawn_to_lane = orb_match_rock_spawn_to_lane
+	c.rock_cleanup_distance = orb_rock_cleanup_distance
+	c.rock_cleanup_interval = orb_rock_cleanup_interval
+	c.max_active_rocks = orb_max_active_rocks
+	c.end_lockout_seconds = orb_end_lockout_seconds
+	c.finish_y_padding = orb_finish_y_padding
+	c.autopilot_speed = orb_autopilot_speed
+	c.autopilot_arc_height = orb_autopilot_arc_height
+	c.autopilot_use_arc = orb_autopilot_use_arc
+	c.target_spawn_path = orb_target_spawn_path
 
 func _setup_world2_doors() -> void:
 	_door1 = null
@@ -604,6 +675,91 @@ func _update_current_floor_from_player() -> void:
 	if _current_floor_number != _last_floor_number:
 		_last_floor_number = _current_floor_number
 		active_floor_changed.emit(_current_floor_number)
+		_apply_per_floor_player_camera_limits(false)
+
+func _apply_per_floor_player_camera_limits(force: bool) -> void:
+	if not enable_per_floor_player_camera_limits:
+		return
+	if _player == null or not is_instance_valid(_player):
+		return
+	if not force and _last_applied_player_camera_limit_floor == _current_floor_number:
+		return
+
+	var cam: Camera2D = _player.get_node_or_null("Camera2D") as Camera2D
+	if cam == null:
+		return
+
+	var idx: int = _current_floor_number - 1
+	if idx < 0:
+		return
+
+	var applied_any: bool = false
+	if use_explicit_floor_camera_limits:
+		match _current_floor_number:
+			1:
+				cam.limit_left = floor1_camera_limit_left
+				cam.limit_right = floor1_camera_limit_right
+				cam.limit_top = floor1_camera_limit_top
+				cam.limit_bottom = floor1_camera_limit_bottom
+				applied_any = true
+			2:
+				cam.limit_left = floor2_camera_limit_left
+				cam.limit_right = floor2_camera_limit_right
+				cam.limit_top = floor2_camera_limit_top
+				cam.limit_bottom = floor2_camera_limit_bottom
+				applied_any = true
+			3:
+				cam.limit_left = floor3_camera_limit_left
+				cam.limit_right = floor3_camera_limit_right
+				var use_world1_floor3_post_teleport_limits: bool = (
+					enable_world1_floor3_transition
+					and world1_floor3_post_teleport_camera_override_enabled
+					and _world1_floor3_transition_completed
+				)
+				if use_world1_floor3_post_teleport_limits:
+					cam.limit_left = world1_floor3_post_teleport_camera_limit_left
+				if enable_world1_floor3_transition and world1_floor3_use_pre_post_camera_limit_top:
+					if use_world1_floor3_post_teleport_limits:
+						cam.limit_top = world1_floor3_post_teleport_camera_limit_top
+					else:
+						cam.limit_top = world1_floor3_pre_teleport_camera_limit_top
+				else:
+					if use_world1_floor3_post_teleport_limits and _world1_floor3_post_teleport_camera_active:
+						cam.limit_top = world1_floor3_post_teleport_camera_limit_top
+					else:
+						cam.limit_top = floor3_camera_limit_top
+				cam.limit_bottom = floor3_camera_limit_bottom
+				applied_any = true
+			4:
+				cam.limit_left = floor4_camera_limit_left
+				cam.limit_right = floor4_camera_limit_right
+				cam.limit_top = floor4_camera_limit_top
+				cam.limit_bottom = floor4_camera_limit_bottom
+				applied_any = true
+			5:
+				cam.limit_left = floor5_camera_limit_left
+				cam.limit_right = floor5_camera_limit_right
+				cam.limit_top = floor5_camera_limit_top
+				cam.limit_bottom = floor5_camera_limit_bottom
+				applied_any = true
+			_:
+				applied_any = false
+	else:
+		if idx < floor_camera_limit_left.size():
+			cam.limit_left = int(floor_camera_limit_left[idx])
+			applied_any = true
+		if idx < floor_camera_limit_right.size():
+			cam.limit_right = int(floor_camera_limit_right[idx])
+			applied_any = true
+		if idx < floor_camera_limit_top.size():
+			cam.limit_top = int(floor_camera_limit_top[idx])
+			applied_any = true
+		if idx < floor_camera_limit_bottom.size():
+			cam.limit_bottom = int(floor_camera_limit_bottom[idx])
+			applied_any = true
+
+	if applied_any:
+		_last_applied_player_camera_limit_floor = _current_floor_number
 
 func _emit_floor_status_if_changed() -> void:
 	var enemies_left: int = get_enemies_left_current_floor()
@@ -674,6 +830,8 @@ func _process(_delta: float) -> void:
 					_encounter.call("begin_boss_encounter")
 
 	_update_current_floor_from_player()
+	if floor_camera_limits_live_tuning or (world1_floor3_post_teleport_camera_live_tuning and _world1_floor3_transition_completed):
+		_apply_per_floor_player_camera_limits(true)
 	_try_start_world1_floor3_transition()
 	_update_world1_boss_camera_live_tuning()
 	_update_world2_boss_camera_live_tuning()
@@ -729,39 +887,62 @@ func _start_floor1_to_floor2_transition() -> void:
 
 	pass
 
-	# Lock input
-	_set_player_input_locked(true)
+	_ensure_transition_fade_rect()
 
-	# Play Door1 opening (then open)
-	_force_door_state(_door1, door_anim_closed)
-	_play_door_anim(_door1, door_anim_opening)
+	# Disable control but keep gravity/falling active for hidden settle.
+	_set_player_cutscene_motion_lock(true)
 
 	# Use async flow via deferred call so we don't block frame
 	call_deferred("_door_transition_sequence")
 
 func _door_transition_sequence() -> void:
-	# Door1 opening finish
+	# Resolve fade target lazily at transition time (never during _ready()).
+	_ensure_transition_fade_rect()
+
+	# Step 1: Fade OUT first.
+	if _teleport_fade_rect != null:
+		_teleport_fade_rect.visible = true
+		_set_teleport_fade_alpha(0.0)
+		var tween_out := create_tween()
+		tween_out.set_pause_mode(Tween.TWEEN_PAUSE_PROCESS)
+		tween_out.tween_method(_set_teleport_fade_alpha, 0.0, 1.0, teleport_fade_out_time)
+		await tween_out.finished
+	else:
+		await get_tree().create_timer(maxf(teleport_fade_out_time, 0.01)).timeout
+
+	# Step 2: While black, play both door animations.
+	var waiting_on_door1: bool = false
+	var waiting_on_door2: bool = false
 	if _door1 != null:
-		await _door1.animation_finished
-		_force_door_state(_door1, door_anim_open)
+		_force_door_state(_door1, door_anim_closed)
+		_play_door_anim(_door1, door_anim_opening)
+		waiting_on_door1 = true
 
-	# Hide player during transition
-	_set_player_visible(false)
-
-	# Floor2 door should play opening, then open, then wait, then spawn player
 	if _door2 != null:
 		_force_door_state(_door2, door_anim_closed)
 		_play_door_anim(_door2, door_anim_opening)
-		await _door2.animation_finished
+		waiting_on_door2 = true
+
+	while waiting_on_door1 or waiting_on_door2:
+		if waiting_on_door1 and (_door1 == null or not is_instance_valid(_door1) or not _door1.is_playing()):
+			waiting_on_door1 = false
+		if waiting_on_door2 and (_door2 == null or not is_instance_valid(_door2) or not _door2.is_playing()):
+			waiting_on_door2 = false
+		if waiting_on_door1 or waiting_on_door2:
+			await get_tree().process_frame
+
+	if _door1 != null and is_instance_valid(_door1):
+		_force_door_state(_door1, door_anim_open)
+	if _door2 != null and is_instance_valid(_door2):
 		_force_door_state(_door2, door_anim_open)
 
-	# Wait before spawning
-	if floor2_spawn_delay > 0.0:
-		await get_tree().create_timer(floor2_spawn_delay).timeout
-
-	# Teleport/spawn player at Floor2Door + offset
+	# Step 3: Move player/camera and allow settle while black.
 	if _player != null and _door2 != null:
 		_player.global_position = _door2.global_position + floor2_spawn_offset
+
+	await get_tree().physics_frame
+	_snap_player_camera_to_player()
+	await _wait_for_player_settle_hidden(world2_door_player_settle_timeout)
 
 	# CRITICAL: Force floor number to 2 after spawning at Floor2Door
 	# This ensures ultimates work immediately without waiting for _update_current_floor_from_player()
@@ -769,10 +950,86 @@ func _door_transition_sequence() -> void:
 	_last_floor_number = 2
 	active_floor_changed.emit(2)
 
-	_set_player_visible(true)
-	_set_player_input_locked(false)
+	# Step 4: Fade IN, then return control.
+	if _teleport_fade_rect != null:
+		var tween_in := create_tween()
+		tween_in.set_pause_mode(Tween.TWEEN_PAUSE_PROCESS)
+		tween_in.tween_method(_set_teleport_fade_alpha, 1.0, 0.0, teleport_fade_in_time)
+		await tween_in.finished
+		_teleport_fade_rect.visible = false
+	else:
+		await get_tree().create_timer(maxf(teleport_fade_in_time, 0.01)).timeout
+
+	_set_player_cutscene_motion_lock(false)
 
 	_door_transition_active = false
+
+func _ensure_transition_fade_rect() -> void:
+	if _teleport_fade_rect != null and is_instance_valid(_teleport_fade_rect):
+		return
+	if teleport_fade_rect_path != NodePath():
+		_teleport_fade_rect = get_node_or_null(teleport_fade_rect_path) as ColorRect
+	if _teleport_fade_rect == null:
+		_teleport_fade_rect = _create_runtime_transition_fade_rect()
+
+func _create_runtime_transition_fade_rect() -> ColorRect:
+	var tree: SceneTree = get_tree()
+	if tree == null or tree.current_scene == null:
+		return null
+	var existing_layer: CanvasLayer = tree.current_scene.get_node_or_null("FloorTransitionFadeLayer") as CanvasLayer
+	var layer: CanvasLayer = existing_layer
+	if layer == null:
+		layer = CanvasLayer.new()
+		layer.name = "FloorTransitionFadeLayer"
+		layer.layer = 100
+		layer.process_mode = Node.PROCESS_MODE_ALWAYS
+		tree.current_scene.add_child(layer)
+
+	var existing_rect: ColorRect = layer.get_node_or_null("FloorTransitionFade") as ColorRect
+	if existing_rect != null:
+		return existing_rect
+
+	var rect: ColorRect = ColorRect.new()
+	rect.name = "FloorTransitionFade"
+	rect.color = Color(0, 0, 0, 0)
+	rect.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	rect.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	rect.visible = false
+	layer.add_child(rect)
+	return rect
+
+func _snap_player_camera_to_player() -> void:
+	if _player == null:
+		return
+	var cam: Camera2D = _player.get_node_or_null("Camera2D") as Camera2D
+	if cam == null:
+		return
+	var prev_smoothing: bool = cam.position_smoothing_enabled
+	cam.position_smoothing_enabled = false
+	cam.global_position = _player.global_position
+	if cam.has_method("reset_smoothing"):
+		cam.call("reset_smoothing")
+	cam.position_smoothing_enabled = prev_smoothing
+
+func _wait_for_player_settle_hidden(timeout_seconds: float) -> void:
+	if _player == null or not is_instance_valid(_player):
+		return
+	var body: CharacterBody2D = _player as CharacterBody2D
+	if body == null:
+		return
+	var timeout: float = maxf(timeout_seconds, 0.0)
+	var elapsed: float = 0.0
+	var stable_frames: int = 0
+	var required_stable_frames: int = 4
+	while elapsed < timeout:
+		if body.is_on_floor() and absf(body.velocity.y) <= 6.0:
+			stable_frames += 1
+			if stable_frames >= required_stable_frames:
+				return
+		else:
+			stable_frames = 0
+		await get_tree().physics_frame
+		elapsed += 1.0 / 60.0
 
 func _set_player_visible(v: bool) -> void:
 	if _player == null:
@@ -812,6 +1069,7 @@ func _try_start_world1_floor3_transition() -> void:
 
 	_world1_floor3_transition_started = true
 	_world1_floor3_transition_running = true
+	_world1_floor3_transition_completed = false
 	call_deferred("_run_world1_floor3_transition")
 
 func _set_world1_floor3_enemies_paused(paused: bool) -> void:
@@ -1177,12 +1435,14 @@ func _run_world1_floor3_transition() -> void:
 		push_warning("[Floors] World1 Floor3 destination not found: %s" % String(world1_floor3_destination_path))
 	else:
 		_player.global_position = destination.global_position
+		_world1_floor3_post_teleport_camera_active = true
+		_world1_floor3_transition_completed = true
+		_apply_per_floor_player_camera_limits(true)
 
 	var cam: Camera2D = null
 	if _player != null:
 		cam = _player.get_node_or_null("Camera2D") as Camera2D
 	if cam != null:
-		cam.limit_left = 41528
 		cam.offset = world1_floor3_camera_offset
 		cam.position = Vector2.ZERO
 		var prev_smoothing: bool = cam.position_smoothing_enabled
@@ -1777,6 +2037,41 @@ func _on_steam_elevator_teleport_completed() -> void:
 
 func activate_world2_boss_arena_camera() -> void:
 	_activate_world2_boss_arena_camera()
+
+func get_world2_boss_camera_hidden_settle_time() -> float:
+	if not enable_world2_boss_arena_camera:
+		return 0.0
+	return maxf(world2_boss_camera_transition_time, 0.0)
+
+func set_world2_portal_combat_paused(paused: bool) -> void:
+	# Used by World2 Floor4 portal transition to keep spawn/camera setup hidden
+	# and only release combat after fade-in completes.
+	_set_boss_combat_paused(paused)
+	if paused:
+		_world2_portal_pause_cache.clear()
+		var enemies: Array[Node] = get_tree().get_nodes_in_group(&"floor5_enemies")
+		for e: Node in enemies:
+			if e == null or not is_instance_valid(e):
+				continue
+			_world2_portal_pause_cache[e] = {
+				"process": e.is_processing(),
+				"physics": e.is_physics_processing()
+			}
+			e.set_process(false)
+			e.set_physics_process(false)
+			if e is CharacterBody2D:
+				(e as CharacterBody2D).velocity = Vector2.ZERO
+	else:
+		for e_obj: Variant in _world2_portal_pause_cache.keys():
+			var e: Node = e_obj as Node
+			if e == null or not is_instance_valid(e):
+				continue
+			var cached: Variant = _world2_portal_pause_cache.get(e, null)
+			if cached == null:
+				continue
+			e.set_process(bool(cached["process"]))
+			e.set_physics_process(bool(cached["physics"]))
+		_world2_portal_pause_cache.clear()
 
 func activate_world3_boss_arena_camera() -> void:
 	_activate_world3_boss_arena_camera()

@@ -33,6 +33,7 @@ var carried_charge: AscensionCharge = null
 
 var _pickup_radius: float = 40.0
 var _pickup_mask: int = 1
+var _drop_locked: bool = false
 
 func _ready() -> void:
 	if _health == null:
@@ -73,6 +74,8 @@ func is_carrying() -> bool:
 
 func _handle_interact() -> void:
 	if is_carrying():
+		if _drop_locked:
+			return
 		_drop_current(DropReason.MANUAL)
 		return
 
@@ -222,6 +225,8 @@ func _on_damage_applied(final_damage: int, _source: Node) -> void:
 		return
 	if not drop_on_damage:
 		return
+	if _drop_locked:
+		return
 	if is_carrying():
 		_drop_current(DropReason.FORCED_BY_DAMAGE)
 
@@ -245,7 +250,14 @@ func _physics_process(_delta: float) -> void:
 func _on_carried_charge_consumed() -> void:
 	# carried_charge may already be queued_free by the time this runs; treat as not carrying.
 	carried_charge = null
+	_drop_locked = false
 	carrying_changed.emit(false)
+
+func set_drop_locked(locked: bool) -> void:
+	_drop_locked = locked
+
+func is_drop_locked() -> bool:
+	return _drop_locked
 
 func _get_player_facing_dir() -> int:
 	if _player == null:

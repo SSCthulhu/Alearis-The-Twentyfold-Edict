@@ -188,6 +188,7 @@ func _handle_return(player: Node2D, fade_overlay: ColorRect) -> void:
 	
 	# Short final delay for physics to settle
 	await get_tree().create_timer(0.2).timeout
+	await _wait_for_settle_hidden([player], [&"floor5_enemies"], 1.8)
 	
 	# NOW fade to transparent (1.5s) - player is already holding charge and camera is stable
 	if debug_logs:
@@ -256,6 +257,8 @@ func _restore_charge_to_player(player: Node2D) -> void:
 	var charge_carrier = player.get_node_or_null("ChargeCarrier")
 	if charge_carrier != null and charge_carrier.has_method("_pickup"):
 		charge_carrier.call("_pickup", charge)
+		if charge_carrier.has_method("set_drop_locked"):
+			charge_carrier.call("set_drop_locked", true)
 		if debug_logs:
 			pass
 		
@@ -318,3 +321,36 @@ func _fade_screen(overlay: ColorRect, from_alpha: float, to_alpha: float, durati
 	tween.tween_property(overlay, "color:a", to_alpha, duration)
 	
 	await tween.finished
+
+func _wait_for_settle_hidden(nodes: Array[Node], groups: Array[StringName], timeout_seconds: float) -> void:
+	var timeout: float = maxf(timeout_seconds, 0.0)
+	var elapsed: float = 0.0
+	while elapsed < timeout:
+		if _all_targets_settled(nodes, groups):
+			return
+		await get_tree().physics_frame
+		elapsed += 1.0 / 60.0
+
+func _all_targets_settled(nodes: Array[Node], groups: Array[StringName]) -> bool:
+	for n: Node in nodes:
+		if not _is_node_settled(n):
+			return false
+	for g: StringName in groups:
+		var group_nodes: Array[Node] = get_tree().get_nodes_in_group(g)
+		for gn: Node in group_nodes:
+			if not _is_node_settled(gn):
+				return false
+	return true
+
+func _is_node_settled(node: Node) -> bool:
+	if node == null or not is_instance_valid(node):
+		return true
+	var body: CharacterBody2D = node as CharacterBody2D
+	if body != null:
+		if body.is_on_floor():
+			return true
+		return absf(body.velocity.y) <= 8.0
+	if "velocity" in node:
+		var v: Vector2 = node.get("velocity")
+		return absf(v.y) <= 8.0
+	return true

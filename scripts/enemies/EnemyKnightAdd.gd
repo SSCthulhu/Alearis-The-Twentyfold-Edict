@@ -91,6 +91,14 @@ const ATTACK_VFX_SCENE: PackedScene = preload("res://scenes/vfx/BlueSlashVFX.tsc
 @export var same_platform_floor_y_tolerance: float = 24.0
 
 # -----------------------------
+# Performance culling
+# -----------------------------
+@export var enable_distant_ai_culling: bool = true
+@export var distant_ai_cull_distance_x: float = 2400.0
+@export var distant_ai_cull_distance_y: float = 1600.0
+@export var distant_ai_cull_tick_interval: float = 0.12
+
+# -----------------------------
 # Ledge safety
 # -----------------------------
 @export var prevent_falling_off_ledges: bool = true
@@ -152,6 +160,8 @@ var _was_on_floor: bool = false
 var _target_ledge_direction: int = 0  # -1 left, 0 none, 1 right
 var _ledge_search_cooldown: float = 0.0  # Re-evaluate ledge every X seconds
 var _direction_flip_cooldown: float = 0.0  # Prevent rapid direction flipping
+var _distant_ai_cull_timer: float = 0.0
+var _is_ai_distant_culled: bool = false
 
 var _base_contact_damage: int = 0
 var _base_attack_damage: int = 0
@@ -278,6 +288,18 @@ func _physics_process(delta: float) -> void:
 		move_and_slide()
 		return
 
+	# Skip expensive AI/targeting logic when far from player.
+	if _should_cull_distant_ai(delta):
+		_apply_gravity(delta)
+		velocity.x = move_toward(velocity.x, 0.0, friction * delta)
+		move_and_slide()
+		_target = null
+		_face_target = null
+		_update_facing()
+		_update_locomotion_anim()
+		_try_contact_damage()
+		return
+
 	if use_floor_activation and not _active:
 		_apply_gravity(delta)
 		move_and_slide()
@@ -399,6 +421,25 @@ func _physics_process(delta: float) -> void:
 		_try_attack()
 
 	_try_contact_damage()
+
+func _should_cull_distant_ai(delta: float) -> bool:
+	if not enable_distant_ai_culling:
+		_is_ai_distant_culled = false
+		return false
+	_distant_ai_cull_timer = maxf(_distant_ai_cull_timer - delta, 0.0)
+	if _distant_ai_cull_timer > 0.0:
+		return _is_ai_distant_culled
+	_distant_ai_cull_timer = maxf(distant_ai_cull_tick_interval, 0.05)
+
+	var player: Node2D = _get_player()
+	if player == null or not is_instance_valid(player):
+		_is_ai_distant_culled = false
+		return false
+
+	var dx: float = absf(player.global_position.x - global_position.x)
+	var dy: float = absf(player.global_position.y - global_position.y)
+	_is_ai_distant_culled = dx >= maxf(distant_ai_cull_distance_x, 0.0) or dy >= maxf(distant_ai_cull_distance_y, 0.0)
+	return _is_ai_distant_culled
 
 # -----------------------------
 # Animation helpers

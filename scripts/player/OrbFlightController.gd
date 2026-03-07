@@ -32,9 +32,14 @@ signal flight_cancelled
 @export var rock_cleanup_distance: float = 1200.0
 @export var rock_cleanup_interval: float = 0.5  # Less frequent cleanup
 @export var max_active_rocks: int = 8  # ✅ Reduced to 8 for better performance
+@export var adaptive_rock_budget_enabled: bool = true
+@export var adaptive_target_fps: float = 58.0
+@export var adaptive_check_interval: float = 0.5
 
 # ✅ Object pooling for performance (no constant instantiate/free)
 @export var rock_pool_size: int = 12  # Pool slightly larger than max active
+@export var rock_pool_bootstrap_count: int = 4
+@export var rock_pool_prewarm_batch_size: int = 2
 
 # Completion target
 @export var target_spawn_path: NodePath = NodePath() # Marker2D on Floor 3
@@ -116,6 +121,39 @@ var _frame_times: Array[float] = []
 var _max_frame_samples: int = 60
 var _last_fps_warning: float = 0.0
 var _fps_warning_cooldown: float = 2.0
+@export var debug_sparse_perf_warnings: bool = false
+
+var _current_spawn_interval: float = 0.0
+var _current_max_active_rocks: int = 0
+var _adaptive_timer: float = 0.0
+var _prewarm_pool_scheduled: bool = false
+var _prewarm_pool_running: bool = false
+
+func prewarm_pool() -> void:
+	if _rock_pool.size() >= rock_pool_size:
+		return
+	if _prewarm_pool_scheduled:
+		return
+	_prewarm_pool_scheduled = true
+	call_deferred("_prewarm_pool_deferred")
+
+func is_running() -> bool:
+	return _running
+
+func _prewarm_pool_deferred() -> void:
+	if _prewarm_pool_running:
+		return
+	_prewarm_pool_running = true
+	_prewarm_pool_scheduled = false
+	await _prewarm_pool_async()
+	_prewarm_pool_running = false
+
+func _prewarm_pool_async() -> void:
+	while _rock_pool.size() < rock_pool_size:
+		var remaining: int = rock_pool_size - _rock_pool.size()
+		var batch: int = mini(maxi(rock_pool_prewarm_batch_size, 1), remaining)
+		_create_pool_entries(batch)
+		await get_tree().process_frame
 
 
 func start_flight(player: Node2D) -> void:
@@ -154,10 +192,14 @@ func start_flight(player: Node2D) -> void:
 	_elapsed = 0.0
 	_spawn_timer = 0.0
 	_cleanup_timer = rock_cleanup_interval
+	_current_spawn_interval = maxf(rock_spawn_interval, 0.05)
+	_current_max_active_rocks = maxi(max_active_rocks, 1)
+	_adaptive_timer = adaptive_check_interval
 	_active_rocks.clear()
 	
-	# ✅ Initialize rock pool if needed
-	_initialize_rock_pool()
+	# Ensure a small pool is ready immediately, then prewarm the rest over frames.
+	_ensure_bootstrap_pool_ready()
+	prewarm_pool()
 
 	set_physics_process(true)
 	flight_started.emit()
@@ -200,6 +242,8 @@ func _physics_process(delta: float) -> void:
 	# ✅ FPS monitoring
 	if debug_fps_monitoring:
 		_monitor_performance(delta)
+	if adaptive_rock_budget_enabled:
+		_update_adaptive_rock_budget(delta)
 
 	_elapsed += delta
 
@@ -253,7 +297,7 @@ func _physics_process(delta: float) -> void:
 	if not _stop_rocks:
 		_spawn_timer -= delta
 		if _spawn_timer <= 0.0:
-			_spawn_timer = maxf(rock_spawn_interval, 0.05)
+			_spawn_timer = _current_spawn_interval
 			_spawn_rock()
 	
 	# ✅ Performance: cleanup rocks periodically, not every frame
@@ -437,23 +481,36 @@ func _spawn_orb() -> void:
 func _initialize_rock_pool() -> void:
 	if rock_scene == null:
 		return
-	
-	# Only create pool if it doesn't exist
-	if _rock_pool.size() > 0:
+	if _rock_pool.size() >= rock_pool_size:
 		return
-	
-	for i in range(rock_pool_size):
+
+	_create_pool_entries(rock_pool_size - _rock_pool.size())
+
+func _ensure_bootstrap_pool_ready() -> void:
+	if rock_scene == null:
+		return
+	var desired: int = clampi(rock_pool_bootstrap_count, 1, maxi(rock_pool_size, 1))
+	if _rock_pool.size() >= desired:
+		return
+	_create_pool_entries(desired - _rock_pool.size())
+
+func _create_pool_entries(count: int) -> void:
+	if rock_scene == null:
+		return
+	var add_count: int = maxi(count, 0)
+	var tree: SceneTree = get_tree()
+	if tree == null or tree.current_scene == null:
+		return
+	for i in range(add_count):
 		var n := rock_scene.instantiate()
 		var rock := n as OrbFallingRock
 		if rock == null:
 			n.queue_free()
 			continue
 		
-		get_tree().current_scene.add_child(rock)
+		tree.current_scene.add_child(rock)
 		rock.deactivate()  # Start inactive
 		_rock_pool.append(rock)
-	
-	pass
 
 # ✅ Get an inactive rock from pool
 func _get_pooled_rock() -> OrbFallingRock:
@@ -467,7 +524,7 @@ func _spawn_rock() -> void:
 		return
 	
 	# ✅ Limit max active rocks
-	if _active_rocks.size() >= max_active_rocks:
+	if _active_rocks.size() >= _current_max_active_rocks:
 		return
 	
 	# ✅ Get rock from pool instead of instantiating
@@ -794,3 +851,29 @@ func _monitor_performance(delta: float) -> void:
 			pass
 		
 		pass
+
+func _update_adaptive_rock_budget(delta: float) -> void:
+	_adaptive_timer -= delta
+	if _adaptive_timer > 0.0:
+		return
+	_adaptive_timer = maxf(adaptive_check_interval, 0.1)
+
+	var fps: float = float(Engine.get_frames_per_second())
+	var base_spawn: float = maxf(rock_spawn_interval, 0.05)
+	var base_max_rocks: int = maxi(max_active_rocks, 1)
+
+	if fps < adaptive_target_fps - 8.0:
+		_current_spawn_interval = base_spawn * 1.6
+		_current_max_active_rocks = maxi(3, base_max_rocks - 3)
+	elif fps < adaptive_target_fps:
+		_current_spawn_interval = base_spawn * 1.35
+		_current_max_active_rocks = maxi(4, base_max_rocks - 2)
+	else:
+		_current_spawn_interval = base_spawn
+		_current_max_active_rocks = base_max_rocks
+
+	if debug_sparse_perf_warnings and fps < fps_warn_threshold:
+		var now_sec: float = Time.get_ticks_msec() / 1000.0
+		if (now_sec - _last_fps_warning) > _fps_warning_cooldown:
+			_last_fps_warning = now_sec
+			push_warning("[OrbFlight] FPS low: %.1f | spawn_interval=%.2f | max_rocks=%d" % [fps, _current_spawn_interval, _current_max_active_rocks])

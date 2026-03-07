@@ -19,11 +19,11 @@ const RELIC_TWIN_FATE: StringName = &"e3_twin_fate"
 @export var loaded_edge_backlash_percent: float = 0.06
 @export var trigger_action: StringName = &"dice_meter_trigger"
 @export var input_buffer_seconds: float = 0.15
-@export var debug_logs: bool = true
+@export var debug_logs: bool = false
 @export_group("Debug Test Mode")
 @export var debug_test_mode_enabled: bool = false
-@export var debug_lock_meter_full: bool = true
-@export var debug_prevent_enemy_deaths: bool = true
+@export var debug_lock_meter_full: bool = false
+@export var debug_prevent_enemy_deaths: bool = false
 @export var debug_force_range_min: int = 1
 @export var debug_force_range_max: int = 20
 

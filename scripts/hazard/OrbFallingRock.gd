@@ -6,7 +6,10 @@ class_name OrbFallingRock
 @export var rock_texture_path: String = "res://art/Worlds/Tropical/Props/stone/rock 1.png"
 @export var debug_collision: bool = false  # ✅ Show collision shape debug (disabled for performance)
 @export var debug_collision_hits: bool = false  # ✅ Debug collision detection (disabled - too many prints)
-@export var debug_orblight_only: bool = true  # ✅ Only debug OrbLight hits
+@export var debug_orblight_only: bool = false  # ✅ Only debug OrbLight hits
+@export var collision_enable_distance_from_orb: float = 900.0
+
+static var _shared_rock_texture: Texture2D = null
 
 var _player: Node2D = null
 var _orb: Node2D = null
@@ -16,6 +19,7 @@ var _damage: int = 10
 var _timer: float = 0.0
 var _hit: bool = false
 var _active: bool = false  # ✅ Track if rock is in use (for pooling)
+var _collision_live: bool = false
 
 # Cached nodes for performance
 var _sprite: Sprite2D = null
@@ -24,6 +28,8 @@ var _collision: CollisionShape2D = null
 func _ready() -> void:
 	add_to_group(&"orb_flight_rocks")
 	_timer = life_seconds
+	# Pooled rocks stay dormant until configured for use.
+	set_physics_process(false)
 	
 	# ✅ Cache child nodes for performance
 	_sprite = get_node_or_null("Sprite2D") as Sprite2D
@@ -56,9 +62,10 @@ func _ready() -> void:
 	
 	# ✅ Load rock texture once
 	if _sprite != null and rock_texture_path != "":
-		var tex := load(rock_texture_path) as Texture2D
-		if tex != null:
-			_sprite.texture = tex
+		if _shared_rock_texture == null:
+			_shared_rock_texture = load(rock_texture_path) as Texture2D
+		if _shared_rock_texture != null:
+			_sprite.texture = _shared_rock_texture
 
 	if not body_entered.is_connected(_on_body_entered):
 		body_entered.connect(_on_body_entered)
@@ -69,6 +76,8 @@ func _ready() -> void:
 	
 	# Enable debug collision drawing in editor
 	set_notify_transform(true)
+	monitoring = false
+	monitorable = false
 
 # ✅ Handle Area2D collisions (in case orb is Area2D, not CharacterBody2D)
 func _on_area_entered(area: Area2D) -> void:
@@ -95,8 +104,10 @@ func configure(player: Node2D, fall_speed: float, damage: int, orb: Node2D = nul
 	
 	# Reset visibility and collision (use set_deferred for safety)
 	visible = true
-	set_deferred("monitoring", true)
-	set_deferred("monitorable", true)
+	set_physics_process(true)
+	_collision_live = false
+	set_deferred("monitoring", false)
+	set_deferred("monitorable", false)
 
 # ✅ Randomize scale, rotation, and color tint
 func _randomize_appearance() -> void:
@@ -172,6 +183,8 @@ func _draw() -> void:
 func deactivate() -> void:
 	_active = false
 	visible = false
+	set_physics_process(false)
+	_collision_live = false
 	# ✅ Use set_deferred to avoid "Function blocked during signal" errors
 	set_deferred("monitoring", false)
 	set_deferred("monitorable", false)
@@ -189,6 +202,7 @@ func _physics_process(delta: float) -> void:
 		return
 	
 	global_position.y += _fall_speed * delta
+	_update_collision_window()
 
 	_timer -= delta
 	if _timer <= 0.0:
@@ -201,6 +215,8 @@ func _physics_process(delta: float) -> void:
 func _on_body_entered(b: Node) -> void:
 	# Early exit for non-targets
 	if not _active or _hit:
+		return
+	if not _collision_live:
 		return
 	if _player == null or not is_instance_valid(_player):
 		return
@@ -229,3 +245,18 @@ func _on_body_entered(b: Node) -> void:
 			pass
 
 	deactivate()
+
+func _update_collision_window() -> void:
+	if _collision_live:
+		return
+	# Enable collision only when rock gets near the orb path.
+	if _orb == null or not is_instance_valid(_orb):
+		_collision_live = true
+		set_deferred("monitoring", true)
+		set_deferred("monitorable", true)
+		return
+	var enable_y: float = _orb.global_position.y - maxf(collision_enable_distance_from_orb, 64.0)
+	if global_position.y >= enable_y:
+		_collision_live = true
+		set_deferred("monitoring", true)
+		set_deferred("monitorable", true)

@@ -24,7 +24,7 @@ var sample_interval: float = 0.05
 
 @export var combat_returns_elapsed: bool = false
 
-@export var debug: bool = true
+@export var debug: bool = false
 @export var run_when_paused: bool = true
 
 var _hud: PlayerHUDCluster

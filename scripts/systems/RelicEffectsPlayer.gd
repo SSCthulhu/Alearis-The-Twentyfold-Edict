@@ -31,7 +31,7 @@ const RELIC_TIME_SLIP: StringName = &"r2_time_slip"
 
 @export var time_slip_duration: float = 2.00
 @export var time_slip_cooldown: float = 6.0
-@export var time_slip_debug: bool = true
+@export var time_slip_debug: bool = false
 
 var _time_slip_cd_left: float = 0.0
 var _time_slip_active: bool = false
@@ -44,7 +44,7 @@ const RELIC_EXECUTION_LOOP: StringName = &"r3_execution_loop"
 
 @export var execution_loop_roll_recharge_cut: float = 0.40 # reduce remaining recharge by 40%
 @export var execution_loop_cooldown: float = 8.0
-@export var execution_loop_debug: bool = true
+@export var execution_loop_debug: bool = false
 
 var _execution_loop_cd_left: float = 0.0
 
@@ -57,7 +57,7 @@ const RELIC_SANCTIFIED_BARRIER: StringName = &"r4_sanctified_barrier"
 @export var sanctified_barrier_duration: float = 6.0
 @export var sanctified_barrier_cooldown: float = 10.0
 @export var sanctified_barrier_cap_pct_max_hp: float = 0.12 # cap equal to grant by default
-@export var sanctified_barrier_debug: bool = true
+@export var sanctified_barrier_debug: bool = false
 
 var _sanctified_barrier_cd_left: float = 0.0
 
@@ -79,7 +79,7 @@ var _blood_price_active: bool = false
 const RELIC_ORB_SURGE: StringName = &"r6_orb_surge"
 
 @export var orb_surge_attack_speed_mult: float = 1.20 # +20% attack speed while boss vulnerable
-@export var orb_surge_debug: bool = true
+@export var orb_surge_debug: bool = false
 
 const BUFF_ORB_SURGE: StringName = &"relic_orb_surge"
 const STAT_ATTACK_SPEED_MULT: StringName = &"attack_speed_mult"
@@ -93,7 +93,7 @@ var _orb_surge_applied: bool = false
 const RELIC_ASCENDANT_CORE: StringName = &"e2_ascendant_core"
 
 @export var ascendant_core_extend_seconds: float = 4.0
-@export var ascendant_core_debug: bool = true
+@export var ascendant_core_debug: bool = false
 
 # -----------------------------
 # Buff IDs (owned by this script)
@@ -197,10 +197,10 @@ const DAMAGE_TAG_SHOCK: StringName = &"shock"
 # -----------------------------
 # Debug
 # -----------------------------
-@export var debug_logs: bool = true
+@export var debug_logs: bool = false
 @export var debug_force_all_relics_enabled: bool = false
 @export var debug_force_relic_ids: Array[StringName] = []
-@export var debug_force_grants_to_runstate: bool = true # <-- add this toggle
+@export var debug_force_grants_to_runstate: bool = false # <-- add this toggle
 # -----------------------------
 # Node paths
 # -----------------------------

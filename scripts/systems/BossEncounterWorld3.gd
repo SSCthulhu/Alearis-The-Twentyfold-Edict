@@ -67,7 +67,8 @@ func _ready() -> void:
 	# CRITICAL: Set world_index to 3 when World3 loads
 	if RunStateSingleton != null:
 		RunStateSingleton.world_index = 3
-		print("[BossEncounterWorld3] Set world_index to 3 for World3")
+		if debug_logs:
+			print("[BossEncounterWorld3] Set world_index to 3 for World3")
 	
 	_boss = get_node_or_null(boss_path)
 	if _boss == null:

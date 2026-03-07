@@ -16,7 +16,7 @@
 
 [node name="FinalWorldController" type="Node" parent="."]
 script = ExtResource("6_fwctl")
-boss_spawn_position = Vector2(4, 800)
+boss_spawn_position = Vector2(4, 900)
 final_boss_camera_bottom = 2000.0
 final_boss_camera_live_tuning = true
 final_boss_camera_use_manual_center = true
@@ -34,6 +34,12 @@ golem_scene = ExtResource("4_icygt")
 start_on_ready = false
 
 [node name="FinalArena" parent="." instance=ExtResource("5_ismk3")]
+
+[node name="LeftWall" parent="FinalArena/Geometry" index="2"]
+position = Vector2(-1587, -13163)
+
+[node name="RightWall" parent="FinalArena/Geometry" index="3"]
+position = Vector2(1590, -13220)
 
 [node name="Player" parent="." instance=ExtResource("17_omg0h")]
 position = Vector2(-938, 1244)
@@ -83,22 +89,9 @@ offset_right = -16.775
 offset_bottom = -16.775
 style = ExtResource("22_bjoim")
 
-[node name="PlayerHUDWiring" parent="UI/ScreenRoot/HUDRoot" index="4"]
+[node name="PlayerHUDWiring" parent="UI/ScreenRoot/HUDRoot" index="6"]
 player_path = NodePath("../../../../Player")
 combat_path = NodePath("../../../../Player/Combat")
-
-[node name="EncounterHUDWiring" parent="UI/ScreenRoot/HUDRoot" index="5"]
-floor_controller_path = NodePath("")
-boss_path = NodePath("../../../../Boss")
-
-[node name="LowHealthPostFX" parent="UI/ScreenRoot/HUDRoot/PlayerDamageFeedback" index="0"]
-layout_mode = 3
-
-[node name="LowHealthBorder" parent="UI/ScreenRoot/HUDRoot/PlayerDamageFeedback" index="1"]
-layout_mode = 3
-
-[node name="HitFlash" parent="UI/ScreenRoot/HUDRoot/PlayerDamageFeedback" index="2"]
-layout_mode = 3
 
 [node name="FinalWorldFade" type="ColorRect" parent="UI/ScreenRoot/HUDRoot" index="7"]
 visible = false
@@ -111,6 +104,21 @@ grow_vertical = 2
 mouse_filter = 2
 color = Color(0, 0, 0, 1)
 
+[node name="EncounterHUDWiring" parent="UI/ScreenRoot/HUDRoot" index="8"]
+floor_controller_path = NodePath("")
+boss_path = NodePath("../../../../Boss")
+
+[node name="LowHealthPostFX" parent="UI/ScreenRoot/HUDRoot/PlayerDamageFeedback" index="0"]
+layout_mode = 3
+
+[node name="LowHealthBorder" parent="UI/ScreenRoot/HUDRoot/PlayerDamageFeedback" index="1"]
+layout_mode = 3
+
+[node name="HitFlash" parent="UI/ScreenRoot/HUDRoot/PlayerDamageFeedback" index="2"]
+layout_mode = 3
+
+[editable path="FinalArena"]
+[editable path="FinalArena/Geometry/Floors/Floor1"]
 [editable path="Player"]
 [editable path="Player/Visual/Body3DView"]
 [editable path="AcensionCharge"]

@@ -12,7 +12,7 @@ signal perfect_dodge(trigger_source: Node, attempted_damage: int)
 # Prevents spamming perfect-dodge triggers from multiple blocked hits in the same moment.
 @export var rearm_cooldown: float = 0.10
 
-@export var debug_prints: bool = true
+@export var debug_prints: bool = false
 
 var _rearm_left: float = 0.0
 
