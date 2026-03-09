@@ -55,8 +55,8 @@ anim_attack = &"Player/Melee_2H_Attack_Chop"
 
 [node name="Enemy3DView" parent="." instance=ExtResource("3_necro3d")]
 position = Vector2(0, -10)
-viewport_size = Vector2i(1024, 512)
-screen_pixels = Vector2i(512, 256)
+viewport_size = Vector2i(1280, 512)
+screen_pixels = Vector2i(640, 256)
 
 [node name="BodyCollision" type="CollisionShape2D" parent="."]
 position = Vector2(0, -10.075)

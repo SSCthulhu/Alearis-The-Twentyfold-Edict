@@ -191,7 +191,15 @@ var _orb_flight_completed_once: bool = false
 @export var world1_boss_camera_top: float = 11000.0
 @export var world1_boss_camera_bottom: float = 14535.0
 @export var world1_boss_camera_transition_time: float = 0.75
+@export var world1_boss_camera_sequential_transition: bool = true
+@export var world1_boss_camera_pan_time: float = 1.25
+@export var world1_boss_camera_zoom_time: float = 0.75
+@export var world1_boss_camera_transition_unbounded_limits: bool = true
+@export var world1_boss_camera_transition_limit_padding: float = 1200.0
 @export var world1_boss_camera_live_tuning: bool = false
+@export var world1_boss_camera_live_tuning_during_runtime: bool = false
+@export var world1_boss_camera_debug_logs: bool = false
+@export var world1_boss_camera_hard_lock_after_transition: bool = true
 @export var world1_boss_camera_use_manual_center: bool = false
 @export var world1_boss_camera_center: Vector2 = Vector2(50849.0, 12767.5)
 @export var world1_boss_camera_auto_fit_zoom: bool = true
@@ -330,6 +338,13 @@ var _world1_floor3_transition_completed: bool = false
 var _world1_floor3_enemy_pause_cache: Dictionary = {}
 var _world1_boss_camera_activated: bool = false
 var _world1_boss_camera_ref: Camera2D = null
+var _world1_boss_camera_transition_running: bool = false
+var _world1_boss_camera_transition_initialized: bool = false
+var _world1_boss_camera_lock_active: bool = false
+var _world1_boss_camera_lock_center: Vector2 = Vector2.ZERO
+var _world1_boss_camera_lock_zoom: Vector2 = Vector2.ONE
+var _world1_boss_last_current_cam_id: int = -1
+var _world1_boss_last_live_tune_signature: String = ""
 var _world2_boss_camera_activated: bool = false
 var _world2_boss_camera_ref: Camera2D = null
 var _world3_boss_camera_activated: bool = false
@@ -697,20 +712,23 @@ func _apply_per_floor_player_camera_limits(force: bool) -> void:
 	if use_explicit_floor_camera_limits:
 		match _current_floor_number:
 			1:
-				cam.limit_left = floor1_camera_limit_left
-				cam.limit_right = floor1_camera_limit_right
-				cam.limit_top = floor1_camera_limit_top
-				cam.limit_bottom = floor1_camera_limit_bottom
-				applied_any = true
+				if not _camera_limits_unset(floor1_camera_limit_left, floor1_camera_limit_right, floor1_camera_limit_top, floor1_camera_limit_bottom):
+					cam.limit_left = floor1_camera_limit_left
+					cam.limit_right = floor1_camera_limit_right
+					cam.limit_top = floor1_camera_limit_top
+					cam.limit_bottom = floor1_camera_limit_bottom
+					applied_any = true
 			2:
-				cam.limit_left = floor2_camera_limit_left
-				cam.limit_right = floor2_camera_limit_right
-				cam.limit_top = floor2_camera_limit_top
-				cam.limit_bottom = floor2_camera_limit_bottom
-				applied_any = true
+				if not _camera_limits_unset(floor2_camera_limit_left, floor2_camera_limit_right, floor2_camera_limit_top, floor2_camera_limit_bottom):
+					cam.limit_left = floor2_camera_limit_left
+					cam.limit_right = floor2_camera_limit_right
+					cam.limit_top = floor2_camera_limit_top
+					cam.limit_bottom = floor2_camera_limit_bottom
+					applied_any = true
 			3:
-				cam.limit_left = floor3_camera_limit_left
-				cam.limit_right = floor3_camera_limit_right
+				if not _camera_limits_unset(floor3_camera_limit_left, floor3_camera_limit_right, floor3_camera_limit_top, floor3_camera_limit_bottom):
+					cam.limit_left = floor3_camera_limit_left
+					cam.limit_right = floor3_camera_limit_right
 				var use_world1_floor3_post_teleport_limits: bool = (
 					enable_world1_floor3_transition
 					and world1_floor3_post_teleport_camera_override_enabled
@@ -731,17 +749,19 @@ func _apply_per_floor_player_camera_limits(force: bool) -> void:
 				cam.limit_bottom = floor3_camera_limit_bottom
 				applied_any = true
 			4:
-				cam.limit_left = floor4_camera_limit_left
-				cam.limit_right = floor4_camera_limit_right
-				cam.limit_top = floor4_camera_limit_top
-				cam.limit_bottom = floor4_camera_limit_bottom
-				applied_any = true
+				if not _camera_limits_unset(floor4_camera_limit_left, floor4_camera_limit_right, floor4_camera_limit_top, floor4_camera_limit_bottom):
+					cam.limit_left = floor4_camera_limit_left
+					cam.limit_right = floor4_camera_limit_right
+					cam.limit_top = floor4_camera_limit_top
+					cam.limit_bottom = floor4_camera_limit_bottom
+					applied_any = true
 			5:
-				cam.limit_left = floor5_camera_limit_left
-				cam.limit_right = floor5_camera_limit_right
-				cam.limit_top = floor5_camera_limit_top
-				cam.limit_bottom = floor5_camera_limit_bottom
-				applied_any = true
+				if not _camera_limits_unset(floor5_camera_limit_left, floor5_camera_limit_right, floor5_camera_limit_top, floor5_camera_limit_bottom):
+					cam.limit_left = floor5_camera_limit_left
+					cam.limit_right = floor5_camera_limit_right
+					cam.limit_top = floor5_camera_limit_top
+					cam.limit_bottom = floor5_camera_limit_bottom
+					applied_any = true
 			_:
 				applied_any = false
 	else:
@@ -760,6 +780,9 @@ func _apply_per_floor_player_camera_limits(force: bool) -> void:
 
 	if applied_any:
 		_last_applied_player_camera_limit_floor = _current_floor_number
+
+func _camera_limits_unset(left: int, right: int, top: int, bottom: int) -> bool:
+	return left == 0 and right == 0 and top == 0 and bottom == 0
 
 func _emit_floor_status_if_changed() -> void:
 	var enemies_left: int = get_enemies_left_current_floor()
@@ -834,6 +857,8 @@ func _process(_delta: float) -> void:
 		_apply_per_floor_player_camera_limits(true)
 	_try_start_world1_floor3_transition()
 	_update_world1_boss_camera_live_tuning()
+	_tick_world1_boss_camera_debug_guard()
+	_enforce_world1_boss_camera_lock()
 	_update_world2_boss_camera_live_tuning()
 	_update_world3_boss_camera_live_tuning()
 	_sync_runstate_floor()
@@ -1115,42 +1140,144 @@ func _activate_world1_boss_arena_camera() -> void:
 		return
 	if _world1_boss_camera_activated:
 		return
-	_world1_boss_camera_activated = true
-	_lock_world1_floor4_gate_if_needed()
-
 	var boss_cam: Camera2D = get_node_or_null(world1_boss_arena_camera_path) as Camera2D
 	if boss_cam == null:
 		push_warning("[Floors] World1 boss arena camera not found: %s" % String(world1_boss_arena_camera_path))
 		return
-	_world1_boss_camera_ref = boss_cam
 	if _player == null:
 		return
 
-	var player_cam: Camera2D = _player.get_node_or_null("Camera2D") as Camera2D
-	if player_cam != null:
-		boss_cam.global_position = player_cam.global_position
-		boss_cam.zoom = player_cam.zoom
-	else:
-		boss_cam.global_position = _player.global_position
-		boss_cam.zoom = Vector2.ONE
+	_world1_boss_camera_activated = true
+	_lock_world1_floor4_gate_if_needed()
+	_world1_boss_camera_ref = boss_cam
 
-	boss_cam.limit_left = int(world1_boss_camera_left)
-	boss_cam.limit_right = int(world1_boss_camera_right)
-	boss_cam.limit_top = int(world1_boss_camera_top)
-	boss_cam.limit_bottom = int(world1_boss_camera_bottom)
+	# Stage the transition as a "brief pause": freeze player control/combat now,
+	# then release only after camera has moved and zoomed.
+	_set_player_cutscene_motion_lock(true)
+	_set_boss_combat_paused(true)
+	_world1_boss_camera_transition_running = true
+	_world1_boss_camera_transition_initialized = false
+	_world1_boss_camera_lock_active = false
+	call_deferred("_run_world1_boss_arena_camera_sequence")
+
+func _run_world1_boss_arena_camera_sequence() -> void:
+	if _world1_boss_camera_ref == null or not is_instance_valid(_world1_boss_camera_ref):
+		_set_player_cutscene_motion_lock(false)
+		_set_boss_combat_paused(false)
+		_world1_boss_camera_transition_running = false
+		return
+	if _player == null or not is_instance_valid(_player):
+		_set_boss_combat_paused(false)
+		_world1_boss_camera_transition_running = false
+		return
+
+	var boss_cam: Camera2D = _world1_boss_camera_ref
+	var player_cam: Camera2D = _player.get_node_or_null("Camera2D") as Camera2D
+	_copy_player_camera_state_to_arena_camera(boss_cam)
+	var center: Vector2 = _get_world1_boss_camera_target_center()
+	var start_pos: Vector2 = boss_cam.global_position
+	if world1_boss_camera_transition_unbounded_limits:
+		# Disable effective clamping during transition to prevent startup snaps.
+		boss_cam.limit_left = -1000000
+		boss_cam.limit_right = 1000000
+		boss_cam.limit_top = -1000000
+		boss_cam.limit_bottom = 1000000
+	else:
+		var transition_padding: float = maxf(world1_boss_camera_transition_limit_padding, 0.0)
+		# Use a temporary transition envelope spanning start->target with padding.
+		boss_cam.limit_left = int(floor(minf(start_pos.x, center.x) - transition_padding))
+		boss_cam.limit_right = int(ceil(maxf(start_pos.x, center.x) + transition_padding))
+		boss_cam.limit_top = int(floor(minf(start_pos.y, center.y) - transition_padding))
+		boss_cam.limit_bottom = int(ceil(maxf(start_pos.y, center.y) + transition_padding))
+	_log_world1_boss_camera("takeover pos=%s zoom=%s player_limits=%s transition_limits=[%d,%d,%d,%d]" % [
+		str(boss_cam.global_position),
+		str(boss_cam.zoom),
+		(str([player_cam.limit_left, player_cam.limit_right, player_cam.limit_top, player_cam.limit_bottom]) if player_cam != null else "<no-player-cam>"),
+		boss_cam.limit_left,
+		boss_cam.limit_right,
+		boss_cam.limit_top,
+		boss_cam.limit_bottom
+	])
+
+	# Safety: if a previous transition left this overlay visible, force clear it
+	# before switching to boss camera to avoid a brief black flash.
+	var floor3_fade_rect: ColorRect = get_node_or_null(world1_floor3_fade_rect_path) as ColorRect
+	if floor3_fade_rect != null:
+		var fade_color: Color = floor3_fade_rect.color
+		fade_color.a = 0.0
+		floor3_fade_rect.color = fade_color
+		floor3_fade_rect.visible = false
+
 	boss_cam.position_smoothing_enabled = false
 	boss_cam.enabled = true
 	boss_cam.make_current()
+	_world1_boss_camera_transition_initialized = true
 
-	var center: Vector2 = _get_world1_boss_camera_target_center()
+	# Let encounter setup/spawns settle while gameplay is paused.
+	await get_tree().process_frame
+	await get_tree().process_frame
+
 	var target_zoom: Vector2 = _get_world1_boss_arena_fit_zoom()
+	var pan_duration: float = maxf(world1_boss_camera_pan_time, 0.01)
+	var zoom_duration: float = maxf(world1_boss_camera_zoom_time, 0.01)
+	var fallback_duration: float = maxf(world1_boss_camera_transition_time, 0.01)
+	if not world1_boss_camera_sequential_transition:
+		pan_duration = fallback_duration
+		zoom_duration = fallback_duration
 	var tween: Tween = create_tween()
 	tween.set_pause_mode(Tween.TWEEN_PAUSE_PROCESS)
 	tween.set_trans(Tween.TRANS_SINE)
 	tween.set_ease(Tween.EASE_IN_OUT)
-	tween.tween_property(boss_cam, "global_position", center, maxf(world1_boss_camera_transition_time, 0.01))
+	tween.tween_property(boss_cam, "global_position", center, pan_duration)
 	if world1_boss_camera_auto_fit_zoom:
-		tween.parallel().tween_property(boss_cam, "zoom", target_zoom, maxf(world1_boss_camera_transition_time, 0.01))
+		if world1_boss_camera_sequential_transition:
+			tween.tween_property(boss_cam, "zoom", target_zoom, zoom_duration)
+		else:
+			tween.parallel().tween_property(boss_cam, "zoom", target_zoom, zoom_duration)
+	_log_world1_boss_camera("pan->center=%s pan_time=%.2f zoom_target=%s zoom_time=%.2f sequential=%s" % [
+		str(center),
+		pan_duration,
+		str(target_zoom),
+		zoom_duration,
+		str(world1_boss_camera_sequential_transition)
+	])
+	await tween.finished
+	_log_world1_boss_camera("tween finished pos=%s zoom=%s" % [str(boss_cam.global_position), str(boss_cam.zoom)])
+
+	# Apply final arena limits only after the camera has reached staging target.
+	boss_cam.limit_left = int(world1_boss_camera_left)
+	boss_cam.limit_right = int(world1_boss_camera_right)
+	boss_cam.limit_top = int(world1_boss_camera_top)
+	boss_cam.limit_bottom = int(world1_boss_camera_bottom)
+	_log_world1_boss_camera("final limits applied=[%d,%d,%d,%d]" % [
+		boss_cam.limit_left,
+		boss_cam.limit_right,
+		boss_cam.limit_top,
+		boss_cam.limit_bottom
+	])
+
+	_set_player_cutscene_motion_lock(false)
+	_set_boss_combat_paused(false)
+	_world1_boss_camera_transition_running = false
+	_world1_boss_camera_transition_initialized = false
+	if world1_boss_camera_hard_lock_after_transition:
+		_world1_boss_camera_lock_center = center
+		_world1_boss_camera_lock_zoom = target_zoom if world1_boss_camera_auto_fit_zoom else boss_cam.zoom
+		_world1_boss_camera_lock_active = true
+	await get_tree().process_frame
+	_log_world1_boss_camera("post_release pos=%s zoom=%s limits=[%d,%d,%d,%d]" % [
+		str(boss_cam.global_position),
+		str(boss_cam.zoom),
+		boss_cam.limit_left,
+		boss_cam.limit_right,
+		boss_cam.limit_top,
+		boss_cam.limit_bottom
+	])
+
+func _log_world1_boss_camera(message: String) -> void:
+	if not world1_boss_camera_debug_logs:
+		return
+	print("[World1BossCam] %s" % message)
 
 func _lock_world1_floor4_gate_if_needed() -> void:
 	if not world1_lock_floor4_gate_on_boss_entry:
@@ -1189,8 +1316,13 @@ func _update_world1_boss_camera_live_tuning() -> void:
 		return
 	if not world1_boss_camera_live_tuning:
 		return
-	var in_boss_zone: bool = (_player != null and _player.global_position.x >= boss_start_x)
-	if not _world1_boss_camera_activated and not in_boss_zone:
+	if _world1_boss_camera_activated and not world1_boss_camera_live_tuning_during_runtime:
+		return
+	# Never let live tuning steal camera before explicit activation.
+	if not _world1_boss_camera_activated:
+		return
+	# Avoid fighting the staged transition tween.
+	if _world1_boss_camera_transition_running:
 		return
 	if _world1_boss_camera_ref == null or not is_instance_valid(_world1_boss_camera_ref):
 		_world1_boss_camera_ref = get_node_or_null(world1_boss_arena_camera_path) as Camera2D
@@ -1211,6 +1343,27 @@ func _update_world1_boss_camera_live_tuning() -> void:
 	# Let you drive framing manually while tuning.
 	if world1_boss_camera_use_manual_center:
 		_world1_boss_camera_ref.global_position = _get_world1_boss_camera_target_center()
+	if world1_boss_camera_debug_logs:
+		var sig: String = "%s|%s|%d|%d|%d|%d|%s" % [
+			str(_world1_boss_camera_ref.global_position),
+			str(_world1_boss_camera_ref.zoom),
+			_world1_boss_camera_ref.limit_left,
+			_world1_boss_camera_ref.limit_right,
+			_world1_boss_camera_ref.limit_top,
+			_world1_boss_camera_ref.limit_bottom,
+			str(world1_boss_camera_use_manual_center)
+		]
+		if sig != _world1_boss_last_live_tune_signature:
+			_world1_boss_last_live_tune_signature = sig
+			_log_world1_boss_camera("live_tune apply pos=%s zoom=%s limits=[%d,%d,%d,%d] manual_center=%s" % [
+				str(_world1_boss_camera_ref.global_position),
+				str(_world1_boss_camera_ref.zoom),
+				_world1_boss_camera_ref.limit_left,
+				_world1_boss_camera_ref.limit_right,
+				_world1_boss_camera_ref.limit_top,
+				_world1_boss_camera_ref.limit_bottom,
+				str(world1_boss_camera_use_manual_center)
+			])
 
 func _activate_world2_boss_arena_camera() -> void:
 	if not enable_world2_boss_arena_camera:
@@ -1389,11 +1542,57 @@ func _copy_player_camera_state_to_arena_camera(boss_cam: Camera2D) -> void:
 		return
 	var player_cam: Camera2D = _player.get_node_or_null("Camera2D") as Camera2D
 	if player_cam != null:
-		boss_cam.global_position = player_cam.global_position
+		boss_cam.global_position = player_cam.get_screen_center_position()
 		boss_cam.zoom = player_cam.zoom
 	else:
 		boss_cam.global_position = _player.global_position
 		boss_cam.zoom = Vector2.ONE
+
+func _tick_world1_boss_camera_debug_guard() -> void:
+	if not world1_boss_camera_debug_logs:
+		return
+	var vp: Viewport = get_viewport()
+	if vp == null:
+		return
+	var current_cam: Camera2D = vp.get_camera_2d()
+	var current_id: int = -1
+	if current_cam != null and is_instance_valid(current_cam):
+		current_id = current_cam.get_instance_id()
+	if current_id != _world1_boss_last_current_cam_id:
+		_world1_boss_last_current_cam_id = current_id
+		var cam_name: String = "<none>"
+		if current_cam != null and is_instance_valid(current_cam):
+			cam_name = String(current_cam.name)
+		_log_world1_boss_camera("current_camera_changed name=%s id=%d transition_running=%s activated=%s" % [
+			cam_name,
+			current_id,
+			str(_world1_boss_camera_transition_running),
+			str(_world1_boss_camera_activated)
+		])
+	if _world1_boss_camera_transition_running and _world1_boss_camera_ref != null and is_instance_valid(_world1_boss_camera_ref):
+		if _world1_boss_camera_transition_initialized and current_cam != _world1_boss_camera_ref:
+			_world1_boss_camera_ref.enabled = true
+			_world1_boss_camera_ref.make_current()
+			_log_world1_boss_camera("camera_reclaimed_during_transition")
+
+func _enforce_world1_boss_camera_lock() -> void:
+	if not world1_boss_camera_hard_lock_after_transition:
+		return
+	if not _world1_boss_camera_lock_active:
+		return
+	if _world1_boss_camera_transition_running:
+		return
+	if _world1_boss_camera_ref == null or not is_instance_valid(_world1_boss_camera_ref):
+		return
+	var cam: Camera2D = _world1_boss_camera_ref
+	var pos_drift: float = cam.global_position.distance_to(_world1_boss_camera_lock_center)
+	var zoom_drift: float = cam.zoom.distance_to(_world1_boss_camera_lock_zoom)
+	if pos_drift > 0.25:
+		cam.global_position = _world1_boss_camera_lock_center
+		_log_world1_boss_camera("lock_corrected_position drift=%.3f" % pos_drift)
+	if zoom_drift > 0.0005:
+		cam.zoom = _world1_boss_camera_lock_zoom
+		_log_world1_boss_camera("lock_corrected_zoom drift=%.6f" % zoom_drift)
 
 func _tween_boss_camera_to_target(
 	boss_cam: Camera2D,

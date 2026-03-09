@@ -66,8 +66,8 @@ same_platform_floor_y_tolerance = 16.0
 
 [node name="Enemy3DView" parent="." instance=ExtResource("5_view")]
 position = Vector2(0, -10)
-viewport_size = Vector2i(1024, 512)
-screen_pixels = Vector2i(512, 256)
+viewport_size = Vector2i(1280, 512)
+screen_pixels = Vector2i(640, 256)
 
 [node name="BodyCollision" type="CollisionShape2D" parent="."]
 position = Vector2(0, -10.075)

@@ -186,13 +186,17 @@ dice_choice_ui_path = NodePath("../DiceModifierChoice")
 chest_spawn_fallback_path = NodePath("../Arena/ChestSpawns")
 enable_orb_flight = false
 enable_world1_floor3_transition = true
-world1_floor3_post_teleport_camera_limit_top = 11640
+world1_floor3_post_teleport_camera_live_tuning = true
+world1_floor3_post_teleport_camera_limit_top = 11600
 enable_world1_boss_arena_camera = true
 world1_boss_camera_left = 47009.27
 world1_boss_camera_right = 54085.6
 world1_boss_camera_top = 10500.0
 world1_boss_camera_bottom = 14250.0
+world1_boss_camera_pan_time = 1.953125
+world1_boss_camera_zoom_time = 0.9375
 world1_boss_camera_live_tuning = true
+world1_boss_camera_debug_logs = true
 world1_boss_camera_use_manual_center = true
 world1_boss_camera_center = Vector2(50867.07, 12371.58)
 world1_boss_camera_min_zoom = 0.77
@@ -208,11 +212,11 @@ floor2_camera_limit_top = -500
 floor2_camera_limit_bottom = 15000
 floor3_camera_limit_left = -1570
 floor3_camera_limit_right = 65000
-floor3_camera_limit_top = 10800
+floor3_camera_limit_top = 11600
 floor3_camera_limit_bottom = 15000
 floor4_camera_limit_left = -1570
 floor4_camera_limit_right = 65000
-floor4_camera_limit_top = 10800
+floor4_camera_limit_top = 11600
 floor4_camera_limit_bottom = 15000
 
 [node name="FloorEnemySpawner" type="Node" parent="."]
@@ -277,10 +281,10 @@ scale = Vector2(1, 1)
 [node name="UI" parent="." instance=ExtResource("16_thmre")]
 
 [node name="PlayerHUDCluster" parent="UI/ScreenRoot/HUDRoot/BottomRight" index="0"]
-offset_left = -684.5333
-offset_top = -289.41666
-offset_right = -27.683332
-offset_bottom = -27.683332
+offset_left = -414.8
+offset_top = -175.375
+offset_right = -16.775
+offset_bottom = -16.775
 style = ExtResource("17_80gak")
 
 [node name="ColdNightOverlay" type="ColorRect" parent="UI/ScreenRoot/HUDRoot" index="6"]
