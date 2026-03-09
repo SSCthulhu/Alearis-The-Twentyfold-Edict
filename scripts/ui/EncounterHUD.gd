@@ -139,6 +139,7 @@ func _ready() -> void:
 		if _boss != null and is_instance_valid(_boss):
 			if _boss_hud.has_method("set_boss_name"):
 				_boss_hud.call("set_boss_name", _get_boss_display_name(_boss))
+		_update_boss_hud_visibility()
 
 	if _boss == null:
 		push_warning("[UI] Boss not found. Set boss_path OR add boss to group 'boss'.")
@@ -158,6 +159,7 @@ func _ready() -> void:
 	_boss_hp_poll_t = 0.0
 	_update_floor_text()
 	_update_encounter_text()
+	_update_boss_hud_visibility()
 
 	set_process(true)
 
@@ -188,6 +190,7 @@ func _process(delta: float) -> void:
 	_boss_hp_poll_t += delta
 	if _boss_hp_poll_t >= boss_hp_poll_interval:
 		_boss_hp_poll_t = 0.0
+		_update_boss_hud_visibility()
 		_poll_boss_health_into_hud()
 
 
@@ -248,6 +251,9 @@ func _update_floor_text() -> void:
 
 		var enemies_left: int = _floors.get_enemies_left_current_floor()
 		var complete: bool = _floors.is_current_floor_complete()
+		# Match dot behavior: show floor complete as soon as enemies-left hits zero.
+		if floor_num < show_encounter_text_on_floor and enemies_left <= 0:
+			complete = true
 
 		if _floor_status_hud.has_method("set_floor"):
 			_floor_status_hud.call("set_floor", floor_num)
@@ -339,6 +345,8 @@ func _get_boss_display_name(boss: Node) -> String:
 func _poll_boss_health_into_hud() -> void:
 	if _boss_hud == null or not is_instance_valid(_boss_hud):
 		return
+	if not _boss_hud.visible:
+		return
 	if _boss == null or not is_instance_valid(_boss):
 		return
 	if not _boss_hud.has_method("set_health"):
@@ -373,6 +381,28 @@ func _poll_boss_health_into_hud() -> void:
 		if curv != null and maxv2 != null:
 			_boss_hud.call("set_health", float(curv), float(maxv2))
 			return
+
+func _update_boss_hud_visibility() -> void:
+	if _boss_hud == null or not is_instance_valid(_boss_hud):
+		return
+	if _boss == null or not is_instance_valid(_boss):
+		_boss_hud.visible = false
+		return
+	if _is_final_world_scene():
+		_boss_hud.visible = true
+		return
+	var floor_num: int = _get_floor_num()
+	_boss_hud.visible = floor_num >= show_encounter_text_on_floor
+
+func _is_final_world_scene() -> bool:
+	var tree: SceneTree = get_tree()
+	if tree == null or tree.current_scene == null:
+		return false
+	var scene_name: String = String(tree.current_scene.name)
+	if "FinalWorld" in scene_name:
+		return true
+	var scene_path: String = String(tree.current_scene.scene_file_path)
+	return scene_path.ends_with("/FinalWorld.tscn")
 
 
 # -----------------------------

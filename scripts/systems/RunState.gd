@@ -420,7 +420,7 @@ func _debug_modifier_description(id: StringName) -> String:
 		&"p_blood_moon": return "Enemies +12% Damage, +10% Health"
 		&"p_siege_lines": return "Enemies +18% Projectile Speed, +5% Damage"
 		&"p_loaded_momentum": return "+2% Damage per kill (max +20%) until hit, Enemies +8% Damage"
-		&"p_gravity_flux": return "Gravity cycles to moon-bounce mode, Enemies +10% Damage"
+		&"p_gravity_flux": return "Gravity cycles to low-gravity drift (55% gravity, +30% jump), Enemies +10% Damage"
 		&"p_ruthless_hunt": return "+1 Elite Spawn, Enemies +8% Damage"
 		&"p_hemorrhage_doctrine": return "Enemy hits apply stacking bleed (up to 3), Enemies +10% Damage"
 		&"p_velocity_collapse": return "Move Speed cycles: normal -> -30% -> +20%, Enemies +8% Damage"
@@ -1295,10 +1295,10 @@ func _tick_dynamic_world_effects(delta: float) -> void:
 		if _gravity_flux_timer <= 0.0:
 			_gravity_flux_timer = 10.0
 			_gravity_flux_phase = 1 - _gravity_flux_phase
-		# Phase 1: normal jump/gravity. Phase 0: moon-bounce mode.
+		# Phase 1: normal jump/gravity. Phase 0: lighter gravity/jump drift mode.
 		if _gravity_flux_phase == 0:
-			player_gravity_mult = 0.20
-			player_flux_jump_height_mult = 2.10
+			player_gravity_mult = 0.55
+			player_flux_jump_height_mult = 1.30
 		else:
 			player_gravity_mult = 1.0
 			player_flux_jump_height_mult = 1.0

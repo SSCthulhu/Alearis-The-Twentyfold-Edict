@@ -17,6 +17,7 @@
 [node name="FinalWorldController" type="Node" parent="."]
 script = ExtResource("6_fwctl")
 boss_spawn_position = Vector2(4, 900)
+debug_force_final_boss = true
 final_boss_camera_bottom = 2000.0
 final_boss_camera_live_tuning = true
 final_boss_camera_use_manual_center = true

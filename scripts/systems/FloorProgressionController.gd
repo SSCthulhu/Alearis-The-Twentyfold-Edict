@@ -635,7 +635,29 @@ func get_enemies_left_current_floor() -> int:
 	var idx: int = _current_floor_number - 1
 	if idx < 0 or idx >= floor_enemy_groups.size():
 		return 0
-	return get_tree().get_nodes_in_group(floor_enemy_groups[idx]).size()
+	return _count_alive_enemies_in_group(floor_enemy_groups[idx])
+
+func _count_alive_enemies_in_group(group_name: StringName) -> int:
+	var nodes: Array[Node] = get_tree().get_nodes_in_group(group_name)
+	var alive: int = 0
+	for n: Node in nodes:
+		if _is_enemy_counted_alive(n):
+			alive += 1
+	return alive
+
+func _is_enemy_counted_alive(enemy: Node) -> bool:
+	if enemy == null or not is_instance_valid(enemy):
+		return false
+	if enemy.is_queued_for_deletion():
+		return false
+	# Enemies mark death start immediately but may remain in scene for animation.
+	if "_death_started" in enemy and bool(enemy.get("_death_started")):
+		return false
+	var health_node: Node = enemy.get_node_or_null("Health")
+	if health_node != null and is_instance_valid(health_node):
+		if "hp" in health_node and int(health_node.get("hp")) <= 0:
+			return false
+	return true
 
 func is_current_floor_complete() -> bool:
 	if floor_enemy_groups.is_empty():

@@ -511,7 +511,7 @@ func _describe_effect(id: StringName) -> String:
 		&"p_blood_moon": return "Blood Moon: +12% Enemy Damage, +10% Enemy Health"
 		&"p_siege_lines": return "Siege Lines: +18% Enemy Projectile Speed, +5% Enemy Damage"
 		&"p_loaded_momentum": return "Loaded Momentum: +2% Damage per kill (max +20%) until hit, Enemies +8% Damage"
-		&"p_gravity_flux": return "Gravity Flux: 10s normal, then moon-bounce (20% gravity, +110% jump), Enemies +10% Damage"
+		&"p_gravity_flux": return "Gravity Flux: 10s normal, then low-gravity drift (55% gravity, +30% jump), Enemies +10% Damage"
 		&"p_ruthless_hunt": return "Ruthless Hunt: +1 Elite Spawn, +8% Enemy Damage"
 		&"p_hemorrhage_doctrine": return "Hemorrhage Doctrine: Enemy hits inflict stacking bleed (up to 3), Enemies +10% Damage"
 		&"p_velocity_collapse": return "Velocity Collapse: 12s normal, then -30% Move Speed (3s), then +20% Move Speed (3s), Enemies +8% Damage"

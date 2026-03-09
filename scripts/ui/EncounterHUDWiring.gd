@@ -58,17 +58,14 @@ func _ready() -> void:
 	if _boss_hud == null:
 		push_warning("[UI] BossHUDTop not found. Check boss_hud_root_path.")
 	else:
-		# Hide boss HUD if no boss present (sub-arenas)
-		if _boss == null:
-			_boss_hud.visible = false
-		else:
-			_boss_hud.visible = true
-			if is_instance_valid(_boss) and _boss_hud.has_method("set_boss_name"):
-				_boss_hud.call("set_boss_name", _get_boss_display_name(_boss))
+		if is_instance_valid(_boss) and _boss_hud.has_method("set_boss_name"):
+			_boss_hud.call("set_boss_name", _get_boss_display_name(_boss))
+		_update_boss_hud_visibility()
 
 	_floor_poll_t = 0.0
 	_boss_hp_poll_t = 0.0
 	_update_floor_chip()
+	_update_boss_hud_visibility()
 	_poll_boss_health_into_hud()
 
 	set_process(true)
@@ -96,7 +93,7 @@ func refresh_boss_connection() -> void:
 	
 	# Update boss HUD with new boss name
 	if _boss_hud != null and is_instance_valid(_boss_hud):
-		_boss_hud.visible = true
+		_update_boss_hud_visibility()
 		if _boss_hud.has_method("set_boss_name"):
 			var new_name := _get_boss_display_name(_boss)
 			_boss_hud.call("set_boss_name", new_name)
@@ -123,6 +120,7 @@ func _process(delta: float) -> void:
 	_boss_hp_poll_t += delta
 	if _boss_hp_poll_t >= boss_hp_poll_interval:
 		_boss_hp_poll_t = 0.0
+		_update_boss_hud_visibility()
 		_poll_boss_health_into_hud()
 
 
@@ -146,6 +144,9 @@ func _update_floor_chip() -> void:
 
 	var enemies_left: int = _floors.get_enemies_left_current_floor()
 	var complete: bool = _floors.is_current_floor_complete()
+	# UI should mark floor complete immediately when all target dots are gone.
+	if not is_boss and enemies_left <= 0:
+		complete = true
 
 	# Detect floor change -> snapshot total enemies for this floor
 	if floor_num != _last_floor_num:
@@ -223,6 +224,8 @@ func _resolve_boss_hud() -> Node:
 func _poll_boss_health_into_hud() -> void:
 	if _boss_hud == null or not is_instance_valid(_boss_hud):
 		return
+	if not _boss_hud.visible:
+		return
 	if _boss == null or not is_instance_valid(_boss):
 		return
 	if not _boss_hud.has_method("set_health"):
@@ -255,6 +258,28 @@ func _poll_boss_health_into_hud() -> void:
 		if curv != null and maxv2 != null:
 			_boss_hud.call("set_health", float(curv), float(maxv2))
 			return
+
+func _update_boss_hud_visibility() -> void:
+	if _boss_hud == null or not is_instance_valid(_boss_hud):
+		return
+	if _boss == null or not is_instance_valid(_boss):
+		_boss_hud.visible = false
+		return
+	if _is_final_world_scene():
+		_boss_hud.visible = true
+		return
+	var floor_num: int = _get_floor_num()
+	_boss_hud.visible = floor_num >= boss_floor
+
+func _is_final_world_scene() -> bool:
+	var tree: SceneTree = get_tree()
+	if tree == null or tree.current_scene == null:
+		return false
+	var scene_name: String = String(tree.current_scene.name)
+	if "FinalWorld" in scene_name:
+		return true
+	var scene_path: String = String(tree.current_scene.scene_file_path)
+	return scene_path.ends_with("/FinalWorld.tscn")
 
 
 func _connect_boss_cast_signals(boss: Node) -> void:
@@ -330,7 +355,21 @@ func _count_elites_on_floor(floor_num: int) -> int:
 	var count: int = 0
 	for elite in elites:
 		if elite != null and is_instance_valid(elite):
-			if elite.is_in_group(floor_group):
+			if elite.is_in_group(floor_group) and _is_enemy_counted_alive(elite):
 				count += 1
 	
 	return count
+
+func _is_enemy_counted_alive(enemy: Node) -> bool:
+	if enemy == null or not is_instance_valid(enemy):
+		return false
+	if enemy.is_queued_for_deletion():
+		return false
+	# Enemies can remain in scene for death animation after lethal damage.
+	if "_death_started" in enemy and bool(enemy.get("_death_started")):
+		return false
+	var health_node: Node = enemy.get_node_or_null("Health")
+	if health_node != null and is_instance_valid(health_node):
+		if "hp" in health_node and int(health_node.get("hp")) <= 0:
+			return false
+	return true

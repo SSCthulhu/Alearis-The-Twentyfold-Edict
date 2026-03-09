@@ -9,6 +9,9 @@ extends Node
 @export var fade_rect_path: NodePath = ^"../UI/ScreenRoot/HUDRoot/FinalWorldFade"
 @export var victory_screen_path: NodePath = ^"../FinalVictoryScreen"
 @export var debug_logs: bool = false
+@export_group("Debug Final Boss Override")
+@export var debug_force_final_boss: bool = false
+@export_enum("FinalBoss_A", "FinalBoss_B", "FinalBoss_C", "FinalBoss_D", "FinalBoss_E") var debug_forced_final_boss: int = 0
 
 @export_group("Final Boss Arena Camera")
 @export var enable_final_boss_arena_camera: bool = true
@@ -31,6 +34,7 @@ var _fade_rect: ColorRect = null
 var _victory_screen: CanvasLayer = null
 var _final_boss_camera_activated: bool = false
 var _final_boss_camera_ref: Camera2D = null
+var _active_final_boss_dice_result: int = -1
 
 func _ready() -> void:
 	if debug_logs:
@@ -77,20 +81,29 @@ func _process(_delta: float) -> void:
 
 func _setup_final_boss() -> void:
 	"""Replace default boss with the selected final boss"""
-	
-	# Check if we have transition data
-	if FinalBossTransitionData == null:
-		push_error("[FinalWorldController] FinalBossTransitionData singleton not found!")
-		_complete_setup()
-		return
-	
-	if not FinalBossTransitionData.has_data:
-		push_warning("[FinalWorldController] No boss selection data found, using default boss")
-		_complete_setup()
-		return
-	
-	# Get the boss scene path
-	var boss_scene_path: String = FinalBossTransitionData.get_boss_scene_path()
+
+	# Resolve boss source: debug override first, then transition data.
+	var boss_scene_path: String = ""
+	if debug_force_final_boss:
+		boss_scene_path = _get_debug_forced_boss_scene_path()
+		_active_final_boss_dice_result = _get_debug_forced_boss_dice_result()
+		if debug_logs:
+			print("[FinalWorldController] DEBUG forcing final boss: %s (dice=%d)" % [boss_scene_path, _active_final_boss_dice_result])
+	else:
+		# Check if we have transition data
+		if FinalBossTransitionData == null:
+			push_error("[FinalWorldController] FinalBossTransitionData singleton not found!")
+			_complete_setup()
+			return
+		
+		if not FinalBossTransitionData.has_data:
+			push_warning("[FinalWorldController] No boss selection data found, using default boss")
+			_complete_setup()
+			return
+		
+		boss_scene_path = FinalBossTransitionData.get_boss_scene_path()
+		_active_final_boss_dice_result = int(FinalBossTransitionData.dice_result)
+
 	if debug_logs:
 		pass
 	
@@ -316,7 +329,11 @@ func _on_boss_died() -> void:
 	var current_dice: int = 10
 	var new_dice: int = 10
 	
-	if FinalBossTransitionData != null and FinalBossTransitionData.has_data:
+	if _active_final_boss_dice_result >= 1:
+		new_dice = _active_final_boss_dice_result
+		if debug_logs:
+			print("[FinalWorldController] Using active final boss debug/selection dice result: %d" % new_dice)
+	elif FinalBossTransitionData != null and FinalBossTransitionData.has_data:
 		new_dice = FinalBossTransitionData.dice_result
 		if debug_logs:
 			pass
@@ -392,3 +409,34 @@ func _on_victory_input_lock_changed(locked: bool) -> void:
 	else:
 		if debug_logs:
 			pass
+
+func _get_debug_forced_boss_scene_path() -> String:
+	match debug_forced_final_boss:
+		0:
+			return "res://scenes/boss/FinalBoss_A.tscn"
+		1:
+			return "res://scenes/boss/FinalBoss_B.tscn"
+		2:
+			return "res://scenes/boss/FinalBoss_C.tscn"
+		3:
+			return "res://scenes/boss/FinalBoss_D.tscn"
+		4:
+			return "res://scenes/boss/FinalBoss_E.tscn"
+		_:
+			return "res://scenes/boss/FinalBoss_A.tscn"
+
+func _get_debug_forced_boss_dice_result() -> int:
+	# Canonical representative dice rolls for each final boss bucket.
+	match debug_forced_final_boss:
+		0:
+			return 1
+		1:
+			return 2
+		2:
+			return 8
+		3:
+			return 14
+		4:
+			return 20
+		_:
+			return 1
