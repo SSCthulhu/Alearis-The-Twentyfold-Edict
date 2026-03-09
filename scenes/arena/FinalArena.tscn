@@ -1,14 +1,113 @@
-[gd_scene load_steps=8 format=3 uid="uid://c1757dykl7ner"]
+[gd_scene load_steps=30 format=4 uid="uid://c1757dykl7ner"]
 
-[ext_resource type="PackedScene" uid="uid://3fuld8awghlh" path="res://scenes/arena/PlatformResizable.tscn" id="1_mls5m"]
-[ext_resource type="Texture2D" uid="uid://bnf1o1bujacxe" path="res://art/Worlds/Volcanic/Tileset/1.png" id="2_2yaae"]
-[ext_resource type="Texture2D" uid="uid://142q5mhwruo7" path="res://art/Worlds/Volcanic/Tileset/6.png" id="5_jw8ik"]
+[ext_resource type="Texture2D" uid="uid://bn76un1sirtb0" path="res://art/Worlds2/Cartoon/Platformer/Cartoon Spooky Level Set_Platformer - Ground 01.png" id="1_by7nl"]
+[ext_resource type="Texture2D" uid="uid://cqfwy84wuxuke" path="res://art/Worlds2/Cartoon/Platformer/Cartoon Spooky Level Set_Platformer - Ground 02.png" id="2_fn6jq"]
+[ext_resource type="Texture2D" uid="uid://ckhmn5x3qaq5b" path="res://art/Worlds2/Cartoon/Platformer/Cartoon Spooky Level Set_Platformer - Ground 03.png" id="3_8gbcf"]
+[ext_resource type="Texture2D" uid="uid://5h38v5ilqof2" path="res://art/Worlds2/Cartoon/Platformer/Cartoon Spooky Level Set_Platformer - Ground 04.png" id="4_lj5tx"]
+[ext_resource type="Texture2D" uid="uid://b13imj3wxm62f" path="res://art/Worlds2/Cartoon/Platformer/Cartoon Spooky Level Set_Platformer - Ground 05.png" id="5_vsuoh"]
+[ext_resource type="Texture2D" uid="uid://c5r4ectyq8wvg" path="res://art/Worlds2/Cartoon/Platformer/Cartoon Spooky Level Set_Platformer - Ground 06.png" id="6_265px"]
+[ext_resource type="Texture2D" uid="uid://cfegybohfge2v" path="res://art/Worlds2/Cartoon/Platformer/Cartoon Spooky Level Set_Platformer - Ground 07.png" id="7_mls5m"]
+[ext_resource type="Texture2D" uid="uid://cfmon1iyk7ke8" path="res://art/Worlds2/Cartoon/Platformer/Cartoon Spooky Level Set_Platformer - Ground 08.png" id="8_2yaae"]
+[ext_resource type="Texture2D" uid="uid://dfvgg2nb7cg7b" path="res://art/Worlds2/Cartoon/Platformer/Cartoon Spooky Level Set_Platformer - Ground 09.png" id="9_d3n3j"]
+[ext_resource type="Texture2D" uid="uid://c1ls55r5svuw8" path="res://art/Worlds2/Cartoon/Platformer/Cartoon Spooky Level Set_Platformer - Ground 10.png" id="10_ho4w6"]
+[ext_resource type="Texture2D" uid="uid://bhu5t4wk5l2fn" path="res://art/Worlds2/Cartoon/Platformer/Cartoon Spooky Level Set_Platformer - Ground 11.png" id="11_jw8ik"]
+[ext_resource type="Texture2D" uid="uid://c7ggdre38elp6" path="res://art/Worlds2/Cartoon/Platformer/Cartoon Spooky Level Set_Platformer - Ground 12.png" id="12_p2nqu"]
+[ext_resource type="Texture2D" uid="uid://ct0p5ysv80tpd" path="res://art/Worlds2/Cartoon/Platformer/Cartoon Spooky Level Set_Platformer - Ground 13.png" id="13_fymns"]
 
-[sub_resource type="RectangleShape2D" id="RectangleShape2D_fafco"]
-size = Vector2(6000, 500)
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_wyqrj"]
+texture = ExtResource("1_by7nl")
+texture_region_size = Vector2i(128, 128)
+0:0/0 = 0
+0:0/0/physics_layer_0/polygon_0/points = PackedVector2Array(-5.81818, 5.818184, 64, -64, 64, 64, -64, 64)
 
-[sub_resource type="RectangleShape2D" id="RectangleShape2D_ddqj4"]
-size = Vector2(43, 362.5)
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_xc47t"]
+texture = ExtResource("2_fn6jq")
+texture_region_size = Vector2i(128, 128)
+0:0/0 = 0
+0:0/0/physics_layer_0/polygon_0/points = PackedVector2Array(-64, -64, 64, -64, 64, -29.090908, -64, -29.090908)
+
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_a4cqj"]
+texture = ExtResource("3_8gbcf")
+texture_region_size = Vector2i(128, 128)
+0:0/0 = 0
+0:0/0/physics_layer_0/polygon_0/points = PackedVector2Array(-64, -64, 5.818184, 5.818184, 64, 64, -64, 64)
+
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_4mur8"]
+texture = ExtResource("4_lj5tx")
+texture_region_size = Vector2i(128, 128)
+0:0/0 = 0
+0:0/0/physics_layer_0/polygon_0/points = PackedVector2Array(-64, -64, 64, -64, 64, -29.090908, -64, -29.090908)
+
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_a2p32"]
+texture = ExtResource("5_vsuoh")
+texture_region_size = Vector2i(128, 128)
+0:0/0 = 0
+0:0/0/physics_layer_0/polygon_0/points = PackedVector2Array(-64, -64, -40.727272, -64, -40.727272, -40.727272, -64, -40.727272)
+
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_qx6vw"]
+texture = ExtResource("6_265px")
+texture_region_size = Vector2i(128, 128)
+0:0/0 = 0
+
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_lsq2i"]
+texture = ExtResource("7_mls5m")
+texture_region_size = Vector2i(128, 128)
+0:0/0 = 0
+0:0/0/physics_layer_0/polygon_0/points = PackedVector2Array(40.72728, -64, 64, -64, 64, -40.727272, 40.72728, -40.727272)
+
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_pyqcd"]
+texture = ExtResource("8_2yaae")
+texture_region_size = Vector2i(128, 128)
+0:0/0 = 0
+0:0/0/physics_layer_0/polygon_0/points = PackedVector2Array(-64, -64, 64, -64, 64, -29.090908, -64, -29.090908)
+
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_pwedp"]
+texture = ExtResource("9_d3n3j")
+texture_region_size = Vector2i(128, 128)
+0:0/0 = 0
+
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_o673t"]
+texture = ExtResource("10_ho4w6")
+texture_region_size = Vector2i(128, 128)
+0:0/0 = 0
+0:0/0/physics_layer_0/polygon_0/points = PackedVector2Array(-64, -64, 64, -64, 64, -29.090908, -64, -29.090908)
+0:0/0/physics_layer_0/polygon_0/one_way = true
+
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_2hcuj"]
+texture = ExtResource("11_jw8ik")
+texture_region_size = Vector2i(128, 128)
+0:0/0 = 0
+0:0/0/physics_layer_0/polygon_0/points = PackedVector2Array(-64, -64, 64, -64, 64, -29.090908, -64, -29.090908)
+0:0/0/physics_layer_0/polygon_0/one_way = true
+
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_10jo5"]
+texture = ExtResource("12_p2nqu")
+texture_region_size = Vector2i(128, 128)
+0:0/0 = 0
+0:0/0/physics_layer_0/polygon_0/points = PackedVector2Array(-64, -64, 64, -64, 64, -29.090908, -64, -29.090908)
+0:0/0/physics_layer_0/polygon_0/one_way = true
+
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_wr0do"]
+texture = ExtResource("13_fymns")
+texture_region_size = Vector2i(128, 128)
+0:0/0 = 0
+
+[sub_resource type="TileSet" id="TileSet_2nvsk"]
+tile_size = Vector2i(128, 128)
+physics_layer_0/collision_layer = 1
+sources/13 = SubResource("TileSetAtlasSource_wyqrj")
+sources/14 = SubResource("TileSetAtlasSource_xc47t")
+sources/15 = SubResource("TileSetAtlasSource_a4cqj")
+sources/16 = SubResource("TileSetAtlasSource_4mur8")
+sources/17 = SubResource("TileSetAtlasSource_a2p32")
+sources/18 = SubResource("TileSetAtlasSource_qx6vw")
+sources/19 = SubResource("TileSetAtlasSource_lsq2i")
+sources/20 = SubResource("TileSetAtlasSource_pyqcd")
+sources/21 = SubResource("TileSetAtlasSource_pwedp")
+sources/22 = SubResource("TileSetAtlasSource_o673t")
+sources/23 = SubResource("TileSetAtlasSource_2hcuj")
+sources/24 = SubResource("TileSetAtlasSource_10jo5")
+sources/25 = SubResource("TileSetAtlasSource_wr0do")
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_tc5gq"]
 size = Vector2(60, 15000)
@@ -22,46 +121,17 @@ size = Vector2(60, 15000)
 
 [node name="Floors" type="Node2D" parent="Geometry"]
 
-[node name="Floor1" parent="Geometry/Floors" instance=ExtResource("1_mls5m")]
-position = Vector2(0, 1522)
-texture = ExtResource("2_2yaae")
-width_px = 6000
-height_px = 484
-collision_height_px = 500
-collision_offset_y_px = 46.425
-patch_left = 50
-patch_right = 50
-patch_top = 48
-patch_bottom = 48
-
-[node name="Visual" parent="Geometry/Floors/Floor1" index="0"]
-offset_left = -3000.0
-offset_top = -242.0
-offset_right = 3000.0
-offset_bottom = 242.0
-texture = ExtResource("2_2yaae")
-patch_margin_left = 50
-patch_margin_top = 48
-patch_margin_right = 50
-patch_margin_bottom = 48
-
-[node name="Collision" parent="Geometry/Floors/Floor1/Body" index="0"]
-position = Vector2(0, 46.425)
-shape = SubResource("RectangleShape2D_fafco")
+[node name="TileMapLayer" type="TileMapLayer" parent="Geometry/Floors"]
+position = Vector2(-2, 36)
+tile_map_data = PackedByteArray("AAD//woADgAAAAAAAAD+/woADgAAAAAAAAD9/woADgAAAAAAAAD8/woADgAAAAAAAAD7/woADgAAAAAAAAD6/woADgAAAAAAAAD5/woADgAAAAAAAAD4/woADgAAAAAAAAD3/woADgAAAAAAAAD2/woADgAAAAAAAAD1/woADgAAAAAAAAD0/woADgAAAAAAAADz/woADgAAAAAAAADy/woADgAAAAAAAADx/woADgAAAAAAAADw/woADgAAAAAAAADv/woADgAAAAAAAADu/woADgAAAAAAAADt/woADgAAAAAAAADs/woADgAAAAAAAADr/woADgAAAAAAAADq/woADgAAAAAAAADp/woADgAAAAAAAAAAAAoADgAAAAAAAAABAAoADgAAAAAAAAACAAoADgAAAAAAAAADAAoADgAAAAAAAAAEAAoADgAAAAAAAAAFAAoADgAAAAAAAAAGAAoADgAAAAAAAAAHAAoADgAAAAAAAAAIAAoADgAAAAAAAAAJAAoADgAAAAAAAAAKAAoADgAAAAAAAAALAAoADgAAAAAAAAAMAAoADgAAAAAAAAANAAoADgAAAAAAAAAOAAoADgAAAAAAAAAPAAoADgAAAAAAAAAQAAoADgAAAAAAAAARAAoADgAAAAAAAAASAAoADgAAAAAAAAATAAoADgAAAAAAAAAUAAoADgAAAAAAAAAVAAoADgAAAAAAAAAWAAoADgAAAAAAAADo/woAEAAAAAAAAAAXAAoAFAAAAAAAAADo/wsAFQAAAAAAAADo/wwAFQAAAAAAAADo/w0AFQAAAAAAAADo/w4AFQAAAAAAAAAXAAsAGQAAAAAAAAAXAAwAGQAAAAAAAAAXAA0AGQAAAAAAAAAXAA4AGQAAAAAAAADp/wsAEgAAAAAAAADp/wwAEgAAAAAAAADp/w0AEgAAAAAAAADp/w4AEgAAAAAAAADq/wsAEgAAAAAAAADq/wwAEgAAAAAAAADq/w0AEgAAAAAAAADq/w4AEgAAAAAAAADr/wsAEgAAAAAAAADr/wwAEgAAAAAAAADr/w0AEgAAAAAAAADr/w4AEgAAAAAAAADs/wsAEgAAAAAAAADs/wwAEgAAAAAAAADs/w0AEgAAAAAAAADs/w4AEgAAAAAAAADt/wsAEgAAAAAAAADt/wwAEgAAAAAAAADt/w0AEgAAAAAAAADt/w4AEgAAAAAAAADu/wsAEgAAAAAAAADu/wwAEgAAAAAAAADu/w0AEgAAAAAAAADu/w4AEgAAAAAAAADv/wsAEgAAAAAAAADv/wwAEgAAAAAAAADv/w0AEgAAAAAAAADv/w4AEgAAAAAAAADw/wsAEgAAAAAAAADw/wwAEgAAAAAAAADw/w0AEgAAAAAAAADw/w4AEgAAAAAAAADx/wsAEgAAAAAAAADx/wwAEgAAAAAAAADx/w0AEgAAAAAAAADx/w4AEgAAAAAAAADy/wsAEgAAAAAAAADy/wwAEgAAAAAAAADy/w0AEgAAAAAAAADy/w4AEgAAAAAAAADz/wsAEgAAAAAAAADz/wwAEgAAAAAAAADz/w0AEgAAAAAAAADz/w4AEgAAAAAAAAD0/wsAEgAAAAAAAAD0/wwAEgAAAAAAAAD0/w0AEgAAAAAAAAD0/w4AEgAAAAAAAAD1/wsAEgAAAAAAAAD1/wwAEgAAAAAAAAD1/w0AEgAAAAAAAAD1/w4AEgAAAAAAAAD2/wsAEgAAAAAAAAD2/wwAEgAAAAAAAAD2/w0AEgAAAAAAAAD2/w4AEgAAAAAAAAD3/wsAEgAAAAAAAAD3/wwAEgAAAAAAAAD3/w0AEgAAAAAAAAD3/w4AEgAAAAAAAAD4/wsAEgAAAAAAAAD4/wwAEgAAAAAAAAD4/w0AEgAAAAAAAAD4/w4AEgAAAAAAAAD5/wsAEgAAAAAAAAD5/wwAEgAAAAAAAAD5/w0AEgAAAAAAAAD5/w4AEgAAAAAAAAD6/wsAEgAAAAAAAAD6/wwAEgAAAAAAAAD6/w0AEgAAAAAAAAD6/w4AEgAAAAAAAAD7/wsAEgAAAAAAAAD7/wwAEgAAAAAAAAD7/w0AEgAAAAAAAAD7/w4AEgAAAAAAAAD8/wsAEgAAAAAAAAD8/wwAEgAAAAAAAAD8/w0AEgAAAAAAAAD8/w4AEgAAAAAAAAD9/wsAEgAAAAAAAAD9/wwAEgAAAAAAAAD9/w0AEgAAAAAAAAD9/w4AEgAAAAAAAAD+/wsAEgAAAAAAAAD+/wwAEgAAAAAAAAD+/w0AEgAAAAAAAAD+/w4AEgAAAAAAAAD//wsAEgAAAAAAAAD//wwAEgAAAAAAAAD//w0AEgAAAAAAAAD//w4AEgAAAAAAAAAAAAsAEgAAAAAAAAAAAAwAEgAAAAAAAAAAAA0AEgAAAAAAAAAAAA4AEgAAAAAAAAABAAsAEgAAAAAAAAABAAwAEgAAAAAAAAABAA0AEgAAAAAAAAABAA4AEgAAAAAAAAACAAsAEgAAAAAAAAACAAwAEgAAAAAAAAACAA0AEgAAAAAAAAACAA4AEgAAAAAAAAADAAsAEgAAAAAAAAADAAwAEgAAAAAAAAADAA0AEgAAAAAAAAADAA4AEgAAAAAAAAAEAAsAEgAAAAAAAAAEAAwAEgAAAAAAAAAEAA0AEgAAAAAAAAAEAA4AEgAAAAAAAAAFAAsAEgAAAAAAAAAFAAwAEgAAAAAAAAAFAA0AEgAAAAAAAAAFAA4AEgAAAAAAAAAGAAsAEgAAAAAAAAAGAAwAEgAAAAAAAAAGAA0AEgAAAAAAAAAGAA4AEgAAAAAAAAAHAAsAEgAAAAAAAAAHAAwAEgAAAAAAAAAHAA0AEgAAAAAAAAAHAA4AEgAAAAAAAAAIAAsAEgAAAAAAAAAIAAwAEgAAAAAAAAAIAA0AEgAAAAAAAAAIAA4AEgAAAAAAAAAJAAsAEgAAAAAAAAAJAAwAEgAAAAAAAAAJAA0AEgAAAAAAAAAJAA4AEgAAAAAAAAAKAAsAEgAAAAAAAAAKAAwAEgAAAAAAAAAKAA0AEgAAAAAAAAAKAA4AEgAAAAAAAAALAAsAEgAAAAAAAAALAAwAEgAAAAAAAAALAA0AEgAAAAAAAAALAA4AEgAAAAAAAAAMAAsAEgAAAAAAAAAMAAwAEgAAAAAAAAAMAA0AEgAAAAAAAAAMAA4AEgAAAAAAAAANAAsAEgAAAAAAAAANAAwAEgAAAAAAAAANAA0AEgAAAAAAAAANAA4AEgAAAAAAAAAOAAsAEgAAAAAAAAAOAAwAEgAAAAAAAAAOAA0AEgAAAAAAAAAOAA4AEgAAAAAAAAAPAAsAEgAAAAAAAAAPAAwAEgAAAAAAAAAPAA0AEgAAAAAAAAAPAA4AEgAAAAAAAAAQAAsAEgAAAAAAAAAQAAwAEgAAAAAAAAAQAA0AEgAAAAAAAAAQAA4AEgAAAAAAAAARAAsAEgAAAAAAAAARAAwAEgAAAAAAAAARAA0AEgAAAAAAAAARAA4AEgAAAAAAAAASAAsAEgAAAAAAAAASAAwAEgAAAAAAAAASAA0AEgAAAAAAAAASAA4AEgAAAAAAAAATAAsAEgAAAAAAAAATAAwAEgAAAAAAAAATAA0AEgAAAAAAAAATAA4AEgAAAAAAAAAUAAsAEgAAAAAAAAAUAAwAEgAAAAAAAAAUAA0AEgAAAAAAAAAUAA4AEgAAAAAAAAAVAAsAEgAAAAAAAAAVAAwAEgAAAAAAAAAVAA0AEgAAAAAAAAAVAA4AEgAAAAAAAAAWAAsAEgAAAAAAAAAWAAwAEgAAAAAAAAAWAA0AEgAAAAAAAAAWAA4AEgAAAAAAAAA=")
+tile_set = SubResource("TileSet_2nvsk")
 
 [node name="Platforms" type="Node2D" parent="Geometry"]
 
-[node name="6" type="Sprite2D" parent="Geometry/Platforms"]
-position = Vector2(6, 700)
-scale = Vector2(2, 1)
-texture = ExtResource("5_jw8ik")
-
-[node name="StaticBody2D" type="StaticBody2D" parent="Geometry/Platforms/6"]
-
-[node name="CollisionShape2D" type="CollisionShape2D" parent="Geometry/Platforms/6/StaticBody2D"]
-position = Vector2(0.25, -89.5)
-rotation = 1.5707964
-shape = SubResource("RectangleShape2D_ddqj4")
+[node name="TileMapLayer" type="TileMapLayer" parent="Geometry/Platforms"]
+position = Vector2(2, 75)
+tile_map_data = PackedByteArray("AAD//wQAFwAAAAAAAAAAAAQAFwAAAAAAAAABAAQAFwAAAAAAAAD+/wQAFwAAAAAAAAD9/wQAFgAAAAAAAAACAAQAGAAAAAAAAAA=")
+tile_set = SubResource("TileSet_2nvsk")
 
 [node name="LeftWall" type="StaticBody2D" parent="Geometry"]
 position = Vector2(-2733, -13199)
@@ -76,5 +146,3 @@ position = Vector2(2694, -13214)
 [node name="CollisionShape2D" type="CollisionShape2D" parent="Geometry/RightWall"]
 scale = Vector2(2, 2)
 shape = SubResource("RectangleShape2D_etbs0")
-
-[editable path="Geometry/Floors/Floor1"]
