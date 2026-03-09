@@ -24,6 +24,9 @@ visual_path = NodePath("FrostGolem3DView")
 boss_name = "Kallos"
 boss_3d_visual_path = NodePath("FrostGolem3DView")
 idle_animation = "KAnim/Melee_Unarmed_Idle"
+hit_animation = "KAnim/Hit_A"
+death_animation = "KAnim/Death_A"
+melee_smash_animation = "KAnim/Melee_Unarmed_Smash"
 
 [node name="Hurtbox" type="Area2D" parent="."]
 script = ExtResource("2_0jdgh")

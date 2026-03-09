@@ -47,6 +47,7 @@ var _attack_speed_multiplier: float = 1.0  # Speed up attacks during forge phase
 @export var idle_animation: String = "KAnim/Idle_B"
 @export var hit_animation: String = "KAnim/Hit_A"
 @export var death_animation: String = "KAnim/Death_A"
+@export var melee_smash_animation: String = "KAnim/Melee_Unarmed_Smash"
 
 var _boss_3d_visual: Node2D = null
 
@@ -128,6 +129,7 @@ func _process(delta: float) -> void:
 
 	# Update facing to look at player
 	_update_facing()
+	_ensure_idle_animation()
 
 	if _combat_paused:
 		return
@@ -184,6 +186,22 @@ func set_attack_speed_multiplier(multiplier: float) -> void:
 		_arm_projectile_scheduler()
 
 
+func play_attack_animation(animation_name: String = "", speed_scale: float = 1.0, looped: bool = false) -> void:
+	if _boss_3d_visual == null:
+		return
+	var anim: String = animation_name
+	if anim == "":
+		anim = melee_smash_animation
+	if anim == "":
+		return
+	var speed: float = maxf(speed_scale, 0.1)
+	if looped and _boss_3d_visual.has_method("play_loop"):
+		_boss_3d_visual.call("play_loop", StringName(anim), true)
+		return
+	if _boss_3d_visual.has_method("play_one_shot"):
+		_boss_3d_visual.call("play_one_shot", anim, true, speed)
+
+
 func _now_s() -> float:
 	return Time.get_ticks_msec() / 1000.0
 
@@ -221,8 +239,8 @@ func take_damage(amount: int, _source: Node = null, tag: StringName = &"", is_cr
 	health_changed.emit(hp, max_hp)
 	_flash_hit()
 	
-	# Play hit animation
-	if _boss_3d_visual != null and _boss_3d_visual.has_method("play_one_shot") and hit_animation != "":
+	# Hit reaction may only interrupt idle; never stomp active attack/death clips.
+	if _can_play_hit_animation():
 		_boss_3d_visual.call("play_one_shot", hit_animation, true, 1.5)  # Play faster (1.5x speed)
 		#print("[Boss] Playing hit animation: ", hit_animation)
 
@@ -392,6 +410,45 @@ func _init_3d_visual() -> void:
 			push_warning("[Boss] 3D Visual doesn't have play_loop method!")
 	else:
 		push_warning("[Boss] No idle_animation configured!")
+
+
+func _ensure_idle_animation() -> void:
+	if _boss_3d_visual == null:
+		return
+	if idle_animation == "":
+		return
+	if not _boss_3d_visual.has_method("is_playing_any"):
+		return
+	if not _boss_3d_visual.has_method("play_loop"):
+		return
+	var is_playing: bool = bool(_boss_3d_visual.call("is_playing_any"))
+	if is_playing:
+		return
+	_boss_3d_visual.call("play_loop", StringName(idle_animation))
+
+
+func _get_current_visual_animation() -> String:
+	if _boss_3d_visual == null:
+		return ""
+	if not _boss_3d_visual.has_method("get_current_anim"):
+		return ""
+	return String(_boss_3d_visual.call("get_current_anim"))
+
+
+func _can_play_hit_animation() -> bool:
+	if _boss_3d_visual == null:
+		return false
+	if hit_animation == "":
+		return false
+	if not _boss_3d_visual.has_method("play_one_shot"):
+		return false
+	if not _boss_3d_visual.has_method("is_playing_any"):
+		return true
+	var is_playing: bool = bool(_boss_3d_visual.call("is_playing_any"))
+	if not is_playing:
+		return true
+	var current_anim: String = _get_current_visual_animation()
+	return current_anim == idle_animation
 
 
 func _update_facing() -> void:

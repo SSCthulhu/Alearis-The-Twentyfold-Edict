@@ -109,6 +109,17 @@ var _floor_on_dropthrough_platform: bool = false
 var _floor_on_elevator_platform: bool = false
 var _elevator_floor_grace_left: float = 0.0
 var _last_floor_collider_name: StringName = &""
+var _last_floor_collider_node: Node = null
+var _last_physics_delta: float = 1.0 / 60.0
+
+# World1 Frost Golem movement profile (enabled only during that encounter).
+var _world1_ice_profile_enabled: bool = false
+var _world1_ice_decel_multiplier: float = 0.55
+var _world1_ice_accel_multiplier: float = 0.72
+var _world1_ice_turn_control_multiplier: float = 0.60
+var _world1_max_drift_velocity_ratio: float = 0.80
+var _world1_platform_traction_group: StringName = &"world1_safe_platforms"
+var _world1_ice_surface_group: StringName = &"world1_ice_floor"
 
 # Timers
 var _coyote_timer: Timer = null
@@ -292,6 +303,7 @@ func _initialize_roll_charges() -> void:
 # Physics Process
 # -----------------------------
 func _physics_process(delta: float) -> void:
+	_last_physics_delta = maxf(delta, 1.0 / 120.0)
 	if _elevator_floor_grace_left > 0.0:
 		_elevator_floor_grace_left = maxf(_elevator_floor_grace_left - delta, 0.0)
 	if is_on_floor() and _floor_on_elevator_platform:
@@ -457,6 +469,7 @@ func _update_floor_surface_cache() -> void:
 	_floor_on_dropthrough_platform = false
 	_floor_on_elevator_platform = false
 	_last_floor_collider_name = &""
+	_last_floor_collider_node = null
 	if not is_on_floor():
 		return
 	for i in range(get_slide_collision_count()):
@@ -469,6 +482,7 @@ func _update_floor_surface_cache() -> void:
 		if collider_obj is Node:
 			var n: Node = collider_obj as Node
 			_last_floor_collider_name = StringName(n.name)
+			_last_floor_collider_node = n
 			if _is_dropthrough_blocked_platform_node(n):
 				_floor_on_elevator_platform = true
 			if _is_dropthrough_platform_node(n):
@@ -481,6 +495,76 @@ func _is_dropthrough_floor_name_allowed(surface_name: String) -> bool:
 			return true
 	var lower: String = surface_name.to_lower()
 	return lower.contains("platform") or lower.contains("cloud") or lower.contains("ledge")
+
+
+func set_world1_ice_profile(
+	enabled: bool,
+	decel_multiplier: float = 1.0,
+	accel_multiplier: float = 1.0,
+	turn_control_multiplier: float = 0.5,
+	max_drift_ratio: float = 0.35,
+	platform_traction_group: StringName = &"world1_safe_platforms"
+) -> void:
+	_world1_ice_profile_enabled = enabled
+	_world1_ice_decel_multiplier = clampf(decel_multiplier, 0.01, 1.5)
+	_world1_ice_accel_multiplier = clampf(accel_multiplier, 0.01, 1.5)
+	_world1_ice_turn_control_multiplier = clampf(turn_control_multiplier, 0.05, 1.0)
+	_world1_max_drift_velocity_ratio = clampf(max_drift_ratio, 0.0, 1.0)
+	_world1_platform_traction_group = platform_traction_group
+
+
+func _is_world1_ice_active_on_current_surface() -> bool:
+	if not is_on_floor():
+		return false
+	if _floor_on_dropthrough_platform:
+		return false
+	if _is_on_world1_safe_platform():
+		return false
+	if _world1_ice_profile_enabled:
+		return true
+	return _is_on_world1_ice_surface()
+
+
+func _is_on_world1_safe_platform() -> bool:
+	if _world1_platform_traction_group == StringName():
+		return false
+	var n: Node = _last_floor_collider_node
+	if n == null or not is_instance_valid(n):
+		return false
+	return _node_or_ancestor_in_group(n, _world1_platform_traction_group)
+
+
+func _is_on_world1_ice_surface() -> bool:
+	if _world1_ice_surface_group == StringName():
+		return false
+	var n: Node = _last_floor_collider_node
+	if n == null or not is_instance_valid(n):
+		return false
+	return _node_or_ancestor_in_group(n, _world1_ice_surface_group)
+
+
+func _node_or_ancestor_in_group(node: Node, group_name: StringName) -> bool:
+	var cursor: Node = node
+	while cursor != null:
+		if cursor.is_in_group(group_name):
+			return true
+		cursor = cursor.get_parent()
+	return false
+
+
+func _get_ground_accel_step(base_step: float) -> float:
+	if not _is_world1_ice_active_on_current_surface():
+		return base_step
+	var per_second_step: float = WALK_VELOCITY * _world1_ice_accel_multiplier
+	return maxf(per_second_step * _last_physics_delta, 0.05)
+
+
+func _get_ground_decel_step(base_step: float) -> float:
+	if not _is_world1_ice_active_on_current_surface():
+		return base_step
+	# Convert to a softer per-second response so drift is noticeable but controlled.
+	var per_second_step: float = WALK_VELOCITY * _world1_ice_decel_multiplier
+	return maxf(per_second_step * _last_physics_delta, 0.05)
 
 func _is_dropthrough_blocked_platform_node(node: Node) -> bool:
 	# Elevator platforms should never be drop-through eligible even if named like "Cloud*".
@@ -965,14 +1049,28 @@ func _handle_ground_movement(input_direction: float = 0.0, horizontal_velocity: 
 	_set_facing_direction(input_direction)
 	
 	var target_velocity: float = input_direction * horizontal_velocity * _get_speed_multiplier()
-	velocity.x = move_toward(velocity.x, target_velocity, step)
+	var effective_step: float = _get_ground_accel_step(step)
+	if input_direction == 0.0:
+		effective_step = _get_ground_decel_step(step)
+		if _is_world1_ice_active_on_current_surface():
+			var max_drift_speed: float = horizontal_velocity * _get_speed_multiplier() * clampf(_world1_max_drift_velocity_ratio, 0.0, 1.0)
+			velocity.x = clampf(velocity.x, -max_drift_speed, max_drift_speed)
+	elif _is_world1_ice_active_on_current_surface():
+		# Turning on ice should feel unstable: reduce steering authority while preserving momentum.
+		if absf(velocity.x) > 0.01 and signf(velocity.x) != signf(input_direction):
+			effective_step *= clampf(_world1_ice_turn_control_multiplier, 0.05, 1.0)
+	velocity.x = move_toward(velocity.x, target_velocity, effective_step)
 
 
 func _handle_sprint(delta: float) -> void:
 	var input_direction: float = signf(Input.get_axis(input_move_left, input_move_right))
 	if input_direction == 0.0:
 		# Holding sprint without movement should never auto-drive the character.
-		velocity.x = move_toward(velocity.x, 0.0, SPRINT_ACCELERATION * delta)
+		var decel_step: float = _get_ground_decel_step(SPRINT_ACCELERATION * delta)
+		if _is_world1_ice_active_on_current_surface():
+			var max_drift_speed: float = SPRINT_VELOCITY * _get_speed_multiplier() * clampf(_world1_max_drift_velocity_ratio, 0.0, 1.0)
+			velocity.x = clampf(velocity.x, -max_drift_speed, max_drift_speed)
+		velocity.x = move_toward(velocity.x, 0.0, decel_step)
 		return
 	_handle_ground_movement(input_direction, SPRINT_VELOCITY, SPRINT_ACCELERATION * delta)
 
