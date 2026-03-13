@@ -44,6 +44,7 @@ const VfxRenderUtil = preload("res://scripts/vfx/VfxRenderUtil.gd")
 @export var debug_floor3_falling: bool = false  # Special debug for Floor 3 falling issues
 @export var debug_nav_decisions: bool = false
 @export var debug_nav_print_interval: float = 0.15
+@export var debug_nav_arbiter: bool = false
 
 # --- Melee reach tuning (must match EnemyMeleeHitbox) ---
 @export var melee_forward_bias_px: float = 55.0
@@ -150,10 +151,16 @@ const ATTACK_VFX_SCENE: PackedScene = preload("res://scenes/vfx/BlueSlashVFX.tsc
 @export var drop_through_horizontal_max_distance: float = 520.0
 @export var drop_through_cooldown: float = 0.65
 @export var drop_through_target_y_tolerance: float = 220.0
+@export var drop_through_min_disable_time: float = 0.05
+@export var drop_through_max_disable_fall_distance: float = 72.0
+@export var drop_through_restore_after_leaving_platform: bool = true
 @export var retreat_descend_hold_time: float = 0.90
 @export var retreat_edge_recover_delay: float = 0.35
 @export var retreat_edge_recover_lock_time: float = 0.70
 @export var retreat_allow_edge_escape_if_not_forbidden: bool = true
+@export var retreat_direction_commit_time: float = 0.32
+@export var retreat_prefer_dropthrough_on_same_level: bool = true
+@export var retreat_dropthrough_same_level_max_dy: float = 72.0
 
 @export var platform_probe_distance: float = 140.0
 @export var platform_probe_mask: int = 1
@@ -234,6 +241,8 @@ var _is_ai_distant_culled: bool = false
 var _drop_through_timer: float = 0.0
 var _drop_through_cd: float = 0.0
 var _drop_restore_collision_mask: int = 0
+var _drop_through_elapsed: float = 0.0
+var _drop_through_start_y: float = 0.0
 var _preferred_jump_dir: int = 0
 var _nav_state: NavState = NavState.HOLD
 var _debug_nav_timer: float = 0.0
@@ -246,6 +255,8 @@ var _retreat_descend_hold_timer: float = 0.0
 var _retreat_edge_blocked_timer: float = 0.0
 var _retreat_recover_timer: float = 0.0
 var _retreat_recover_dir: int = 0
+var _retreat_commit_dir: int = 0
+var _retreat_commit_timer: float = 0.0
 
 var _base_contact_damage: int = 0
 var _base_attack_damage: int = 0
@@ -358,6 +369,7 @@ func _physics_process(delta: float) -> void:
 	_retreat_dir_memory_timer = maxf(0.0, _retreat_dir_memory_timer - delta)
 	_retreat_descend_hold_timer = maxf(0.0, _retreat_descend_hold_timer - delta)
 	_retreat_recover_timer = maxf(0.0, _retreat_recover_timer - delta)
+	_retreat_commit_timer = maxf(0.0, _retreat_commit_timer - delta)
 	if _retreat_dir_memory_timer <= 0.0:
 		_retreat_dir_memory = 0
 	if _retreat_recover_timer <= 0.0:
@@ -452,6 +464,7 @@ func _physics_process(delta: float) -> void:
 	var in_attack_range: bool = false
 	var forced_intent_dir: int = 0
 	var retreat_edge_blocked: bool = false
+	var movement_owner: String = "none"
 
 	if _target != null:
 		var dx: float = _target.global_position.x - global_position.x
@@ -464,7 +477,21 @@ func _physics_process(delta: float) -> void:
 		in_attack_range = (adx <= (melee_reach + standoff_deadzone)) and (ady <= melee_vertical_range)
 
 		desired_vx = _chase_desired_velocity()
+		movement_owner = "chase_velocity"
 		_update_nav_state(desired_vx)
+		if _nav_state == NavState.RETREAT and absf(desired_vx) > 0.01:
+			var retreat_dx: float = _target.global_position.x - global_position.x
+			var desired_retreat_dir: int = _stable_retreat_dir(retreat_dx, 0.22, 96.0)
+			if _retreat_commit_timer <= 0.0 or _retreat_commit_dir == 0:
+				_retreat_commit_dir = desired_retreat_dir
+				_retreat_commit_timer = maxf(retreat_direction_commit_time, 0.05)
+			# Keep retreat movement direction committed for a short window to prevent
+			# rapid left/right arbitration when probes flicker on ramps/edges.
+			desired_vx = float(_retreat_commit_dir) * absf(desired_vx)
+			movement_owner = "retreat_commit"
+			# Re-evaluate nav state after retreat commit so downstream vertical/action
+			# logic sees the final movement direction, not stale pre-commit intent.
+			_update_nav_state(desired_vx)
 		
 		# Single nav pipeline:
 		# 1) vertical intent (if strongly separated), 2) horizontal intent, 3) action commit.
@@ -478,17 +505,42 @@ func _physics_process(delta: float) -> void:
 			and ady > maxf(vertical_intent_y_threshold * 0.45, 24.0)
 			and _has_walkable_slope_in_direction(base_traverse_dir, 220.0, _target.global_position.y, true)
 		)
+		var retreat_descend_requested: bool = _nav_state == NavState.RETREAT and dy > retreat_vertical_intent_y_threshold
+		var retreat_descend_confirmed: bool = false
+		if retreat_descend_requested:
+			var retreat_descend_min_delta: float = maxf(retreat_vertical_intent_y_threshold, maxf(vertical_intent_y_threshold + 16.0, 72.0))
+			retreat_descend_confirmed = _has_confirmed_target_floor_below(retreat_descend_min_delta)
 		var allow_vertical_intent: bool = enable_vertical_traversal and (ady > vertical_intent_y_threshold or ramp_assist)
 		if _nav_state == NavState.RETREAT:
 			# Prevent retreat from bouncing into ASCEND/DESCEND on small dy differences at ramp edges.
-			allow_vertical_intent = enable_vertical_traversal and dy > retreat_vertical_intent_y_threshold
+			allow_vertical_intent = enable_vertical_traversal and retreat_descend_requested and retreat_descend_confirmed
 		if allow_vertical_intent:
 			if absf(dx) > 10.0:
 				var traverse_dir: int = _pick_vertical_traverse_dir(_target.global_position.y, base_traverse_dir)
-				desired_vx = float(traverse_dir) * move_speed
-				_nav_state = NavState.DESCEND if dy > 0.0 else NavState.ASCEND
+				var next_vertical_state: NavState = NavState.DESCEND if dy > 0.0 else NavState.ASCEND
+				var block_retreat_descend: bool = _nav_state == NavState.RETREAT and next_vertical_state == NavState.DESCEND and not retreat_descend_confirmed
+				if block_retreat_descend:
+					movement_owner = "retreat_descend_guard"
+					if debug_nav_decisions and debug_nav_arbiter:
+						_debug_nav("arbiter guard=retreat_descend_blocked dy=%.1f floor=%s target_floor=%s" % [
+							dy,
+							_debug_floor_name_under(self),
+							_debug_floor_name_under(_target)
+						])
+				else:
+					desired_vx = float(traverse_dir) * move_speed
+					_nav_state = next_vertical_state
+					movement_owner = "vertical_traverse"
 			_preferred_jump_dir = _pick_vertical_traverse_dir(_target.global_position.y, base_traverse_dir)
 		else:
+			if _nav_state == NavState.RETREAT and retreat_descend_requested and not retreat_descend_confirmed:
+				movement_owner = "retreat_descend_guard"
+				if debug_nav_decisions and debug_nav_arbiter:
+					_debug_nav("arbiter guard=retreat_descend_wait dy=%.1f floor=%s target_floor=%s" % [
+						dy,
+						_debug_floor_name_under(self),
+						_debug_floor_name_under(_target)
+					])
 			if absf(desired_vx) > 0.01:
 				_preferred_jump_dir = 1 if desired_vx > 0.0 else -1
 			else:
@@ -500,7 +552,10 @@ func _physics_process(delta: float) -> void:
 			velocity.x = 0.0
 	else:
 		desired_vx = _patrol_desired_velocity() if patrol_enabled else 0.0
+		movement_owner = "patrol"
 		_nav_state = NavState.HOLD
+		_retreat_commit_dir = 0
+		_retreat_commit_timer = 0.0
 
 	# Ledge prevention:
 	# - strict mode: always prevent falls
@@ -527,12 +582,14 @@ func _physics_process(delta: float) -> void:
 					_preferred_jump_dir = guard_dir
 					forced_intent_dir = guard_dir
 					retreat_edge_blocked = true
+					movement_owner = "retreat_edge_block"
 			if not has_ground:
 				# Stop at ledge
 				if patrol_enabled:
 					_patrol_dir = -guard_dir
 				desired_vx = 0.0
 				velocity.x = 0.0
+				movement_owner = "ledge_guard_stop"
 				if _nav_state == NavState.RETREAT:
 					forced_intent_dir = guard_dir
 					retreat_edge_blocked = true
@@ -551,14 +608,20 @@ func _physics_process(delta: float) -> void:
 		if _retreat_recover_timer > 0.0 and _retreat_recover_dir != 0:
 			desired_vx = float(_retreat_recover_dir) * move_speed
 			forced_intent_dir = _retreat_recover_dir
+			movement_owner = "retreat_recover_lock"
 		elif retreat_edge_blocked and _retreat_edge_blocked_timer >= maxf(retreat_edge_recover_delay, 0.05):
 			_retreat_recover_dir = -_preferred_jump_dir if _preferred_jump_dir != 0 else 1
 			_retreat_recover_timer = maxf(retreat_edge_recover_lock_time, 0.15)
 			_retreat_edge_blocked_timer = 0.0
 			desired_vx = float(_retreat_recover_dir) * move_speed
+			_retreat_commit_dir = _retreat_recover_dir
+			_retreat_commit_timer = maxf(retreat_direction_commit_time, 0.05)
 			forced_intent_dir = _retreat_recover_dir
+			movement_owner = "retreat_recover_start"
 	else:
 		_retreat_edge_blocked_timer = 0.0
+		_retreat_commit_dir = 0
+		_retreat_commit_timer = 0.0
 
 	var next_intent_dir: int = 0
 	if desired_vx > 0.0:
@@ -571,11 +634,17 @@ func _physics_process(delta: float) -> void:
 	if _target != null and is_instance_valid(_target):
 		to_target_dx = _target.global_position.x - global_position.x
 	var close_flip_window: bool = absf(to_target_dx) <= 72.0
-	if next_intent_dir != 0 and _intent_dir != 0 and next_intent_dir != _intent_dir:
-		if _direction_flip_cooldown > 0.0 or close_flip_window:
-			next_intent_dir = _intent_dir
-		else:
-			_direction_flip_cooldown = 0.18
+	var retreat_committed_motion: bool = _nav_state == NavState.RETREAT and absf(desired_vx) > 0.01
+	if retreat_committed_motion:
+		# During committed retreat movement, intent must follow actual movement direction.
+		# Keeping stale intent here causes turn-in-place loops on ramps.
+		next_intent_dir = 1 if desired_vx > 0.0 else -1
+	else:
+		if next_intent_dir != 0 and _intent_dir != 0 and next_intent_dir != _intent_dir:
+			if _direction_flip_cooldown > 0.0 or close_flip_window:
+				next_intent_dir = _intent_dir
+			else:
+				_direction_flip_cooldown = 0.18
 	_intent_dir = next_intent_dir
 	if _intent_dir != 0:
 		_preferred_jump_dir = _intent_dir
@@ -589,6 +658,18 @@ func _physics_process(delta: float) -> void:
 	if _intent_dir != 0:
 		if (velocity.x > 0.0 and _intent_dir < 0) or (velocity.x < 0.0 and _intent_dir > 0):
 			velocity.x = 0.0
+
+	if debug_nav_decisions and debug_nav_arbiter and _target != null and is_instance_valid(_target):
+		_debug_nav("arbiter owner=%s desired=%.1f intent=%d nav=%s dy=%.1f dx=%.1f floor=%s target_floor=%s" % [
+			movement_owner,
+			desired_vx,
+			_intent_dir,
+			_nav_state_name(_nav_state),
+			_target.global_position.y - global_position.y,
+			absf(_target.global_position.x - global_position.x),
+			_debug_floor_name_under(self),
+			_debug_floor_name_under(_target)
+		])
 
 	_move_horizontal(desired_vx, delta)
 	move_and_slide()
@@ -800,12 +881,29 @@ func _floor_hit_under(node: Node2D) -> Dictionary:
 	if node == null:
 		return {}
 	var space := get_world_2d().direct_space_state
-	var from: Vector2 = node.global_position + Vector2(0.0, 6.0)
-	var to: Vector2 = from + Vector2(0.0, platform_probe_distance)
-	var params := PhysicsRayQueryParameters2D.create(from, to)
-	params.exclude = [node]
-	params.collision_mask = platform_probe_mask
-	return space.intersect_ray(params)
+	# Probe a few nearby vertical lines and only accept floor-like normals.
+	# This avoids classifying side walls as "floor" near ramp seams/edges.
+	var x_offsets: PackedFloat32Array = PackedFloat32Array([0.0, -10.0, 10.0])
+	for x_off: float in x_offsets:
+		var from: Vector2 = node.global_position + Vector2(x_off, 6.0)
+		var to: Vector2 = from + Vector2(0.0, platform_probe_distance)
+		var params := PhysicsRayQueryParameters2D.create(from, to)
+		params.exclude = [node]
+		params.collision_mask = platform_probe_mask
+		var hit: Dictionary = space.intersect_ray(params)
+		if hit.is_empty():
+			continue
+		var normal: Vector2 = hit.get("normal", Vector2.ZERO)
+		if normal.dot(Vector2.UP) < 0.35:
+			continue
+		var collider_obj: Variant = hit.get("collider", null)
+		if collider_obj is Node:
+			var node_name: String = String((collider_obj as Node).name).to_lower()
+			# Keep wall boundary colliders from being treated as floor probes.
+			if node_name.contains("wall"):
+				continue
+		return hit
+	return {}
 
 func _is_same_platform(player: Node2D) -> bool:
 	if player == null:
@@ -876,9 +974,21 @@ func _update_nav_state(desired_vx: float) -> void:
 	var dx: float = _target.global_position.x - global_position.x
 	var dy: float = _target.global_position.y - global_position.y
 	var ady: float = absf(dy)
-	if ady > 60.0:
-		_nav_state = NavState.DESCEND if dy > 0.0 else NavState.ASCEND
-		return
+	var vertical_state_threshold: float = maxf(vertical_intent_y_threshold + 16.0, 72.0)
+	var descend_confirmed: bool = _has_confirmed_target_floor_below(maxf(retreat_vertical_intent_y_threshold, vertical_state_threshold))
+	# Keep retreat horizontal unless target is meaningfully below.
+	# This prevents RETREAT<->ASCEND churn around ramp offsets (dy ~ 40-70).
+	if _nav_state == NavState.RETREAT:
+		if dy > maxf(retreat_vertical_intent_y_threshold, vertical_state_threshold) and descend_confirmed:
+			_nav_state = NavState.DESCEND
+			return
+	else:
+		if dy > vertical_state_threshold and descend_confirmed:
+			_nav_state = NavState.DESCEND
+			return
+		if dy < -vertical_state_threshold:
+			_nav_state = NavState.DESCEND if dy > 0.0 else NavState.ASCEND
+			return
 	if absf(desired_vx) <= 0.01:
 		_nav_state = NavState.HOLD
 		return
@@ -897,6 +1007,17 @@ func _update_nav_state(desired_vx: float) -> void:
 		var move_sign: float = signf(desired_vx)
 		# Moving toward target = chase, away from target = retreat.
 		_nav_state = NavState.CHASE if move_sign == to_target_sign else NavState.RETREAT
+
+func _has_confirmed_target_floor_below(min_delta: float) -> bool:
+	if _target == null or not is_instance_valid(_target):
+		return false
+	var my_floor_hit: Dictionary = _floor_hit_under(self)
+	var target_floor_hit: Dictionary = _floor_hit_under(_target)
+	if my_floor_hit.is_empty() or target_floor_hit.is_empty():
+		return false
+	var my_floor_y: float = (my_floor_hit["position"] as Vector2).y
+	var target_floor_y: float = (target_floor_hit["position"] as Vector2).y
+	return (target_floor_y - my_floor_y) >= min_delta
 
 func _nav_state_name(state: NavState) -> String:
 	match state:
@@ -1538,10 +1659,62 @@ func _can_force_dropthrough_retreat() -> bool:
 		return false
 	return true
 
+func _can_force_dropthrough_retreat_same_level() -> bool:
+	if not retreat_prefer_dropthrough_on_same_level:
+		return false
+	if not enable_drop_through_platforms:
+		return false
+	if _drop_through_cd > 0.0:
+		return false
+	if not is_on_floor():
+		return false
+	if not _is_dropthrough_platform_surface():
+		return false
+	if _target == null or not is_instance_valid(_target):
+		return false
+	var dy: float = _target.global_position.y - global_position.y
+	if absf(dy) > maxf(retreat_dropthrough_same_level_max_dy, 8.0):
+		return false
+	# Apply the same forbidden-surface safety gate used by descend/retreat force-drop.
+	var floor_hit: Dictionary = _floor_hit_under(self)
+	if floor_hit.is_empty():
+		return false
+	var my_floor_collider: Variant = floor_hit.get("collider", null)
+	var my_floor_y: float = (floor_hit["position"] as Vector2).y
+	var from: Vector2 = Vector2(global_position.x, my_floor_y + 8.0)
+	var to: Vector2 = from + Vector2(0.0, maxf(safe_drop_max_distance, 120.0))
+	var params := PhysicsRayQueryParameters2D.create(from, to)
+	params.exclude = [self]
+	if my_floor_collider is CollisionObject2D:
+		params.exclude.append(my_floor_collider)
+	params.collision_mask = world_collision_mask
+	var hit: Dictionary = get_world_2d().direct_space_state.intersect_ray(params)
+	if hit.is_empty():
+		return false
+	if _is_forbidden_drop_surface(hit.get("collider", null)):
+		return false
+	return true
+
 func _update_drop_through_state(delta: float) -> void:
 	if _drop_through_timer <= 0.0:
 		return
+	_drop_through_elapsed += delta
 	_drop_through_timer = maxf(_drop_through_timer - delta, 0.0)
+	var can_restore_early: bool = _drop_through_elapsed >= maxf(drop_through_min_disable_time, 0.01)
+	if can_restore_early:
+		# Re-enable world collision as soon as we are no longer standing on a
+		# drop-through platform so we cannot tunnel through additional floors.
+		if drop_through_restore_after_leaving_platform and not _is_dropthrough_platform_surface():
+			collision_mask = _drop_restore_collision_mask
+			_drop_through_timer = 0.0
+			return
+		# Absolute safety clamp: never keep world collision disabled beyond a
+		# short vertical travel budget from drop start.
+		var max_fall_dist: float = maxf(drop_through_max_disable_fall_distance, 24.0)
+		if absf(global_position.y - _drop_through_start_y) >= max_fall_dist:
+			collision_mask = _drop_restore_collision_mask
+			_drop_through_timer = 0.0
+			return
 	if _drop_through_timer <= 0.0:
 		collision_mask = _drop_restore_collision_mask
 
@@ -1552,6 +1725,8 @@ func _start_drop_through() -> void:
 	_drop_restore_collision_mask = collision_mask
 	collision_mask = collision_mask & ~(1 << (bit - 1))
 	_drop_through_timer = maxf(drop_through_duration, 0.05)
+	_drop_through_elapsed = 0.0
+	_drop_through_start_y = global_position.y
 	_drop_through_cd = maxf(drop_through_cooldown, 0.0)
 	velocity.y = maxf(velocity.y, drop_through_downward_boost)
 	_is_jumping = true
@@ -1693,7 +1868,7 @@ func _try_jump_to_target() -> void:
 		preferred_dir = 1 if _target.global_position.x >= global_position.x else -1
 
 	# Retreat default: if on a drop-through platform and safe, descend immediately.
-	if _nav_state == NavState.RETREAT and _can_force_dropthrough_retreat():
+	if _nav_state == NavState.RETREAT and (_can_force_dropthrough_retreat() or _can_force_dropthrough_retreat_same_level()):
 		_start_drop_through()
 		_retreat_descend_hold_timer = maxf(retreat_descend_hold_time, 0.2)
 		_vertical_fail_timer = 0.0

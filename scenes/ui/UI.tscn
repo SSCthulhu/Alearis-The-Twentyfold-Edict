@@ -615,6 +615,7 @@ scroll_active = false
 layer = 100
 
 [node name="PauseMenu" parent="PauseLayer" instance=ExtResource("19_f7i3j")]
+debug_reset_run_enabled = true
 settings_menu_scene = ExtResource("20_settings")
 style = SubResource("Resource_5tdvf")
 

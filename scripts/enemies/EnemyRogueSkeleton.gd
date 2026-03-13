@@ -213,9 +213,10 @@ func _chase_desired_velocity() -> float:
 	if _aiming or _shooting:
 		return 0.0
 	
-	var ady: float = absf(_target.global_position.y - global_position.y)
-	if ady > (vertical_intent_y_threshold + 16.0):
-		# Vertical separation: prioritize traversal/pathing over distance-keeping.
+	var dy: float = _target.global_position.y - global_position.y
+	if dy > (vertical_intent_y_threshold + 16.0) and _is_target_significantly_below(96.0):
+		# Only hand off to base descend/pathing when target is truly on a lower floor.
+		# This avoids retreat<->descend ping-pong around ramp/local Y crossings.
 		return super._chase_desired_velocity()
 	
 	# Use base class distance keeping helper

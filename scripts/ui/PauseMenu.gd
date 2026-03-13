@@ -12,6 +12,10 @@ signal quit_confirmed()
 # Layout
 @export var summary_to_button_gap: float = 50.0  # Gap between RunSummary bottom and Resume button top
 
+@export_group("Debug")
+@export var debug_reset_run_enabled: bool = false
+@export var debug_reset_world_scene_path: String = "res://scenes/world/World1.tscn"
+
 # Button sizing (match MainMenu style)
 @export var button_width: float = 900.0
 @export var button_font_size: int = 80
@@ -25,6 +29,7 @@ signal quit_confirmed()
 @onready var _settings_button: Button = $Root/ButtonsContainer/SettingsButton
 @onready var _quit_button: Button = $Root/ButtonsContainer/QuitButton
 @onready var _quit_to_desktop_button: Button = $Root/ButtonsContainer/QuitToDesktopButton
+@onready var _debug_reset_run_button: Button = get_node_or_null("Root/DebugToolsContainer/VBoxContainer/DebugResetRunButton") as Button
 @onready var _confirm_dialog: Control = $Root/ConfirmDialog
 @onready var _confirm_label: Label = $Root/ConfirmDialog/ConfirmPanel/VBox/ConfirmLabel
 @onready var _confirm_yes_button: Button = $Root/ConfirmDialog/ConfirmPanel/VBox/ButtonsHBox/YesButton
@@ -36,7 +41,7 @@ var _settings_menu_instance: SettingsMenu = null
 var _was_paused_before_open: bool = false
 var _was_time_scale_before_open: float = 1.0
 
-enum QuitAction { MAIN_MENU, DESKTOP }
+enum QuitAction { MAIN_MENU, DESKTOP, DEBUG_RESET_RUN }
 var _pending_quit_action: QuitAction = QuitAction.MAIN_MENU
 
 func _ready() -> void:
@@ -65,6 +70,8 @@ func _ready() -> void:
 		_quit_button.pivot_offset = _quit_button.size / 2.0
 	if _quit_to_desktop_button != null:
 		_quit_to_desktop_button.pivot_offset = _quit_to_desktop_button.size / 2.0
+	if _debug_reset_run_button != null:
+		_debug_reset_run_button.pivot_offset = _debug_reset_run_button.size / 2.0
 	if _confirm_yes_button != null:
 		_confirm_yes_button.pivot_offset = _confirm_yes_button.size / 2.0
 	if _confirm_no_button != null:
@@ -79,6 +86,8 @@ func _ready() -> void:
 		_quit_button.pressed.connect(_on_quit_pressed)
 	if _quit_to_desktop_button != null:
 		_quit_to_desktop_button.pressed.connect(_on_quit_to_desktop_pressed)
+	if _debug_reset_run_button != null:
+		_debug_reset_run_button.pressed.connect(_on_debug_reset_run_pressed)
 	
 	# Connect confirmation dialog buttons
 	if _confirm_yes_button != null:
@@ -92,6 +101,8 @@ func _ready() -> void:
 	# Hide confirmation dialog initially
 	if _confirm_dialog != null:
 		_confirm_dialog.visible = false
+
+	_configure_debug_tools()
 	
 	# Start hidden but input enabled (so we can open it!)
 	visible = false
@@ -217,6 +228,12 @@ func _on_quit_to_desktop_pressed() -> void:
 	_pending_quit_action = QuitAction.DESKTOP
 	_show_confirmation_dialog()
 
+func _on_debug_reset_run_pressed() -> void:
+	if not _is_debug_reset_available():
+		return
+	_pending_quit_action = QuitAction.DEBUG_RESET_RUN
+	_show_confirmation_dialog()
+
 
 func _show_confirmation_dialog() -> void:
 	if _confirm_dialog == null:
@@ -227,10 +244,13 @@ func _show_confirmation_dialog() -> void:
 	
 	# Update label text
 	if _confirm_label != null:
-		if _pending_quit_action == QuitAction.DESKTOP:
-			_confirm_label.text = "Quit to desktop? Progress will be lost."
-		else:
-			_confirm_label.text = "Are you sure? Progress will be lost."
+		match _pending_quit_action:
+			QuitAction.DESKTOP:
+				_confirm_label.text = "Quit to desktop? Progress will be lost."
+			QuitAction.DEBUG_RESET_RUN:
+				_confirm_label.text = "Reset run and return to World 1? Progress will be lost."
+			_:
+				_confirm_label.text = "Are you sure? Progress will be lost."
 
 
 func _hide_confirmation_dialog() -> void:
@@ -247,6 +267,10 @@ func _on_confirm_yes() -> void:
 	# Unpause before changing scene
 	get_tree().paused = false
 	Engine.time_scale = _was_time_scale_before_open
+
+	if _pending_quit_action == QuitAction.DEBUG_RESET_RUN:
+		_perform_debug_reset_run()
+		return
 	
 	# Emit quit signal (handled by scene to clean up/return to main menu)
 	quit_confirmed.emit()
@@ -257,6 +281,26 @@ func _on_confirm_yes() -> void:
 	
 	# Return to main menu
 	get_tree().call_deferred("change_scene_to_file", "res://scenes/ui/MainMenu.tscn")
+
+func _perform_debug_reset_run() -> void:
+	if RunStateSingleton != null:
+		if RunStateSingleton.has_method("start_new_run"):
+			RunStateSingleton.start_new_run()
+		elif RunStateSingleton.has_method("reset_on_death_and_retry"):
+			RunStateSingleton.reset_on_death_and_retry()
+	var target_scene: String = debug_reset_world_scene_path.strip_edges()
+	if target_scene == "":
+		target_scene = "res://scenes/world/World1.tscn"
+	get_tree().call_deferred("change_scene_to_file", target_scene)
+
+func _is_debug_reset_available() -> bool:
+	return debug_reset_run_enabled and OS.is_debug_build()
+
+func _configure_debug_tools() -> void:
+	if _debug_reset_run_button == null:
+		return
+	var enabled: bool = _is_debug_reset_available()
+	_debug_reset_run_button.visible = enabled
 
 
 func _on_confirm_no() -> void:
@@ -323,6 +367,9 @@ func _connect_button_hover_effects() -> void:
 	if _quit_to_desktop_button != null:
 		_quit_to_desktop_button.mouse_entered.connect(_on_button_hover.bind(_quit_to_desktop_button))
 		_quit_to_desktop_button.mouse_exited.connect(_on_button_unhover.bind(_quit_to_desktop_button))
+	if _debug_reset_run_button != null:
+		_debug_reset_run_button.mouse_entered.connect(_on_button_hover.bind(_debug_reset_run_button))
+		_debug_reset_run_button.mouse_exited.connect(_on_button_unhover.bind(_debug_reset_run_button))
 	if _confirm_yes_button != null:
 		_confirm_yes_button.mouse_entered.connect(_on_button_hover.bind(_confirm_yes_button))
 		_confirm_yes_button.mouse_exited.connect(_on_button_unhover.bind(_confirm_yes_button))

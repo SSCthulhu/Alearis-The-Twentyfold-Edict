@@ -52,6 +52,7 @@ script = ExtResource("1_rogue")
 projectile_scene = ExtResource("6_projectile")
 move_speed = 120.0
 debug_nav_decisions = true
+debug_nav_arbiter = true
 melee_spawn_forward_px = 50.0
 max_hp = 50
 edge_aggro_lockout_time = 0.35
