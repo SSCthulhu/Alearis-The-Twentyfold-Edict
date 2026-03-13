@@ -2,6 +2,13 @@
 extends Node
 class_name FloorEnemySpawner
 
+const ENEMY_KNIGHT_SCENE: PackedScene = preload("res://scenes/enemies/EnemyKnightAdd.tscn")
+const ENEMY_ROGUE_SCENE: PackedScene = preload("res://scenes/enemies/EnemyRogueSkeleton.tscn")
+const ENEMY_MAGE_SCENE: PackedScene = preload("res://scenes/enemies/EnemySkeletonMage.tscn")
+const ENEMY_NECROMANCER_SCENE: PackedScene = preload("res://scenes/enemies/EnemyNecromancer.tscn")
+const ENEMY_MINION_SCENE: PackedScene = preload("res://scenes/enemies/EnemyMinionSkeleton.tscn")
+const ENEMY_GOLEM_SCENE: PackedScene = preload("res://scenes/enemies/EnemySkeletonGolem.tscn")
+
 # ✅ NEW: Support multiple enemy types for randomization
 @export var enemy_scenes: Array[PackedScene] = []    # Add multiple enemy types here
 @export var enemy_scene: PackedScene                 # Legacy: single enemy (for backward compatibility)
@@ -27,6 +34,20 @@ class_name FloorEnemySpawner
 
 # Optional: parent node to hold spawned enemies (keeps tree tidy)
 @export var enemy_parent_path: NodePath = ^"../Arena"
+
+@export_group("Debug Spawn Overrides")
+@export var enable_forced_enemy_scene: bool = false
+@export_enum(
+	"None (Use Normal Pool)",
+	"Skeleton Knight",
+	"Skeleton Rogue",
+	"Skeleton Mage",
+	"Skeleton Necromancer",
+	"Skeleton Minion",
+	"Skeleton Golem"
+) var forced_enemy_type: int = 0
+@export var forced_enemy_count: int = -1  # -1 keeps default per-floor count
+@export var disable_golem_replacement_when_forced: bool = true
 
 # Floor activation mode (must match world type)
 @export_enum("Vertical (Y-axis)", "Horizontal (X-axis)") var floor_activation_mode: int = 0  # 0 = vertical (World1/World2), 1 = horizontal (World3)
@@ -84,6 +105,15 @@ func spawn_floor(floor_index: int) -> void:
 		enemy_pool = enemy_scenes
 	elif enemy_scene != null:
 		enemy_pool = [enemy_scene]
+
+	if enable_forced_enemy_scene:
+		var forced_scene: PackedScene = _get_forced_enemy_scene()
+		if forced_scene != null:
+			enemy_pool = [forced_scene]
+			if debug_spawning:
+				pass
+		else:
+			push_warning("[Spawner] Forced enemy is enabled but no enemy type is selected. Using normal pool.")
 	
 	if enemy_pool.is_empty():
 		push_warning("[Spawner] No enemy scenes assigned. Set Enemy Scenes array in inspector.")
@@ -118,6 +148,8 @@ func spawn_floor(floor_index: int) -> void:
 	var desired: int = 1
 	if floor_index < enemies_per_floor.size():
 		desired = max(1, enemies_per_floor[floor_index])
+	if enable_forced_enemy_scene and forced_enemy_count > 0:
+		desired = forced_enemy_count
 
 	var count_to_spawn: int = min(desired, points.size())
 	var group_name: StringName = floor_enemy_groups[floor_index]
@@ -140,6 +172,8 @@ func spawn_floor(floor_index: int) -> void:
 	
 	# Clamp elites to not exceed total spawn count
 	elites_to_spawn = mini(elites_to_spawn, count_to_spawn)
+	if enable_forced_enemy_scene and disable_golem_replacement_when_forced:
+		elites_to_spawn = 0
 	
 	if debug_spawning:
 		pass
@@ -189,6 +223,23 @@ func _seed_rng_for_spawner(extra: int) -> void:
 			_rng.seed = seeded_rng.seed
 			return
 	_rng.randomize()
+
+func _get_forced_enemy_scene() -> PackedScene:
+	match forced_enemy_type:
+		1:
+			return ENEMY_KNIGHT_SCENE
+		2:
+			return ENEMY_ROGUE_SCENE
+		3:
+			return ENEMY_MAGE_SCENE
+		4:
+			return ENEMY_NECROMANCER_SCENE
+		5:
+			return ENEMY_MINION_SCENE
+		6:
+			return ENEMY_GOLEM_SCENE
+		_:
+			return null
 
 func _shuffle_markers(points: Array[Marker2D]) -> void:
 	for i: int in range(points.size() - 1, 0, -1):

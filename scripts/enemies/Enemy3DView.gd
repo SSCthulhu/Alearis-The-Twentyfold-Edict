@@ -28,6 +28,7 @@ var _stage_root: Node3D
 var _skeleton_root: Node3D
 var _anim_player: AnimationPlayer
 var _default_speed_scale: float = 1.0  # Enemy's default animation speed
+var _base_speed_scale: float = 1.0
 
 var _facing: int = 1
 
@@ -103,6 +104,7 @@ func _instance_stage() -> void:
 		
 		# Save the enemy's default animation speed (usually 1.0, but can be customized per enemy)
 		_default_speed_scale = _anim_player.speed_scale
+		_base_speed_scale = _default_speed_scale
 
 	_apply_facing()
 
@@ -230,3 +232,9 @@ func get_current_anim() -> StringName:
 	if _anim_player == null:
 		return &""
 	return StringName(_anim_player.current_animation)
+
+func set_default_speed_multiplier(multiplier: float) -> void:
+	var m: float = clampf(multiplier, 0.1, 4.0)
+	_default_speed_scale = _base_speed_scale * m
+	if _anim_player != null:
+		_anim_player.speed_scale = _default_speed_scale

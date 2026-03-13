@@ -55,6 +55,9 @@ func _ready() -> void:
 	# Golem stats
 	max_hp = 200
 	move_speed = 100.0  # Slower than player but faster than other enemies
+	ground_probe_distance = 180.0
+	max_walk_step_down_height = 340.0
+	hold_when_no_vertical_path = false
 	
 	# Match telegraph readability to golem size/reach.
 	telegraph_width_px = golem_telegraph_width_px

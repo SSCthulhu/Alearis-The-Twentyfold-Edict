@@ -5,21 +5,45 @@ const VfxRenderUtil = preload("res://scripts/vfx/VfxRenderUtil.gd")
 @export var move_speed: float = 140.0
 @export var accel: float = 1800.0
 @export var friction: float = 2200.0
+@export var movement_speed_multiplier: float = 1.25
+@export var locomotion_anim_speed_multiplier: float = 1.20
 
 @export var gravity: float = 1250.0
 @export var max_fall_speed: float = 900.0
 
+@export_group("Ground Adhesion")
+@export var enable_slope_ground_adhesion: bool = true
+@export var slope_floor_snap_length: float = 26.0
+@export var slope_floor_max_angle_deg: float = 55.0
+@export var slope_snap_requires_downward_motion: bool = false
+
 # Jump
 @export var can_jump: bool = true
-@export var jump_strength: float = -450.0
+@export var jump_strength: float = -1037.5
 @export var jump_check_distance: float = 150.0
 @export var jump_cooldown: float = 2.0
+@export var enable_vertical_traversal: bool = true
+@export var allow_upward_jump_traversal: bool = true
+@export var jump_up_probe_height_bonus: float = 72.0
+@export var jump_up_horizontal_boost: float = 0.55
+@export var upward_jump_strength: float = -1037.5
+@export var jump_over_obstacles: bool = true
+@export var suppress_jump_when_ramp_available: bool = true
+@export var ramp_jump_suppress_max_height: float = 260.0
+@export var ramp_jump_suppress_max_dx: float = 420.0
+@export var ramp_jump_commit_max_dx: float = 300.0
+@export var vertical_intent_y_threshold: float = 56.0
+@export var retreat_vertical_intent_y_threshold: float = 84.0
+@export var vertical_retry_fail_window: float = 0.22
 
 # Debug
+@export_group("Debug")
 @export var debug_chase: bool = false
 
 @export var debug_logs: bool = false
 @export var debug_floor3_falling: bool = false  # Special debug for Floor 3 falling issues
+@export var debug_nav_decisions: bool = false
+@export var debug_nav_print_interval: float = 0.15
 
 # --- Melee reach tuning (must match EnemyMeleeHitbox) ---
 @export var melee_forward_bias_px: float = 55.0
@@ -37,8 +61,11 @@ var _home_initialized: bool = false
 @export var lose_aggro_range: float = 2080.0
 @export var patrol_enabled: bool = true
 @export var patrol_distance: float = 220.0
+@export var aggro_by_same_floor_presence: bool = true
+@export var same_floor_aggro_y_tolerance: float = 220.0
 
 @export var standoff_deadzone: float = 4.0
+@export var nav_center_hysteresis_x: float = 18.0
 @export var sprite_faces_right: bool = false
 
 @export var contact_damage: int = 10
@@ -54,6 +81,7 @@ var _home_initialized: bool = false
 @export var attack_hit_time: float = 0.70
 @export var attack_min_cycle_time: float = 0.0
 @export var melee_vertical_range: float = 100.0
+@export var stop_when_in_attack_range: bool = true
 
 # Melee telegraph readability (no-hit support)
 @export var enable_melee_telegraph: bool = true
@@ -89,6 +117,7 @@ const ATTACK_VFX_SCENE: PackedScene = preload("res://scenes/vfx/BlueSlashVFX.tsc
 @export var same_platform_y_tolerance: float = 48.0
 @export var aggro_only_when_same_platform: bool = false
 @export var same_platform_floor_y_tolerance: float = 24.0
+@export var hold_when_no_vertical_path: bool = false
 
 # -----------------------------
 # Performance culling
@@ -107,6 +136,23 @@ const ATTACK_VFX_SCENE: PackedScene = preload("res://scenes/vfx/BlueSlashVFX.tsc
 @export var ground_probe_distance: float = 80.0
 @export var ground_probe_origin_y: float = 28.0
 @export var world_collision_mask: int = 9  # Layers 1 (world) + 8 (enemy-only walls)
+@export var safe_drop_max_distance: float = 1200.0
+@export var safe_drop_target_y_tolerance: float = 420.0
+@export var max_walk_step_down_height: float = 220.0
+@export var allow_drop_from_unknown_surface: bool = false
+@export var drop_surface_name_tokens: PackedStringArray = PackedStringArray(["platform", "bridge", "ledge", "cloud"])
+@export var forbidden_drop_surface_name_tokens: PackedStringArray = PackedStringArray(["lava", "death", "kill", "void", "hazard"])
+@export var enable_drop_through_platforms: bool = true
+@export var drop_through_world_collision_layer_bit: int = 1
+@export var drop_through_duration: float = 0.14
+@export var drop_through_downward_boost: float = 280.0
+@export var drop_through_vertical_min_distance: float = 90.0
+@export var drop_through_horizontal_max_distance: float = 520.0
+@export var drop_through_cooldown: float = 0.65
+@export var drop_through_target_y_tolerance: float = 220.0
+@export var retreat_descend_hold_time: float = 0.90
+@export var retreat_edge_recover_delay: float = 0.35
+@export var retreat_edge_recover_lock_time: float = 0.70
 
 @export var platform_probe_distance: float = 140.0
 @export var platform_probe_mask: int = 1
@@ -156,12 +202,49 @@ var _has_been_damaged: bool = false
 var _is_jumping: bool = false
 var _was_on_floor: bool = false
 
+enum NavState {
+	HOLD,
+	CHASE,
+	RETREAT,
+	ASCEND,
+	DESCEND
+}
+
+enum VerticalAction {
+	NONE,
+	JUMP_UP,
+	DROP_THROUGH,
+	EDGE_DROP
+}
+
+enum SurfaceKind {
+	UNKNOWN,
+	WALKABLE_FLOOR,
+	DROPTHROUGH_PLATFORM,
+	FORBIDDEN
+}
+
 # Vertical pathfinding
 var _target_ledge_direction: int = 0  # -1 left, 0 none, 1 right
 var _ledge_search_cooldown: float = 0.0  # Re-evaluate ledge every X seconds
 var _direction_flip_cooldown: float = 0.0  # Prevent rapid direction flipping
 var _distant_ai_cull_timer: float = 0.0
 var _is_ai_distant_culled: bool = false
+var _drop_through_timer: float = 0.0
+var _drop_through_cd: float = 0.0
+var _drop_restore_collision_mask: int = 0
+var _preferred_jump_dir: int = 0
+var _nav_state: NavState = NavState.HOLD
+var _debug_nav_timer: float = 0.0
+var _debug_nav_last_line: String = ""
+var _vertical_fail_timer: float = 0.0
+var _vertical_fail_reason: String = ""
+var _retreat_dir_memory: int = 0
+var _retreat_dir_memory_timer: float = 0.0
+var _retreat_descend_hold_timer: float = 0.0
+var _retreat_edge_blocked_timer: float = 0.0
+var _retreat_recover_timer: float = 0.0
+var _retreat_recover_dir: int = 0
 
 var _base_contact_damage: int = 0
 var _base_attack_damage: int = 0
@@ -185,10 +268,15 @@ func _apply_scaling_once() -> void:
 func _ready() -> void:
 	# Set collision mask to check layers 1 (world) + 8 (enemy-only walls)
 	collision_mask = 9
+	_drop_restore_collision_mask = collision_mask
 	
 	_base_contact_damage = contact_damage
 	_base_attack_damage = attack_damage
 	_base_max_hp = max_hp
+	move_speed *= maxf(movement_speed_multiplier, 0.1)
+	accel *= maxf(movement_speed_multiplier, 0.1)
+	friction *= maxf(movement_speed_multiplier, 0.1)
+	floor_max_angle = deg_to_rad(slope_floor_max_angle_deg)
 
 	_active = not use_floor_activation
 	if _active:
@@ -223,6 +311,8 @@ func _ready() -> void:
 	if view_3d != null:
 		if not view_3d.stage_animation_finished.is_connected(_on_anim_finished):
 			view_3d.stage_animation_finished.connect(_on_anim_finished)
+		if view_3d.has_method("set_default_speed_multiplier"):
+			view_3d.call("set_default_speed_multiplier", locomotion_anim_speed_multiplier)
 		_play_anim(anim_idle, false)
 		view_3d.set_facing(_facing_dir)
 		_view_default_modulate = view_3d.modulate
@@ -261,6 +351,17 @@ func _physics_process(delta: float) -> void:
 	_jump_cd = maxf(0.0, _jump_cd - delta)
 	_ledge_search_cooldown = maxf(0.0, _ledge_search_cooldown - delta)
 	_direction_flip_cooldown = maxf(0.0, _direction_flip_cooldown - delta)
+	_drop_through_cd = maxf(0.0, _drop_through_cd - delta)
+	_debug_nav_timer = maxf(0.0, _debug_nav_timer - delta)
+	_vertical_fail_timer = maxf(0.0, _vertical_fail_timer - delta)
+	_retreat_dir_memory_timer = maxf(0.0, _retreat_dir_memory_timer - delta)
+	_retreat_descend_hold_timer = maxf(0.0, _retreat_descend_hold_timer - delta)
+	_retreat_recover_timer = maxf(0.0, _retreat_recover_timer - delta)
+	if _retreat_dir_memory_timer <= 0.0:
+		_retreat_dir_memory = 0
+	if _retreat_recover_timer <= 0.0:
+		_retreat_recover_dir = 0
+	_update_drop_through_state(delta)
 
 	# DEBUG: Track Floor 3 enemies falling
 	if debug_floor3_falling:
@@ -322,6 +423,7 @@ func _physics_process(delta: float) -> void:
 		_home_initialized = true
 
 	_apply_gravity(delta)
+	_update_slope_ground_adhesion()
 	_update_target()
 	
 	# Track floor state for jump landing
@@ -329,15 +431,26 @@ func _physics_process(delta: float) -> void:
 	if not _was_on_floor and on_floor_now and _is_jumping:
 		# Just landed from a jump
 		_is_jumping = false
+		_anim_locked = false
 		_play_anim(anim_jump_land, false)
+	elif _is_jumping:
+		# Failsafe: floor contact/probe can flicker near platform edges.
+		# If we have nearby ground support and low vertical speed, clear jump state.
+		var floor_hit: Dictionary = _floor_hit_under(self)
+		var has_probe_support: bool = not floor_hit.is_empty()
+		var near_ground_support: bool = false
+		if has_probe_support:
+			var probe_y: float = (floor_hit["position"] as Vector2).y - ground_probe_origin_y
+			near_ground_support = absf(probe_y - global_position.y) <= 18.0
+		if on_floor_now or (near_ground_support and absf(velocity.y) <= 48.0):
+			_is_jumping = false
+			_anim_locked = false
 	_was_on_floor = on_floor_now
 	
-	# Try to jump to reach target on different platform
-	if can_jump and _target != null:
-		_try_jump_to_target()
-
 	var desired_vx: float = 0.0
 	var in_attack_range: bool = false
+	var forced_intent_dir: int = 0
+	var retreat_edge_blocked: bool = false
 
 	if _target != null:
 		var dx: float = _target.global_position.x - global_position.x
@@ -350,41 +463,122 @@ func _physics_process(delta: float) -> void:
 		in_attack_range = (adx <= (melee_reach + standoff_deadzone)) and (ady <= melee_vertical_range)
 
 		desired_vx = _chase_desired_velocity()
+		_update_nav_state(desired_vx)
+		
+		# Single nav pipeline:
+		# 1) vertical intent (if strongly separated), 2) horizontal intent, 3) action commit.
+		var to_target_dir: int = 1 if dx >= 0.0 else -1
+		var base_traverse_dir: int = to_target_dir
+		if absf(desired_vx) > 0.01:
+			base_traverse_dir = 1 if desired_vx > 0.0 else -1
+		var ramp_assist: bool = (
+			enable_vertical_traversal
+			and _nav_state != NavState.RETREAT
+			and ady > maxf(vertical_intent_y_threshold * 0.45, 24.0)
+			and _has_walkable_slope_in_direction(base_traverse_dir, 220.0, _target.global_position.y, true)
+		)
+		var allow_vertical_intent: bool = enable_vertical_traversal and (ady > vertical_intent_y_threshold or ramp_assist)
+		if _nav_state == NavState.RETREAT:
+			# Prevent retreat from bouncing into ASCEND/DESCEND on small dy differences at ramp edges.
+			allow_vertical_intent = enable_vertical_traversal and dy > retreat_vertical_intent_y_threshold
+		if allow_vertical_intent:
+			if absf(dx) > 10.0:
+				var traverse_dir: int = _pick_vertical_traverse_dir(_target.global_position.y, base_traverse_dir)
+				desired_vx = float(traverse_dir) * move_speed
+				_nav_state = NavState.DESCEND if dy > 0.0 else NavState.ASCEND
+			_preferred_jump_dir = _pick_vertical_traverse_dir(_target.global_position.y, base_traverse_dir)
+		else:
+			if absf(desired_vx) > 0.01:
+				_preferred_jump_dir = 1 if desired_vx > 0.0 else -1
+			else:
+				_preferred_jump_dir = 1 if dx >= 0.0 else -1
+		_target_ledge_direction = _preferred_jump_dir
 
-		# Only stop movement if truly in melee range (both X and Y)
-		if in_attack_range:
+		# Melee enemies hold for attack window; ranged units can disable this.
+		if in_attack_range and stop_when_in_attack_range:
 			velocity.x = 0.0
 	else:
 		desired_vx = _patrol_desired_velocity() if patrol_enabled else 0.0
+		_nav_state = NavState.HOLD
 
-	# Ledge prevention - completely disabled when chasing different vertical level (unless strict mode)
+	# Ledge prevention:
+	# - strict mode: always prevent falls
+	# - non-strict: allow vertical states to use explicit drop logic instead of hard guard
 	if prevent_falling_off_ledges and absf(desired_vx) > 0.01 and is_on_floor() and not _is_jumping:
-		# Check if we're chasing vertically
-		var chasing_vertically: bool = false
-		if _target != null and is_instance_valid(_target) and not strict_ledge_guard:
-			var vertical_diff: float = absf(_target.global_position.y - global_position.y)
-			chasing_vertically = vertical_diff > 50.0
-		
-		# In strict mode, ALWAYS check ledge. Otherwise only check if NOT chasing vertically
-		if strict_ledge_guard or not chasing_vertically:
+		var apply_guard: bool = strict_ledge_guard or (_nav_state != NavState.ASCEND and _nav_state != NavState.DESCEND)
+		if apply_guard:
 			var guard_dir: int = 1 if desired_vx > 0.0 else -1
 			var has_ground: bool = _has_ground_ahead(guard_dir)
+			if not has_ground and _has_walkable_slope_in_direction(guard_dir, 140.0):
+				has_ground = true
 			
+			if not has_ground:
+				# If retreating and that side is blocked, prefer a valid reverse route over standstill.
+				if _nav_state == NavState.RETREAT:
+					# Do not reverse direction on retreat edges (causes left/right jitter loops).
+					# Retreat descent logic will handle platform drop-through/edge-drop.
+					desired_vx = 0.0
+					_preferred_jump_dir = guard_dir
+					forced_intent_dir = guard_dir
+					retreat_edge_blocked = true
 			if not has_ground:
 				# Stop at ledge
 				if patrol_enabled:
 					_patrol_dir = -guard_dir
 				desired_vx = 0.0
 				velocity.x = 0.0
+				if _nav_state == NavState.RETREAT:
+					forced_intent_dir = guard_dir
+					retreat_edge_blocked = true
 				
 				if debug_logs and strict_ledge_guard:
 					pass
 
-	_intent_dir = 0
+	if _nav_state == NavState.RETREAT:
+		if retreat_edge_blocked:
+			_retreat_edge_blocked_timer += delta
+		else:
+			_retreat_edge_blocked_timer = maxf(_retreat_edge_blocked_timer - delta * 1.5, 0.0)
+
+		# Corner recovery: if retreat remains blocked, commit a short reverse move
+		# so the enemy can re-open pathing instead of stalling forever.
+		if _retreat_recover_timer > 0.0 and _retreat_recover_dir != 0:
+			desired_vx = float(_retreat_recover_dir) * move_speed
+			forced_intent_dir = _retreat_recover_dir
+		elif retreat_edge_blocked and _retreat_edge_blocked_timer >= maxf(retreat_edge_recover_delay, 0.05):
+			_retreat_recover_dir = -_preferred_jump_dir if _preferred_jump_dir != 0 else 1
+			_retreat_recover_timer = maxf(retreat_edge_recover_lock_time, 0.15)
+			_retreat_edge_blocked_timer = 0.0
+			desired_vx = float(_retreat_recover_dir) * move_speed
+			forced_intent_dir = _retreat_recover_dir
+	else:
+		_retreat_edge_blocked_timer = 0.0
+
+	var next_intent_dir: int = 0
 	if desired_vx > 0.0:
-		_intent_dir = 1
+		next_intent_dir = 1
 	elif desired_vx < 0.0:
-		_intent_dir = -1
+		next_intent_dir = -1
+	elif forced_intent_dir != 0:
+		next_intent_dir = forced_intent_dir
+	var to_target_dx: float = 0.0
+	if _target != null and is_instance_valid(_target):
+		to_target_dx = _target.global_position.x - global_position.x
+	var close_flip_window: bool = absf(to_target_dx) <= 72.0
+	if next_intent_dir != 0 and _intent_dir != 0 and next_intent_dir != _intent_dir:
+		if _direction_flip_cooldown > 0.0 or close_flip_window:
+			next_intent_dir = _intent_dir
+		else:
+			_direction_flip_cooldown = 0.18
+	_intent_dir = next_intent_dir
+	if _intent_dir != 0:
+		_preferred_jump_dir = _intent_dir
+	if _nav_state == NavState.RETREAT and _target != null and is_instance_valid(_target):
+		_preferred_jump_dir = _stable_retreat_dir(_target.global_position.x - global_position.x, 0.28, 120.0)
+
+	# Vertical traversal decisions use current intent/movement context.
+	if can_jump and _target != null:
+		_try_jump_to_target()
 
 	if _intent_dir != 0:
 		if (velocity.x > 0.0 and _intent_dir < 0) or (velocity.x < 0.0 and _intent_dir > 0):
@@ -392,27 +586,6 @@ func _physics_process(delta: float) -> void:
 
 	_move_horizontal(desired_vx, delta)
 	move_and_slide()
-	
-	# Wall detection - if we hit a wall while searching for a ledge, try opposite direction
-	if _target_ledge_direction != 0 and _direction_flip_cooldown <= 0.0 and get_slide_collision_count() > 0:
-		for i in range(get_slide_collision_count()):
-			var collision := get_slide_collision(i)
-			var normal := collision.get_normal()
-			
-			# Check if we hit a vertical wall (not floor/ceiling)
-			# Normal points away from wall: left wall has normal (1,0), right wall has normal (-1,0)
-			if absf(normal.y) < 0.3:  # Stricter check - more clearly vertical
-				# Check if wall is blocking our search direction
-				var wall_blocks_left: bool = normal.x > 0.5  # Wall to our left (normal points right)
-				var wall_blocks_right: bool = normal.x < -0.5  # Wall to our right (normal points left)
-				
-				if (_target_ledge_direction == -1 and wall_blocks_left) or (_target_ledge_direction == 1 and wall_blocks_right):
-					# Wall is blocking our current search direction - flip and commit
-					_target_ledge_direction = -_target_ledge_direction
-					_direction_flip_cooldown = 2.0  # Commit to new direction for 2 seconds
-					if debug_logs:
-						pass
-					break
 
 	_update_facing()
 	_update_locomotion_anim()
@@ -578,9 +751,11 @@ func _update_target() -> void:
 
 	var d: float = global_position.distance_to(player.global_position)
 	var same_platform: bool = _is_same_platform(player)
+	var same_floor_for_aggro: bool = aggro_by_same_floor_presence and _is_same_floor_for_aggro(player)
+	var should_aggro_now: bool = d <= aggro_range or same_floor_for_aggro
 
 	# Always face player if close enough
-	if d <= aggro_range:
+	if should_aggro_now:
 		_face_target = player
 	else:
 		if _face_target != null and not is_instance_valid(_face_target):
@@ -598,7 +773,7 @@ func _update_target() -> void:
 		return
 
 	# Acquire target only if allowed
-	if d <= aggro_range:
+	if should_aggro_now:
 		if aggro_only_when_same_platform and not same_platform:
 			return
 		if chase_only_when_same_platform and not same_platform:
@@ -650,17 +825,228 @@ func _distance_keeping_velocity(target_pos: Vector2, min_dist: float, preferred_
 	var dist: float = absf(dx)
 	
 	if dist < min_dist:
-		# Too close - back away
-		return -signf(dx) * move_speed * 0.8
+		# Too close - back away at full run speed (no slowdown near player).
+		return -signf(dx) * move_speed
 	elif dist > max_dist:
-		# Too far - move closer
-		return signf(dx) * move_speed * 0.6
+		# Too far - close in at full run speed.
+		return signf(dx) * move_speed
 	elif dist < preferred_dist:
-		# Still a bit close - gentle retreat
-		return -signf(dx) * move_speed * 0.4
+		# Slightly close - still retreat at full run speed for snappier kiting.
+		return -signf(dx) * move_speed
 	else:
 		# In ideal range - hold position
 		return 0.0
+
+func _stable_retreat_dir(dx: float, hold_seconds: float = 0.22, deadzone: float = 70.0) -> int:
+	var abs_dx: float = absf(dx)
+	var desired: int = 0
+	if abs_dx <= 1.0:
+		desired = -_facing_dir if _facing_dir != 0 else -1
+	else:
+		desired = -1 if dx > 0.0 else 1
+
+	# Keep retreat direction sticky near close-range overlap on ramps,
+	# and damp sudden sign flips that cause left/right jitter loops.
+	if _retreat_dir_memory != 0:
+		var sign_changed: bool = desired != _retreat_dir_memory
+		if abs_dx <= deadzone:
+			desired = _retreat_dir_memory
+		elif sign_changed:
+			if _direction_flip_cooldown > 0.0:
+				desired = _retreat_dir_memory
+			else:
+				_direction_flip_cooldown = maxf(_direction_flip_cooldown, hold_seconds)
+
+	if desired == 0:
+		desired = -1
+	_retreat_dir_memory = desired
+	_retreat_dir_memory_timer = maxf(hold_seconds, 0.05)
+	return desired
+
+func _update_nav_state(desired_vx: float) -> void:
+	if _target == null or not is_instance_valid(_target):
+		_nav_state = NavState.HOLD
+		return
+	var dx: float = _target.global_position.x - global_position.x
+	var dy: float = _target.global_position.y - global_position.y
+	var ady: float = absf(dy)
+	if ady > 60.0:
+		_nav_state = NavState.DESCEND if dy > 0.0 else NavState.ASCEND
+		return
+	if absf(desired_vx) <= 0.01:
+		_nav_state = NavState.HOLD
+		return
+
+	var to_target_sign: float = signf(dx)
+	if absf(dx) <= maxf(nav_center_hysteresis_x, 1.0):
+		# Near centerline, preserve previous chase/retreat intent to avoid rapid flips.
+		if _nav_state == NavState.RETREAT or _nav_state == NavState.CHASE:
+			return
+		to_target_sign = 0.0
+
+	if to_target_sign == 0.0:
+		# If horizontally aligned, preserve intent from movement direction only.
+		_nav_state = NavState.CHASE if desired_vx > 0.0 else NavState.RETREAT
+	else:
+		var move_sign: float = signf(desired_vx)
+		# Moving toward target = chase, away from target = retreat.
+		_nav_state = NavState.CHASE if move_sign == to_target_sign else NavState.RETREAT
+
+func _nav_state_name(state: NavState) -> String:
+	match state:
+		NavState.HOLD:
+			return "HOLD"
+		NavState.CHASE:
+			return "CHASE"
+		NavState.RETREAT:
+			return "RETREAT"
+		NavState.ASCEND:
+			return "ASCEND"
+		NavState.DESCEND:
+			return "DESCEND"
+	return "UNKNOWN"
+
+func _vertical_action_name(action: VerticalAction) -> String:
+	match action:
+		VerticalAction.NONE:
+			return "NONE"
+		VerticalAction.JUMP_UP:
+			return "JUMP_UP"
+		VerticalAction.DROP_THROUGH:
+			return "DROP_THROUGH"
+		VerticalAction.EDGE_DROP:
+			return "EDGE_DROP"
+	return "UNKNOWN"
+
+func _debug_nav(line: String) -> void:
+	if not debug_nav_decisions:
+		return
+	if _debug_nav_timer > 0.0 and line == _debug_nav_last_line:
+		return
+	_debug_nav_timer = maxf(debug_nav_print_interval, 0.01)
+	_debug_nav_last_line = line
+	print("[EnemyNav:%s] %s" % [name, line])
+
+func _debug_floor_name_under(node: Node2D) -> String:
+	var hit: Dictionary = _floor_hit_under(node)
+	if hit.is_empty():
+		return "none"
+	var collider_obj: Variant = hit.get("collider", null)
+	if collider_obj is Node:
+		return String((collider_obj as Node).name)
+	return "unknown"
+
+func _pick_vertical_traverse_dir(target_y: float, fallback_dir: int) -> int:
+	var left_ramp: bool = _has_ramp_toward_target(-1, target_y, 320.0)
+	var right_ramp: bool = _has_ramp_toward_target(1, target_y, 320.0)
+	if not left_ramp:
+		left_ramp = _has_walkable_slope_in_direction(-1, 240.0, target_y, true)
+	if not right_ramp:
+		right_ramp = _has_walkable_slope_in_direction(1, 240.0, target_y, true)
+	if left_ramp and not right_ramp:
+		return -1
+	if right_ramp and not left_ramp:
+		return 1
+	if left_ramp and right_ramp:
+		return fallback_dir if fallback_dir != 0 else 1
+	# No ramp detected in either direction: pick the nearer reachable ledge so we keep progressing
+	# instead of stalling against a blocked side.
+	var left_ledge: float = _find_ledge_distance(-1, 520.0)
+	var right_ledge: float = _find_ledge_distance(1, 520.0)
+	if left_ledge > 0.0 and right_ledge <= 0.0:
+		return -1
+	if right_ledge > 0.0 and left_ledge <= 0.0:
+		return 1
+	if left_ledge > 0.0 and right_ledge > 0.0:
+		return -1 if left_ledge < right_ledge else 1
+	return fallback_dir if fallback_dir != 0 else 1
+
+func _update_slope_ground_adhesion() -> void:
+	if not enable_slope_ground_adhesion:
+		floor_snap_length = 0.0
+		return
+
+	floor_max_angle = deg_to_rad(slope_floor_max_angle_deg)
+	var disable_snap: bool = _is_jumping or _drop_through_timer > 0.0
+	if disable_snap:
+		floor_snap_length = 0.0
+		return
+	if slope_snap_requires_downward_motion and velocity.y < 0.0:
+		floor_snap_length = 0.0
+		return
+
+	floor_snap_length = maxf(slope_floor_snap_length, 0.0)
+	if floor_snap_length <= 0.0:
+		return
+	# Apply proactively so floor contact does not flicker on ramp seams.
+	if not slope_snap_requires_downward_motion or velocity.y >= -1.0:
+		apply_floor_snap()
+
+func _has_walkable_slope_in_direction(
+	dir: int,
+	check_distance: float = 220.0,
+	target_y: float = 0.0,
+	match_target_vertical: bool = false
+) -> bool:
+	var space := get_world_2d().direct_space_state
+	var start_from := global_position + Vector2(0.0, ground_probe_origin_y)
+	var start_to := start_from + Vector2(0.0, maxf(ground_probe_distance, 80.0))
+	var start_params := PhysicsRayQueryParameters2D.create(start_from, start_to)
+	start_params.exclude = [self]
+	start_params.collision_mask = world_collision_mask
+	var start_hit: Dictionary = space.intersect_ray(start_params)
+	if start_hit.is_empty():
+		return false
+
+	var ahead_x: float = global_position.x + float(dir) * maxf(check_distance, 20.0)
+	var ahead_top: float = global_position.y - maxf(jump_up_probe_height_bonus + 36.0, 96.0)
+	var ahead_from := Vector2(ahead_x, ahead_top)
+	var ahead_to := Vector2(ahead_x, global_position.y + ground_probe_origin_y + maxf(ground_probe_distance + 220.0, 160.0))
+	var ahead_params := PhysicsRayQueryParameters2D.create(ahead_from, ahead_to)
+	ahead_params.exclude = [self]
+	ahead_params.collision_mask = world_collision_mask
+	var ahead_hit: Dictionary = space.intersect_ray(ahead_params)
+	if ahead_hit.is_empty():
+		return false
+
+	var start_y: float = (start_hit.get("position", start_from) as Vector2).y
+	var ahead_y: float = (ahead_hit.get("position", ahead_from) as Vector2).y
+	var delta_y: float = ahead_y - start_y
+	if absf(delta_y) < 6.0:
+		return false
+	if absf(delta_y) > maxf(max_walk_step_down_height + 260.0, 280.0):
+		return false
+
+	if match_target_vertical:
+		var need_up: bool = target_y < global_position.y
+		var need_down: bool = target_y > global_position.y
+		if need_up and delta_y > -4.0:
+			return false
+		if need_down and delta_y < 4.0:
+			return false
+	return true
+
+func _matches_surface_name_tokens(name_value: String, tokens: PackedStringArray) -> bool:
+	var name_lower: String = name_value.to_lower()
+	for token: String in tokens:
+		if token.is_empty():
+			continue
+		if name_lower.contains(token.to_lower()):
+			return true
+	return false
+
+func _is_forbidden_drop_surface(collider_obj: Variant) -> bool:
+	return _surface_kind_for_collider(collider_obj) == SurfaceKind.FORBIDDEN
+
+func _surface_kind_for_collider(collider_obj: Variant) -> SurfaceKind:
+	if not (collider_obj is Node):
+		return SurfaceKind.UNKNOWN
+	var node_name: String = String((collider_obj as Node).name)
+	if _matches_surface_name_tokens(node_name, forbidden_drop_surface_name_tokens):
+		return SurfaceKind.FORBIDDEN
+	if _matches_surface_name_tokens(node_name, drop_surface_name_tokens):
+		return SurfaceKind.DROPTHROUGH_PLATFORM
+	return SurfaceKind.WALKABLE_FLOOR
 
 func _chase_desired_velocity() -> float:
 	if _target == null:
@@ -670,90 +1056,12 @@ func _chase_desired_velocity() -> float:
 
 	var dx: float = _target.global_position.x - global_position.x
 	var adx: float = absf(dx)
-	var dy: float = _target.global_position.y - global_position.y
-	var ady: float = absf(dy)
-
-	var to_player_dir: int = 0
-	if dx > 0.0:
-		to_player_dir = 1
-	elif dx < 0.0:
-		to_player_dir = -1
+	var to_player_dir: int = 1 if dx >= 0.0 else -1
 
 	var melee_reach: float = melee_forward_bias_px + (melee_width_px * 0.5) + melee_spawn_forward_px
 	var max_dist: float = melee_reach + standoff_deadzone
 
-	# ABSOLUTE PRIORITY: Vertical movement ONLY when on different levels
-	# SKIP THIS ENTIRELY in strict ledge guard mode (World3 horizontal)
-	var vertical_threshold: float = 50.0
-	
-	# If on different vertical level, ONLY focus on finding a way down/up
-	if not strict_ledge_guard and ady > vertical_threshold:
-		# STICKY DIRECTION: Only search for path if we haven't committed yet
-		if _target_ledge_direction == 0 and _ledge_search_cooldown <= 0.0:
-			_ledge_search_cooldown = 0.3
-			
-			# PRIORITY 1: Check for ramps first (easier and more natural than jumping)
-			var target_y: float = _target.global_position.y
-			var left_has_ramp: bool = _has_ramp_toward_target(-1, target_y, 250.0)
-			var right_has_ramp: bool = _has_ramp_toward_target(1, target_y, 250.0)
-			
-			if left_has_ramp or right_has_ramp:
-				# Found a ramp! Use it
-				if left_has_ramp and right_has_ramp:
-					# Both directions have ramps - pick closest to player or nearest ledge
-					var left_ledge_dist: float = _find_ledge_distance(-1, 800.0)
-					var right_ledge_dist: float = _find_ledge_distance(1, 800.0)
-					if left_ledge_dist > 0.0 and right_ledge_dist > 0.0:
-						_target_ledge_direction = -1 if left_ledge_dist < right_ledge_dist else 1
-					else:
-						_target_ledge_direction = to_player_dir if to_player_dir != 0 else -1
-				elif left_has_ramp:
-					_target_ledge_direction = -1
-				else:
-					_target_ledge_direction = 1
-				
-				if debug_logs:
-					pass
-			else:
-				# PRIORITY 2: No ramps found, search for ledges to jump from
-				var left_ledge_dist: float = _find_ledge_distance(-1, 800.0)
-				var right_ledge_dist: float = _find_ledge_distance(1, 800.0)
-				
-				if debug_logs:
-					pass
-				
-				# Choose the nearest valid ledge
-				if left_ledge_dist > 0.0 and right_ledge_dist > 0.0:
-					# Both valid - pick closest, with player direction as tiebreaker
-					if absf(left_ledge_dist - right_ledge_dist) < 50.0:
-						# Too close to call - use player direction to break tie
-						_target_ledge_direction = to_player_dir if to_player_dir != 0 else -1
-					else:
-						_target_ledge_direction = -1 if left_ledge_dist < right_ledge_dist else 1
-				elif left_ledge_dist > 0.0:
-					_target_ledge_direction = -1
-				elif right_ledge_dist > 0.0:
-					_target_ledge_direction = 1
-				else:
-					# No ledge found - move toward player to explore
-					_target_ledge_direction = to_player_dir if to_player_dir != 0 else -1
-				
-				if debug_logs:
-					pass
-		
-		# COMMIT: Move in the chosen direction until we find a ledge or reach same level
-		if _target_ledge_direction != 0:
-			if debug_logs:
-				pass
-			return float(_target_ledge_direction) * move_speed
-		if debug_logs:
-			pass
-		return 0.0
-	
-	# Same vertical level - reset ledge target and do normal horizontal chase
-	_target_ledge_direction = 0
-	_ledge_search_cooldown = 0.0  # Reset cooldown when reaching same level
-	
+	# Horizontal-only core chase. Vertical commit happens in _try_jump_to_target.
 	if adx > max_dist:
 		return float(to_player_dir) * move_speed
 	
@@ -799,12 +1107,30 @@ func _update_facing() -> void:
 
 	if t != null and is_instance_valid(t):
 		var dx: float = t.global_position.x - global_position.x
-		if dx > 1.0:
+		if dx > 16.0:
 			_facing_dir = 1
-		elif dx < -1.0:
+		elif dx < -16.0:
 			_facing_dir = -1
 
 	_apply_sprite_facing(_facing_dir)
+
+func _face_toward_position(target_pos: Vector2) -> void:
+	var dx: float = target_pos.x - global_position.x
+	if dx > 16.0:
+		_facing_dir = 1
+	elif dx < -16.0:
+		_facing_dir = -1
+	_apply_sprite_facing(_facing_dir)
+
+func _has_clear_line_to_target(target_pos: Vector2, y_offset: float = -40.0) -> bool:
+	var space := get_world_2d().direct_space_state
+	var from := global_position + Vector2(0.0, y_offset)
+	var to := target_pos + Vector2(0.0, y_offset)
+	var params := PhysicsRayQueryParameters2D.create(from, to)
+	params.exclude = [self]
+	params.collision_mask = world_collision_mask
+	var hit: Dictionary = space.intersect_ray(params)
+	return hit.is_empty()
 
 func _try_attack() -> void:
 	if _attack_cd > 0.0:
@@ -914,16 +1240,25 @@ func take_damage(amount: int) -> void:
 
 func _has_ground_ahead(dir: int) -> bool:
 	var space := get_world_2d().direct_space_state
-
-	var from := global_position + Vector2(float(dir) * ground_probe_forward, ground_probe_origin_y)
-	var to := from + Vector2(0.0, ground_probe_distance)
-
-	var params := PhysicsRayQueryParameters2D.create(from, to)
-	params.exclude = [self]
-	params.collision_mask = world_collision_mask
-
-	var hit := space.intersect_ray(params)
-	return not hit.is_empty()
+	var probes: Array[float] = [
+		float(dir) * ground_probe_forward,
+		float(dir) * (ground_probe_forward + 10.0),
+		float(dir) * maxf(ground_probe_forward - 10.0, 6.0)
+	]
+	var probe_top_offset: float = maxf(jump_up_probe_height_bonus * 0.5, 42.0)
+	for probe_x: float in probes:
+		var from := global_position + Vector2(probe_x, -probe_top_offset)
+		var to := from + Vector2(0.0, maxf(ground_probe_distance, max_walk_step_down_height + 24.0))
+		var params := PhysicsRayQueryParameters2D.create(from, to)
+		params.exclude = [self]
+		params.collision_mask = world_collision_mask
+		var hit: Dictionary = space.intersect_ray(params)
+		if not hit.is_empty():
+			var hit_pos: Vector2 = hit.get("position", from)
+			var step_down: float = hit_pos.y - from.y
+			if step_down <= max_walk_step_down_height:
+				return true
+	return false
 
 ## Find nearest ledge (open edge) in given direction
 ## Returns distance to ledge, or -1 if no ledge found within max_search_dist
@@ -984,8 +1319,9 @@ func _has_ramp_toward_target(dir: int, target_y: float, check_distance: float = 
 	
 	# Check ground height ahead in the given direction
 	var check_ahead_x: float = global_position.x + float(dir) * check_distance
-	var from_ahead := Vector2(check_ahead_x, my_y + ground_probe_origin_y)
-	var to_ahead := from_ahead + Vector2(0.0, ground_probe_distance + 200.0)  # Extra range for slopes
+	var ahead_probe_top: float = my_y - maxf(jump_up_probe_height_bonus + 36.0, 96.0)
+	var from_ahead := Vector2(check_ahead_x, ahead_probe_top)
+	var to_ahead := Vector2(check_ahead_x, my_y + ground_probe_origin_y + ground_probe_distance + 240.0)  # Extra range for slopes
 	var params_ahead := PhysicsRayQueryParameters2D.create(from_ahead, to_ahead)
 	params_ahead.exclude = [self]
 	params_ahead.collision_mask = world_collision_mask
@@ -1041,63 +1377,511 @@ func _has_wall_in_direction(dir: int, check_distance: float = 100.0) -> bool:
 	
 	return is_wall
 
+func _can_drop_from_current_surface() -> bool:
+	var floor_hit: Dictionary = _floor_hit_under(self)
+	var collider_obj: Variant = floor_hit.get("collider", null) if not floor_hit.is_empty() else _get_floor_collider_from_slide()
+	if collider_obj == null:
+		# Fallback near ledge tips where probe can miss despite floor contact.
+		return is_on_floor() and allow_drop_from_unknown_surface
+	if not (collider_obj is Node):
+		return allow_drop_from_unknown_surface
+	if _surface_kind_for_collider(collider_obj) == SurfaceKind.DROPTHROUGH_PLATFORM:
+		return true
+	return allow_drop_from_unknown_surface
+
+func _is_dropthrough_platform_surface() -> bool:
+	var floor_hit: Dictionary = _floor_hit_under(self)
+	var collider_obj: Variant = floor_hit.get("collider", null) if not floor_hit.is_empty() else _get_floor_collider_from_slide()
+	if collider_obj == null:
+		return false
+	return _surface_kind_for_collider(collider_obj) == SurfaceKind.DROPTHROUGH_PLATFORM
+
+func _get_floor_collider_from_slide() -> Variant:
+	if not is_on_floor():
+		return null
+	var best_dot: float = 0.5
+	var best_collider: Variant = null
+	for i in range(get_slide_collision_count()):
+		var col: KinematicCollision2D = get_slide_collision(i)
+		if col == null:
+			continue
+		var up_dot: float = col.get_normal().dot(Vector2.UP)
+		if up_dot >= best_dot:
+			best_dot = up_dot
+			best_collider = col.get_collider()
+	return best_collider
+
+func _can_drop_through_toward_target(target_y: float) -> bool:
+	var floor_hit: Dictionary = _floor_hit_under(self)
+	if floor_hit.is_empty() and not is_on_floor():
+		return false
+	var my_floor_y: float = (floor_hit["position"] as Vector2).y if not floor_hit.is_empty() else (global_position.y + ground_probe_origin_y)
+	var my_floor_collider: Variant = floor_hit.get("collider", null) if not floor_hit.is_empty() else null
+	var space := get_world_2d().direct_space_state
+	var from: Vector2 = global_position + Vector2(0.0, 10.0)
+	var to: Vector2 = from + Vector2(0.0, maxf(safe_drop_max_distance, 120.0))
+	var params := PhysicsRayQueryParameters2D.create(from, to)
+	params.exclude = [self]
+	if my_floor_collider is CollisionObject2D:
+		params.exclude.append(my_floor_collider)
+	params.collision_mask = world_collision_mask
+	var hit: Dictionary = space.intersect_ray(params)
+	if hit.is_empty():
+		return false
+	var landing_collider: Variant = hit.get("collider", null)
+	if _is_forbidden_drop_surface(landing_collider):
+		return false
+	var landing_y: float = (hit["position"] as Vector2).y
+	if landing_y <= my_floor_y + 6.0:
+		return false
+	var landing_body_y: float = landing_y - ground_probe_origin_y
+
+	# Descend/retreat behavior should be permissive:
+	# if we found a valid lower landing and target is below us, allow commit.
+	var is_descending_intent: bool = (_nav_state == NavState.DESCEND or _nav_state == NavState.RETREAT) and target_y > (global_position.y + 24.0)
+	if is_descending_intent:
+		if _target != null and is_instance_valid(_target):
+			var target_floor_hit_desc: Dictionary = _floor_hit_under(_target)
+			if not target_floor_hit_desc.is_empty():
+				var target_floor_y_desc: float = (target_floor_hit_desc["position"] as Vector2).y
+				if target_floor_y_desc > my_floor_y + (drop_through_vertical_min_distance * 0.5):
+					return true
+		return true
+
+	var y_tolerance: float = drop_through_target_y_tolerance if hold_when_no_vertical_path else (drop_through_target_y_tolerance * 2.5)
+	if _nav_state == NavState.DESCEND or _nav_state == NavState.RETREAT:
+		y_tolerance *= 1.75
+	if absf(target_y - landing_body_y) > y_tolerance:
+		return false
+	if _target != null and is_instance_valid(_target):
+		var target_floor_hit: Dictionary = _floor_hit_under(_target)
+		if not target_floor_hit.is_empty():
+			var target_floor_y: float = (target_floor_hit["position"] as Vector2).y
+			var floor_tolerance: float = y_tolerance * 1.25 if (_nav_state == NavState.DESCEND or _nav_state == NavState.RETREAT) else y_tolerance
+			if absf(landing_y - target_floor_y) > floor_tolerance:
+				return false
+	return true
+
+func _can_force_dropthrough_descend() -> bool:
+	if not enable_drop_through_platforms:
+		return false
+	if _drop_through_cd > 0.0:
+		return false
+	if not is_on_floor():
+		return false
+	if not _is_dropthrough_platform_surface():
+		return false
+	if _target == null or not is_instance_valid(_target):
+		return false
+
+	var my_floor_hit: Dictionary = _floor_hit_under(self)
+	var target_floor_hit: Dictionary = _floor_hit_under(_target)
+	if my_floor_hit.is_empty() or target_floor_hit.is_empty():
+		return false
+
+	var my_floor_y: float = (my_floor_hit["position"] as Vector2).y
+	var target_floor_y: float = (target_floor_hit["position"] as Vector2).y
+	if target_floor_y <= my_floor_y + (drop_through_vertical_min_distance * 0.5):
+		return false
+
+	# Safety: ensure the first valid landing under us is not a forbidden surface.
+	var my_floor_collider: Variant = my_floor_hit.get("collider", null)
+	var from: Vector2 = Vector2(global_position.x, my_floor_y + 8.0)
+	var to: Vector2 = from + Vector2(0.0, maxf(safe_drop_max_distance, 120.0))
+	var params := PhysicsRayQueryParameters2D.create(from, to)
+	params.exclude = [self]
+	if my_floor_collider is CollisionObject2D:
+		params.exclude.append(my_floor_collider)
+	params.collision_mask = world_collision_mask
+	var hit: Dictionary = get_world_2d().direct_space_state.intersect_ray(params)
+	if hit.is_empty():
+		return false
+	if _is_forbidden_drop_surface(hit.get("collider", null)):
+		return false
+	return true
+
+func _can_force_dropthrough_retreat() -> bool:
+	if not enable_drop_through_platforms:
+		return false
+	if _drop_through_cd > 0.0:
+		return false
+	if not is_on_floor():
+		return false
+	if not _is_dropthrough_platform_surface():
+		return false
+	if not _is_target_significantly_below(24.0):
+		return false
+	# Retreat should prefer descending through platforms when available.
+	# Require a safe landing below so we never drop into forbidden/death zones.
+	var floor_hit: Dictionary = _floor_hit_under(self)
+	if floor_hit.is_empty():
+		return false
+	var my_floor_collider: Variant = floor_hit.get("collider", null)
+	var my_floor_y: float = (floor_hit["position"] as Vector2).y
+	var from: Vector2 = Vector2(global_position.x, my_floor_y + 8.0)
+	var to: Vector2 = from + Vector2(0.0, maxf(safe_drop_max_distance, 120.0))
+	var params := PhysicsRayQueryParameters2D.create(from, to)
+	params.exclude = [self]
+	if my_floor_collider is CollisionObject2D:
+		params.exclude.append(my_floor_collider)
+	params.collision_mask = world_collision_mask
+	var hit: Dictionary = get_world_2d().direct_space_state.intersect_ray(params)
+	if hit.is_empty():
+		return false
+	if _is_forbidden_drop_surface(hit.get("collider", null)):
+		return false
+	return true
+
+func _update_drop_through_state(delta: float) -> void:
+	if _drop_through_timer <= 0.0:
+		return
+	_drop_through_timer = maxf(_drop_through_timer - delta, 0.0)
+	if _drop_through_timer <= 0.0:
+		collision_mask = _drop_restore_collision_mask
+
+func _start_drop_through() -> void:
+	if _drop_through_timer > 0.0:
+		return
+	var bit: int = clampi(drop_through_world_collision_layer_bit, 1, 32)
+	_drop_restore_collision_mask = collision_mask
+	collision_mask = collision_mask & ~(1 << (bit - 1))
+	_drop_through_timer = maxf(drop_through_duration, 0.05)
+	_drop_through_cd = maxf(drop_through_cooldown, 0.0)
+	velocity.y = maxf(velocity.y, drop_through_downward_boost)
+	_is_jumping = true
+	_debug_nav("action=DROP_THROUGH dir=%d nav=%s" % [_preferred_jump_dir, _nav_state_name(_nav_state)])
+
+func _can_jump_up_over_obstacle(dir: int) -> bool:
+	var gravity_abs: float = maxf(absf(gravity), 1.0)
+	var jump_v: float = upward_jump_strength if upward_jump_strength < -1.0 else jump_strength
+	var max_jump_height: float = (jump_v * jump_v) / (2.0 * gravity_abs) + maxf(jump_up_probe_height_bonus, 0.0)
+	var top_y: float = global_position.y - max_jump_height
+	var space := get_world_2d().direct_space_state
+	var sample_x: float = global_position.x + float(dir) * maxf(jump_check_distance, 110.0)
+	var from := Vector2(sample_x, top_y)
+	var to := Vector2(sample_x, global_position.y + ground_probe_origin_y)
+	var params := PhysicsRayQueryParameters2D.create(from, to)
+	params.exclude = [self]
+	params.collision_mask = world_collision_mask
+	var hit: Dictionary = space.intersect_ray(params)
+	return not hit.is_empty()
+
+func _is_safe_drop_toward_target(dir: int, target_y: float) -> bool:
+	var space := get_world_2d().direct_space_state
+	var from := global_position + Vector2(float(dir) * ground_probe_forward, ground_probe_origin_y)
+	var to := from + Vector2(0.0, maxf(safe_drop_max_distance, 80.0))
+	var params := PhysicsRayQueryParameters2D.create(from, to)
+	params.exclude = [self]
+	params.collision_mask = world_collision_mask
+	var hit: Dictionary = space.intersect_ray(params)
+	if hit.is_empty():
+		return false
+	var landing_collider: Variant = hit.get("collider", null)
+	if _is_forbidden_drop_surface(landing_collider):
+		return false
+	var hit_pos: Vector2 = hit.get("position", from)
+	var drop_distance: float = hit_pos.y - from.y
+	if drop_distance < 6.0:
+		return false
+	if drop_distance > safe_drop_max_distance:
+		return false
+	var landing_body_y: float = hit_pos.y - ground_probe_origin_y
+	var y_tolerance: float = safe_drop_target_y_tolerance
+	if not hold_when_no_vertical_path:
+		y_tolerance *= 2.5
+	if absf(target_y - landing_body_y) > y_tolerance:
+		return false
+	return true
+
+func _is_safe_escape_drop(dir: int) -> bool:
+	var space := get_world_2d().direct_space_state
+	var from := global_position + Vector2(float(dir) * ground_probe_forward, ground_probe_origin_y)
+	var to := from + Vector2(0.0, maxf(safe_drop_max_distance, 80.0))
+	var params := PhysicsRayQueryParameters2D.create(from, to)
+	params.exclude = [self]
+	params.collision_mask = world_collision_mask
+	var hit: Dictionary = space.intersect_ray(params)
+	if hit.is_empty():
+		return false
+	var landing_collider: Variant = hit.get("collider", null)
+	if _is_forbidden_drop_surface(landing_collider):
+		return false
+	var hit_pos: Vector2 = hit.get("position", from)
+	var drop_distance: float = hit_pos.y - from.y
+	if drop_distance < 8.0:
+		return false
+	if drop_distance > safe_drop_max_distance:
+		return false
+	return true
+
+func _is_target_significantly_below(min_delta: float = 48.0) -> bool:
+	if _target == null or not is_instance_valid(_target):
+		return false
+	var my_floor_hit: Dictionary = _floor_hit_under(self)
+	var target_floor_hit: Dictionary = _floor_hit_under(_target)
+	if my_floor_hit.is_empty() or target_floor_hit.is_empty():
+		return (_target.global_position.y - global_position.y) >= min_delta
+	var my_floor_y: float = (my_floor_hit["position"] as Vector2).y
+	var target_floor_y: float = (target_floor_hit["position"] as Vector2).y
+	return (target_floor_y - my_floor_y) >= min_delta
+
+func _can_jump_up_to_target(dir: int) -> bool:
+	if _target == null or not is_instance_valid(_target):
+		return false
+	if _has_wall_in_direction(dir, 72.0):
+		return false
+	var gravity_abs: float = maxf(absf(gravity), 1.0)
+	var jump_v: float = upward_jump_strength if upward_jump_strength < -1.0 else jump_strength
+	var max_jump_height: float = (jump_v * jump_v) / (2.0 * gravity_abs)
+	max_jump_height += maxf(jump_up_probe_height_bonus, 0.0)
+	var top_y: float = global_position.y - max_jump_height
+	var search_dist: float = maxf(jump_check_distance, 180.0)
+	var step_dist: float = 60.0
+	var space := get_world_2d().direct_space_state
+	while step_dist <= search_dist:
+		var sample_x: float = global_position.x + float(dir) * step_dist
+		var from := Vector2(sample_x, top_y)
+		var to := Vector2(sample_x, global_position.y + ground_probe_origin_y)
+		var params := PhysicsRayQueryParameters2D.create(from, to)
+		params.exclude = [self]
+		params.collision_mask = world_collision_mask
+		var hit: Dictionary = space.intersect_ray(params)
+		if not hit.is_empty():
+			var hit_pos: Vector2 = hit.get("position", from)
+			var jump_height_needed: float = global_position.y - hit_pos.y
+			if jump_height_needed > 30.0 and jump_height_needed <= max_jump_height:
+				return true
+		step_dist += 40.0
+	return false
+
 ## Check if there's a platform above that we can jump to reach
 ## Returns true if a jumpable platform exists above us
 func _try_jump_to_target() -> void:
-	# Strict ledge guard: Never jump off ledges (World3 horizontal mode)
-	if strict_ledge_guard:
-		return
-	
 	if _target == null or not is_instance_valid(_target):
 		return
 	if _jump_cd > 0.0:
 		return
 	if not is_on_floor():
 		return
-	
-	# Check vertical difference
+	if _vertical_fail_timer > 0.0 and (_nav_state == NavState.ASCEND or _nav_state == NavState.DESCEND):
+		return
+
 	var target_y: float = _target.global_position.y
-	var my_y: float = global_position.y
-	var vertical_diff: float = target_y - my_y
-	
-	# Only jump if meaningful vertical difference
-	if absf(vertical_diff) < 50.0:
-		# Reset ledge target when reaching same level
-		_target_ledge_direction = 0
+	var vertical_diff: float = target_y - global_position.y
+	var dx_to_target: float = absf(_target.global_position.x - global_position.x)
+	var preferred_dir: int = _preferred_jump_dir
+	if preferred_dir == 0:
+		preferred_dir = 1 if _target.global_position.x >= global_position.x else -1
+
+	# Retreat default: if on a drop-through platform and safe, descend immediately.
+	if _nav_state == NavState.RETREAT and _can_force_dropthrough_retreat():
+		_start_drop_through()
+		_retreat_descend_hold_timer = maxf(retreat_descend_hold_time, 0.2)
+		_vertical_fail_timer = 0.0
+		_vertical_fail_reason = ""
+		_debug_nav("nav=%s action=%s reason=%s dy=%.1f dx=%.1f dir=%d floor=%s target_floor=%s" % [
+			_nav_state_name(_nav_state),
+			_vertical_action_name(VerticalAction.DROP_THROUGH),
+			"force_retreat_dropthrough",
+			vertical_diff,
+			dx_to_target,
+			preferred_dir,
+			_debug_floor_name_under(self),
+			_debug_floor_name_under(_target)
+		])
 		return
-	
-	# Only attempt jumping to reach lower platforms (no upward jumping)
-	# If player is above, just use normal pathfinding (ramps, etc.)
-	
-	# Check if there's a ledge in the direction we're moving toward
-	if _target_ledge_direction == 0:
-		return
-	
-	var has_ground: bool = _has_ground_ahead(_target_ledge_direction)
-	
-	# CASE 1: Jump at a ledge when target is above or below (DOWN jump)
-	if not has_ground:
-		# Before jumping, check if there's a wall blocking the jump path
-		if _direction_flip_cooldown <= 0.0 and _has_wall_in_direction(_target_ledge_direction, 100.0):
-			# Wall detected - flip and commit to opposite direction
-			_target_ledge_direction = -_target_ledge_direction
-			_direction_flip_cooldown = 2.0  # Commit to new direction for 2 seconds
-			if debug_logs:
-				pass
+
+	# Priority: when descending from a drop-through platform, commit to drop-through
+	# instead of walking to an edge first.
+	if (_nav_state == NavState.DESCEND or vertical_diff > drop_through_vertical_min_distance) and _can_force_dropthrough_descend():
+			_start_drop_through()
+			_vertical_fail_timer = 0.0
+			_vertical_fail_reason = ""
+			_debug_nav("nav=%s action=%s reason=%s dy=%.1f dx=%.1f dir=%d floor=%s target_floor=%s" % [
+				_nav_state_name(_nav_state),
+				_vertical_action_name(VerticalAction.DROP_THROUGH),
+				"force_dropthrough",
+				vertical_diff,
+				dx_to_target,
+				preferred_dir,
+				_debug_floor_name_under(self),
+				_debug_floor_name_under(_target)
+			])
 			return
-		
-		# Clear to jump down
-		if debug_logs:
-			pass
-		velocity.y = jump_strength
-		_is_jumping = true
-		_jump_cd = jump_cooldown
-		_play_anim(anim_jump_start, false)
-		_anim_locked = true
-		return
+
+	var decision: Dictionary = _choose_vertical_action(vertical_diff, dx_to_target, preferred_dir, target_y)
+	var chosen_action: VerticalAction = int(decision.get("action", VerticalAction.NONE)) as VerticalAction
+	var reason_code: String = String(decision.get("reason", "none"))
+	_debug_nav("nav=%s action=%s reason=%s dy=%.1f dx=%.1f dir=%d floor=%s target_floor=%s" % [
+		_nav_state_name(_nav_state),
+		_vertical_action_name(chosen_action),
+		reason_code,
+		vertical_diff,
+		dx_to_target,
+		preferred_dir,
+		_debug_floor_name_under(self),
+		_debug_floor_name_under(_target)
+	])
+
+	match chosen_action:
+		VerticalAction.JUMP_UP:
+			velocity.y = upward_jump_strength if upward_jump_strength < -1.0 else jump_strength
+			velocity.x = float(preferred_dir) * move_speed * jump_up_horizontal_boost
+			_is_jumping = true
+			_jump_cd = jump_cooldown
+			_play_anim(anim_jump_start, false)
+			_vertical_fail_timer = 0.0
+			_vertical_fail_reason = ""
+			return
+		VerticalAction.DROP_THROUGH:
+			_start_drop_through()
+			if _nav_state == NavState.RETREAT:
+				_retreat_descend_hold_timer = maxf(retreat_descend_hold_time, 0.2)
+			_vertical_fail_timer = 0.0
+			_vertical_fail_reason = ""
+			return
+		VerticalAction.EDGE_DROP:
+			# If we're on a drop-through platform, prefer true drop-through over edge walk-off.
+			if enable_drop_through_platforms and _is_dropthrough_platform_surface() and _drop_through_cd <= 0.0:
+				_start_drop_through()
+				_vertical_fail_timer = 0.0
+				_vertical_fail_reason = ""
+				return
+			velocity.y = maxf(velocity.y, 220.0)
+			_is_jumping = true
+			_jump_cd = jump_cooldown
+			if _nav_state == NavState.RETREAT:
+				_retreat_descend_hold_timer = maxf(retreat_descend_hold_time, 0.2)
+			_play_anim(anim_jump_start, false)
+			_vertical_fail_timer = 0.0
+			_vertical_fail_reason = ""
+			return
+		_:
+			_vertical_fail_reason = reason_code
+			_vertical_fail_timer = maxf(vertical_retry_fail_window, 0.05)
+			return
+
+func _choose_vertical_action(vertical_diff: float, dx_to_target: float, preferred_dir: int, target_y: float) -> Dictionary:
+	var result: Dictionary = {
+		"action": VerticalAction.NONE,
+		"reason": "no_action"
+	}
+	if preferred_dir == 0:
+		result["reason"] = "no_dir"
+		return result
+	if _nav_state == NavState.RETREAT and _target != null and is_instance_valid(_target):
+		# Ensure retreat vertical decisions don't use stale chase-facing direction.
+		preferred_dir = _stable_retreat_dir(_target.global_position.x - global_position.x, 0.22, 96.0)
+		if not _is_target_significantly_below(24.0):
+			result["reason"] = "retreat_flat"
+			return result
+
+	var score_jump_up: float = -9999.0
+	var score_drop_through: float = -9999.0
+	var score_edge_drop: float = -9999.0
+	var reason_code: String = "no_action"
+	var ramp_available_up: bool = _has_ramp_toward_target(preferred_dir, target_y, 240.0)
+	var suppress_jump_for_ramp: bool = (
+		suppress_jump_when_ramp_available
+		and ramp_available_up
+		and vertical_diff < 0.0
+		and absf(vertical_diff) <= ramp_jump_suppress_max_height
+		and dx_to_target <= ramp_jump_suppress_max_dx
+	)
+
+	if _nav_state != NavState.RETREAT and allow_upward_jump_traversal and vertical_diff < -72.0:
+		if _retreat_descend_hold_timer > 0.0:
+			reason_code = "descend_hold"
+		elif suppress_jump_for_ramp:
+			reason_code = "ramp_walk"
+		elif dx_to_target > maxf(ramp_jump_commit_max_dx, jump_check_distance * 1.5):
+			# Too far to commit jump yet; keep walking toward the real ramp/ledge.
+			reason_code = "jump_approach"
+		elif _can_jump_up_to_target(preferred_dir):
+			score_jump_up = 120.0 - absf(vertical_diff) * 0.03
+		else:
+			reason_code = "jump_range"
+
+	var obstacle_wall: bool = _has_wall_in_direction(preferred_dir, 54.0)
+	if jump_over_obstacles and (not suppress_jump_for_ramp) and absf(vertical_diff) <= 24.0 and dx_to_target > 120.0 and obstacle_wall and _can_jump_up_over_obstacle(preferred_dir):
+		score_jump_up = maxf(score_jump_up, 90.0)
+	if jump_over_obstacles and vertical_diff < -20.0 and vertical_diff > -120.0 and dx_to_target <= 220.0:
+		if _has_wall_in_direction(preferred_dir, 42.0) and _can_jump_up_over_obstacle(preferred_dir):
+			score_jump_up = maxf(score_jump_up, 140.0)
+			reason_code = "step_up"
+
+	var can_drop_cd: bool = _drop_through_cd <= 0.0
+	var drop_min_dy: float = maxf(drop_through_vertical_min_distance, 56.0)
+	var target_below_for_drop: bool = _is_target_significantly_below(40.0)
+	if enable_drop_through_platforms and can_drop_cd and vertical_diff > drop_min_dy and target_below_for_drop and dx_to_target <= drop_through_horizontal_max_distance:
+		if not _is_dropthrough_platform_surface():
+			reason_code = "drop_surface"
+		elif not _can_drop_through_toward_target(target_y):
+			reason_code = "drop_target"
+		else:
+			score_drop_through = 125.0
+	elif enable_drop_through_platforms and not can_drop_cd:
+		reason_code = "drop_cd"
+
+	if vertical_diff > 50.0:
+		if _has_ground_ahead(preferred_dir):
+			if reason_code == "no_action":
+				reason_code = "edge_ground"
+		elif not _can_drop_from_current_surface():
+			reason_code = "edge_surface"
+		elif not _is_safe_drop_toward_target(preferred_dir, target_y):
+			reason_code = "edge_target"
+		else:
+			score_edge_drop = 100.0
+
+	# Retreat edge-escape: if retreat path is blocked at an edge, prefer descending safely
+	# instead of pacing/oscillating on that edge.
+	if _nav_state == NavState.RETREAT:
+		var retreat_target_below: bool = _is_target_significantly_below(24.0)
+		var can_force_platform_descend: bool = (
+			enable_drop_through_platforms
+			and can_drop_cd
+			and _is_dropthrough_platform_surface()
+			and retreat_target_below
+		)
+		# If retreating on a drop-through platform and descent is valid, prioritize this path
+		# even when edge probes report ground ahead.
+		if can_force_platform_descend:
+			score_drop_through = maxf(score_drop_through, 150.0)
+			reason_code = "retreat_dropthrough"
+		elif not _has_ground_ahead(preferred_dir) and retreat_target_below and _is_safe_escape_drop(preferred_dir):
+			score_edge_drop = maxf(score_edge_drop, 130.0)
+			reason_code = "retreat_edgedrop"
+
+	if score_jump_up >= score_drop_through and score_jump_up >= score_edge_drop and score_jump_up > 0.0:
+		result["action"] = VerticalAction.JUMP_UP
+		result["reason"] = "jump_up"
+		return result
+	if score_drop_through >= score_edge_drop and score_drop_through > 0.0:
+		result["action"] = VerticalAction.DROP_THROUGH
+		result["reason"] = "drop_through"
+		return result
+	if score_edge_drop > 0.0:
+		result["action"] = VerticalAction.EDGE_DROP
+		result["reason"] = "edge_drop"
+		return result
+
+	result["reason"] = reason_code
+	return result
 
 func _on_died() -> void:
 	_start_death()
+
+func _is_same_floor_for_aggro(player: Node2D) -> bool:
+	if player == null:
+		return false
+	var my_hit: Dictionary = _floor_hit_under(self)
+	var pl_hit: Dictionary = _floor_hit_under(player)
+	if my_hit.is_empty() or pl_hit.is_empty():
+		return false
+	var my_y: float = (my_hit["position"] as Vector2).y
+	var pl_y: float = (pl_hit["position"] as Vector2).y
+	return absf(my_y - pl_y) <= same_floor_aggro_y_tolerance
 
 func _spawn_attack_vfx(spawn_position: Vector2, direction: int) -> void:
 	"""Spawns blue slash VFX at attack position"""

@@ -52,6 +52,7 @@ script = ExtResource("1_golem")
 slam_radius = 500.0
 melee_damage_range = 200.0
 slam_ground_vfx_scene = ExtResource("14_slamvfx")
+debug_nav_decisions = true
 melee_forward_bias_px = 120.0
 melee_width_px = 180.0
 melee_spawn_forward_px = 80.0

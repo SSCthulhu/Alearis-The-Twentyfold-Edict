@@ -7,7 +7,7 @@
 [ext_resource type="PackedScene" uid="uid://c8kmq5v7h1ods" path="res://scenes/enemies/Enemy3DView.tscn" id="3_enemy3dview"]
 [ext_resource type="Script" uid="uid://ct6vabs6fcwub" path="res://scripts/enemies/EnemyHealth.gd" id="4_4p88x"]
 [ext_resource type="PackedScene" uid="uid://cvlobx6k68egu" path="res://scenes/vfx/EnemyHitVFX.tscn" id="6_3aife"]
-[ext_resource type="PackedScene" path="res://scenes/vfx/EnemyCritVFX.tscn" id="7_17tnr"]
+[ext_resource type="PackedScene" uid="uid://d186dmo00kqu5" path="res://scenes/vfx/EnemyCritVFX.tscn" id="7_17tnr"]
 [ext_resource type="Script" uid="uid://dnkb2ub8ghbd8" path="res://scripts/enemies/EnemyRunScaler.gd" id="7_p8x61"]
 [ext_resource type="Script" uid="uid://xq6026rltx5k" path="res://scripts/enemies/EnemyStatusEffects.gd" id="8_statusfx"]
 [ext_resource type="Script" uid="uid://bxkstno4wqyqf" path="res://scripts/ui/DamageNumberEmitter.gd" id="13_c4nu0"]
@@ -36,6 +36,7 @@ corner_radius_bottom_left = 10
 z_index = 5
 collision_layer = 4
 script = ExtResource("1_2boc0")
+debug_nav_decisions = true
 melee_spawn_forward_px = 50.0
 edge_aggro_lockout_time = 0.35
 aggro_range = 1200.0

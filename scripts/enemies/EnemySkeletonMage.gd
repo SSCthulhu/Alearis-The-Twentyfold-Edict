@@ -14,6 +14,7 @@ class_name EnemySkeletonMage
 @export var preferred_distance: float = 350.0  # Increased from 280
 @export var min_distance: float = 250.0  # Increased from 200
 @export var max_distance: float = 500.0  # Increased from 400
+@export var retreat_flip_deadzone: float = 64.0
 
 # Casting aura VFX
 @export var cast_aura_vfx_scene: PackedScene
@@ -47,6 +48,9 @@ func _ready() -> void:
 	# Initialize casting helper
 	add_child(_casting_helper)
 	_casting_helper.initialize_cast_bar(cast_bar)
+	hold_when_no_vertical_path = false
+	enable_drop_through_platforms = true
+	stop_when_in_attack_range = false
 	
 	super._ready()
 
@@ -68,6 +72,7 @@ func _physics_process(delta: float) -> void:
 			velocity.y += gravity * delta
 			velocity.y = minf(velocity.y, max_fall_speed)
 		velocity.x = 0.0
+		_intent_dir = 0
 		move_and_slide()
 		_update_facing()
 		_update_locomotion_anim()
@@ -94,13 +99,20 @@ func _can_ranged_attack() -> bool:
 	if _target == null:
 		return false
 	var dist: float = global_position.distance_to(_target.global_position)
-	return dist <= ranged_range
+	if dist > ranged_range:
+		return false
+	# Do not start a cast while still in close pressure range.
+	if dist < preferred_distance:
+		return false
+	return true
 
 func _start_ranged_cast() -> void:
 	# Use actual animation length or fallback to export value
 	var anim_len := _get_anim_length(anim_cast)
 	var duration: float = anim_len if anim_len > 0.0 else ranged_cast_time
 	
+	if _target != null and is_instance_valid(_target):
+		_face_toward_position(_target.global_position)
 	_casting_helper.start_cast(duration)
 	_spawn_cast_aura_vfx()
 	_play_anim(anim_cast, true)
@@ -115,6 +127,8 @@ func _finish_cast() -> void:
 	_shooting = true  # Lock in shooting animation
 	
 	# Execute the spell effect
+	if _target != null and is_instance_valid(_target):
+		_face_toward_position(_target.global_position)
 	_fire_projectile()
 	_ranged_cd = ranged_cooldown
 	
@@ -142,6 +156,9 @@ func _fire_projectile() -> void:
 	# Set projectile direction and damage
 	if projectile.has_method("initialize"):
 		var direction: Vector2 = (_target.global_position - spawn_pos).normalized()
+		if absf(direction.x) > 0.001:
+			_facing_dir = 1 if direction.x > 0.0 else -1
+			_apply_sprite_facing(_facing_dir)
 		projectile.call("initialize", direction, ranged_damage)
 
 # Override chase behavior for distance keeping
@@ -151,8 +168,24 @@ func _chase_desired_velocity() -> float:
 	if _casting_helper.is_casting:
 		return 0.0
 	
+	var ady: float = absf(_target.global_position.y - global_position.y)
+	if ady > (vertical_intent_y_threshold + 16.0):
+		# Vertical separation: prioritize traversal/pathing over distance-keeping.
+		return super._chase_desired_velocity()
+	
 	# Use base class distance keeping helper
-	return _distance_keeping_velocity(_target.global_position, min_distance, preferred_distance, max_distance)
+	var desired_vx: float = _distance_keeping_velocity(_target.global_position, min_distance, preferred_distance, max_distance)
+	var dx: float = _target.global_position.x - global_position.x
+	var dist: float = absf(dx)
+	var pressure_dist: float = maxf(min_distance, 320.0)
+	if dist <= pressure_dist:
+		var retreat_dir: float = float(_stable_retreat_dir(dx, 0.24, retreat_flip_deadzone))
+		return retreat_dir * move_speed
+	
+	# Avoid idle stalls behind cover: if we hold range but have no LOS, step to re-engage.
+	if absf(desired_vx) <= 0.01 and not _has_clear_line_to_target(_target.global_position, -40.0):
+		return signf(dx) * move_speed
+	return desired_vx
 
 # Override animation finished to unlock shooting state and anim lock
 func _on_anim_finished(anim_name: StringName) -> void:
