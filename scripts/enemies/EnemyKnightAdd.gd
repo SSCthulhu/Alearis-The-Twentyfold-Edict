@@ -153,6 +153,7 @@ const ATTACK_VFX_SCENE: PackedScene = preload("res://scenes/vfx/BlueSlashVFX.tsc
 @export var retreat_descend_hold_time: float = 0.90
 @export var retreat_edge_recover_delay: float = 0.35
 @export var retreat_edge_recover_lock_time: float = 0.70
+@export var retreat_allow_edge_escape_if_not_forbidden: bool = true
 
 @export var platform_probe_distance: float = 140.0
 @export var platform_probe_mask: int = 1
@@ -511,6 +512,11 @@ func _physics_process(delta: float) -> void:
 			var has_ground: bool = _has_ground_ahead(guard_dir)
 			if not has_ground and _has_walkable_slope_in_direction(guard_dir, 140.0):
 				has_ground = true
+			# Retreat simplification: allow moving off edges unless we detect a forbidden
+			# landing surface (lava/death/kill/void/hazard) below.
+			if not has_ground and _nav_state == NavState.RETREAT and retreat_allow_edge_escape_if_not_forbidden:
+				if not _is_forbidden_drop_ahead(guard_dir):
+					has_ground = true
 			
 			if not has_ground:
 				# If retreating and that side is blocked, prefer a valid reverse route over standstill.
@@ -1613,6 +1619,19 @@ func _is_safe_escape_drop(dir: int) -> bool:
 	if drop_distance > safe_drop_max_distance:
 		return false
 	return true
+
+func _is_forbidden_drop_ahead(dir: int) -> bool:
+	var space := get_world_2d().direct_space_state
+	var from := global_position + Vector2(float(dir) * ground_probe_forward, ground_probe_origin_y)
+	var to := from + Vector2(0.0, maxf(safe_drop_max_distance, 80.0))
+	var params := PhysicsRayQueryParameters2D.create(from, to)
+	params.exclude = [self]
+	params.collision_mask = world_collision_mask
+	var hit: Dictionary = space.intersect_ray(params)
+	if hit.is_empty():
+		# No floor detected in probe range -> treat as non-forbidden for retreat escape.
+		return false
+	return _is_forbidden_drop_surface(hit.get("collider", null))
 
 func _is_target_significantly_below(min_delta: float = 48.0) -> bool:
 	if _target == null or not is_instance_valid(_target):
