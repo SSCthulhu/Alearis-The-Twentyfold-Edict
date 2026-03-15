@@ -2,6 +2,8 @@ extends CharacterBody2D
 class_name EnemyKnightAdd
 const VfxRenderUtil = preload("res://scripts/vfx/VfxRenderUtil.gd")
 const EnemySurfaceRulesRef = preload("res://scripts/enemies/EnemySurfaceRules.gd")
+const EnemyNavDebugUtilRef = preload("res://scripts/enemies/EnemyNavDebugUtil.gd")
+const EnemyTraversalScoringRef = preload("res://scripts/enemies/EnemyTraversalScoring.gd")
 
 @export var move_speed: float = 140.0
 @export var accel: float = 1800.0
@@ -51,7 +53,6 @@ const EnemySurfaceRulesRef = preload("res://scripts/enemies/EnemySurfaceRules.gd
 @export var debug_chase: bool = false
 
 @export var debug_logs: bool = false
-@export var debug_floor3_falling: bool = false  # Special debug for Floor 3 falling issues
 @export var debug_nav_decisions: bool = false
 @export var debug_nav_print_interval: float = 0.15
 @export var debug_nav_arbiter: bool = false
@@ -425,19 +426,6 @@ func _physics_process(delta: float) -> void:
 	if _is_no_drop_platform_surface():
 		_no_drop_floor_grace_timer = maxf(_no_drop_floor_grace_timer, no_drop_floor_grace_time)
 
-	# DEBUG: Track Floor 3 enemies falling
-	if debug_floor3_falling:
-		# Floor 3 actual Y range is approximately -15500 to -14700
-		var on_floor3 = global_position.y >= -15600 and global_position.y <= -14600
-		if on_floor3:
-			# Log if falling fast or off floor
-			if not is_on_floor() and velocity.y > 200:
-				pass
-			
-			# Check if near edge walls (X should be between -1100 on left, 1400 on right)
-			if global_position.x < -1000 or global_position.x > 1300:
-				pass
-
 	if _death_started:
 		_apply_gravity(delta)
 		move_and_slide()
@@ -771,8 +759,6 @@ func _physics_process(delta: float) -> void:
 					forced_intent_dir = guard_dir
 					retreat_edge_blocked = true
 				
-				if debug_logs and strict_ledge_guard:
-					pass
 
 	if _nav_state == NavState.RETREAT:
 		if retreat_edge_blocked:
@@ -1362,17 +1348,17 @@ func _debug_nav(line: String) -> void:
 		return
 	var final_line: String = line
 	if debug_nav_positions and _target != null and is_instance_valid(_target):
-		final_line += " ex=%.1f ey=%.1f px=%.1f py=%.1f" % [
-			global_position.x,
-			global_position.y,
-			_target.global_position.x,
-			_target.global_position.y
-		]
+		final_line = EnemyNavDebugUtilRef.append_positions(
+			final_line,
+			true,
+			global_position,
+			_target.global_position
+		)
 	if _debug_nav_timer > 0.0 and final_line == _debug_nav_last_line:
 		return
 	_debug_nav_timer = maxf(debug_nav_print_interval, 0.01)
 	_debug_nav_last_line = final_line
-	print("[EnemyNav:%s] %s" % [name, final_line])
+	print(EnemyNavDebugUtilRef.format_nav_print(name, final_line))
 
 func _debug_floor_name_under(node: Node2D) -> String:
 	var hit: Dictionary = _floor_hit_under(node)
@@ -1617,11 +1603,6 @@ func _try_attack() -> void:
 	_show_melee_telegraph(dir, hit_delay)
 	_play_melee_windup_flash(hit_delay)
 
-	# ✅ TIMING DEBUG: Mark attack animation start
-	var _attack_start_time: float = Time.get_ticks_msec() / 1000.0
-	if debug_logs:
-		pass
-
 	get_tree().create_timer(hit_delay).timeout.connect(func() -> void:
 		_hide_melee_telegraph()
 		_stop_melee_windup_flash()
@@ -1654,10 +1635,6 @@ func _try_attack() -> void:
 		parent.add_child.call_deferred(hb)
 		hb.set_global_position.call_deferred(spawn_pos)
 
-		# ✅ TIMING DEBUG: Mark hitbox spawn
-		var _hitbox_spawn_time: float = Time.get_ticks_msec() / 1000.0
-		if debug_logs:
-			pass
 	)
 
 func _try_contact_damage() -> void:
@@ -1795,9 +1772,6 @@ func _has_ramp_toward_target(dir: int, target_y: float, check_distance: float = 
 	# Ramp is useful if it goes in the direction we need
 	var ramp_useful: bool = (need_to_go_down and slope_goes_down) or (need_to_go_up and slope_goes_up)
 	
-	if debug_logs and ramp_useful:
-		pass
-	
 	return ramp_useful
 
 ## Check if there's a wall blocking the path in the given direction
@@ -1815,18 +1789,11 @@ func _has_wall_in_direction(dir: int, check_distance: float = 100.0) -> bool:
 	
 	var hit := space.intersect_ray(params)
 	if hit.is_empty():
-		if debug_logs:
-			pass
 		return false
 	
 	# Check if the hit is a wall (vertical surface)
 	var normal: Vector2 = hit.get("normal", Vector2.ZERO)
 	var is_wall: bool = absf(normal.y) < 0.3  # Stricter check - more clearly vertical
-	var _hit_distance: float = from.distance_to(hit.get("position", from))
-	
-	if debug_logs:
-		pass
-	
 	return is_wall
 
 func _can_drop_from_current_surface() -> bool:
@@ -2621,21 +2588,15 @@ func _choose_vertical_action(vertical_diff: float, dx_to_target: float, preferre
 			score_edge_drop = maxf(score_edge_drop, 130.0)
 			reason_code = "retreat_edgedrop"
 
-	if score_jump_up >= score_drop_through and score_jump_up >= score_edge_drop and score_jump_up > 0.0:
-		result["action"] = VerticalAction.JUMP_UP
-		result["reason"] = "jump_up"
-		return result
-	if score_drop_through >= score_edge_drop and score_drop_through > 0.0:
-		result["action"] = VerticalAction.DROP_THROUGH
-		result["reason"] = "drop_through"
-		return result
-	if score_edge_drop > 0.0:
-		result["action"] = VerticalAction.EDGE_DROP
-		result["reason"] = "edge_drop"
-		return result
-
-	result["reason"] = reason_code
-	return result
+	return EnemyTraversalScoringRef.choose_action(
+		score_jump_up,
+		score_drop_through,
+		score_edge_drop,
+		VerticalAction.JUMP_UP,
+		VerticalAction.DROP_THROUGH,
+		VerticalAction.EDGE_DROP,
+		reason_code
+	)
 
 func _on_died() -> void:
 	_start_death()
