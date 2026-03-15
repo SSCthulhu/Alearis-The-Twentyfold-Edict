@@ -678,7 +678,8 @@ func _physics_process(delta: float) -> void:
 		if in_attack_range and stop_when_in_attack_range:
 			velocity.x = 0.0
 		# Hard melee rule: never move horizontally away from player.
-		if enforce_melee_toward_target and is_on_floor():
+		var has_floor_probe_support_now: bool = not _floor_hit_under(self).is_empty()
+		if enforce_melee_toward_target and is_on_floor() and has_floor_probe_support_now:
 			var toward_target_dir_h: int = 1 if dx >= 0.0 else -1
 			if absf(desired_vx) > 0.01 and signf(desired_vx) != float(toward_target_dir_h):
 				desired_vx = absf(desired_vx) * float(toward_target_dir_h)
@@ -731,7 +732,8 @@ func _physics_process(delta: float) -> void:
 	# - non-strict: allow vertical states to use explicit drop logic instead of hard guard
 	var ledge_guard_floor_ok: bool = is_on_floor() or _no_drop_floor_grace_timer > 0.0
 	if prevent_falling_off_ledges and absf(desired_vx) > 0.01 and ledge_guard_floor_ok and not _is_jumping:
-		var apply_guard: bool = strict_ledge_guard or (_nav_state != NavState.ASCEND and _nav_state != NavState.DESCEND)
+		var force_no_drop_guard: bool = _no_drop_floor_grace_timer > 0.0
+		var apply_guard: bool = force_no_drop_guard or strict_ledge_guard or (_nav_state != NavState.ASCEND and _nav_state != NavState.DESCEND)
 		if apply_guard:
 			var guard_dir: int = 1 if desired_vx > 0.0 else -1
 			var on_no_drop_platform: bool = _is_no_drop_platform_surface()
