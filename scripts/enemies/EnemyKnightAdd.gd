@@ -317,12 +317,7 @@ func _apply_scaling_once() -> void:
 	if run_scaler != null:
 		run_scaler.apply_once()
 
-
-func _ready() -> void:
-	# Set collision mask to check layers 1 (world) + 8 (enemy-only walls)
-	collision_mask = 9
-	_drop_restore_collision_mask = collision_mask
-	
+func _initialize_movement_baseline() -> void:
 	_base_contact_damage = contact_damage
 	_base_attack_damage = attack_damage
 	_base_max_hp = max_hp
@@ -331,54 +326,64 @@ func _ready() -> void:
 	friction *= maxf(movement_speed_multiplier, 0.1)
 	floor_max_angle = deg_to_rad(slope_floor_max_angle_deg)
 
+func _initialize_health_setup() -> void:
+	if health != null:
+		health.max_hp = _base_max_hp
+		health.hp = _base_max_hp
+	health_bar.max_value = health.max_hp
+	health_bar.value = health.hp
+
+func _connect_health_signals() -> void:
+	if health == null:
+		return
+	if not health.died.is_connected(_on_died):
+		health.died.connect(_on_died)
+	# Keep both damage signal paths for compatibility.
+	if health.has_signal("damaged_tagged"):
+		if not health.damaged_tagged.is_connected(_on_health_damaged_tagged):
+			health.damaged_tagged.connect(_on_health_damaged_tagged)
+	if health.has_signal("damaged"):
+		if not health.damaged.is_connected(_on_health_damaged_plain):
+			health.damaged.connect(_on_health_damaged_plain)
+	health_bar.max_value = health.max_hp
+	health_bar.value = health.hp
+
+func _initialize_view3d_setup() -> void:
+	if view_3d == null:
+		return
+	if not view_3d.stage_animation_finished.is_connected(_on_anim_finished):
+		view_3d.stage_animation_finished.connect(_on_anim_finished)
+	if view_3d.has_method("set_default_speed_multiplier"):
+		view_3d.call("set_default_speed_multiplier", locomotion_anim_speed_multiplier)
+	_play_anim(anim_idle, false)
+	view_3d.set_facing(_facing_dir)
+	_view_default_modulate = view_3d.modulate
+
+func _ready() -> void:
+	# Set collision mask to check layers 1 (world) + 8 (enemy-only walls)
+	collision_mask = 9
+	_drop_restore_collision_mask = collision_mask
+	_initialize_movement_baseline()
+
 	_active = not use_floor_activation
 	if _active:
 		_apply_scaling_once()
 
-	if health != null:
-		health.max_hp = _base_max_hp
-		health.hp = _base_max_hp
-
-	health_bar.max_value = health.max_hp
-	health_bar.value = health.hp
-
-	if health != null:
-		# Keep death hookup
-		if not health.died.is_connected(_on_died):
-			health.died.connect(_on_died)
-
-		# ✅ Update HP bar on damage (tagged + legacy)
-		if health.has_signal("damaged_tagged"):
-			if not health.damaged_tagged.is_connected(_on_health_damaged_tagged):
-				health.damaged_tagged.connect(_on_health_damaged_tagged)
-		if health.has_signal("damaged"):
-			if not health.damaged.is_connected(_on_health_damaged_plain):
-				health.damaged.connect(_on_health_damaged_plain)
-
-		# Ensure max stays correct (in case scaling/heals change it)
-		health_bar.max_value = health.max_hp
-		health_bar.value = health.hp
-
-	if view_3d != null:
-		if not view_3d.stage_animation_finished.is_connected(_on_anim_finished):
-			view_3d.stage_animation_finished.connect(_on_anim_finished)
-		if view_3d.has_method("set_default_speed_multiplier"):
-			view_3d.call("set_default_speed_multiplier", locomotion_anim_speed_multiplier)
-		_play_anim(anim_idle, false)
-		view_3d.set_facing(_facing_dir)
-		_view_default_modulate = view_3d.modulate
+	_initialize_health_setup()
+	_connect_health_signals()
+	_initialize_view3d_setup()
 
 	# ⚡ OPTIMIZATION: Cache player reference to avoid tree walks every frame
 	_player_cached = get_tree().get_first_node_in_group("player")
 	_setup_melee_telegraph()
 
 func _on_health_damaged_plain(_amount: int) -> void:
-	_refresh_health_bar()
-	# Play hit animation when damaged (don't lock to allow walking to resume)
-	if not _death_started and anim_hit != &"":
-		_play_anim(anim_hit, false)
+	_handle_damaged_feedback()
 
 func _on_health_damaged_tagged(_amount: int, _tag: StringName) -> void:
+	_handle_damaged_feedback()
+
+func _handle_damaged_feedback() -> void:
 	_refresh_health_bar()
 	# Play hit animation when damaged (don't lock to allow walking to resume)
 	if not _death_started and anim_hit != &"":
