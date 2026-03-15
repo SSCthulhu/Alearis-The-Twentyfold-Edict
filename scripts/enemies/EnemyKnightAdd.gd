@@ -5,6 +5,7 @@ const EnemySurfaceRulesRef = preload("res://scripts/enemies/EnemySurfaceRules.gd
 const EnemyNavDebugUtilRef = preload("res://scripts/enemies/EnemyNavDebugUtil.gd")
 const EnemyTraversalScoringRef = preload("res://scripts/enemies/EnemyTraversalScoring.gd")
 const EnemyNavLabelsRef = preload("res://scripts/enemies/EnemyNavLabels.gd")
+const EnemyDropProbeUtilRef = preload("res://scripts/enemies/EnemyDropProbeUtil.gd")
 
 @export var move_speed: float = 140.0
 @export var accel: float = 1800.0
@@ -1805,15 +1806,15 @@ func _can_drop_through_toward_target(target_y: float) -> bool:
 		return false
 	var my_floor_y: float = (floor_hit["position"] as Vector2).y if not floor_hit.is_empty() else (global_position.y + ground_probe_origin_y)
 	var my_floor_collider: Variant = floor_hit.get("collider", null) if not floor_hit.is_empty() else null
-	var space := get_world_2d().direct_space_state
 	var from: Vector2 = global_position + Vector2(0.0, 10.0)
-	var to: Vector2 = from + Vector2(0.0, maxf(safe_drop_max_distance, 120.0))
-	var params := PhysicsRayQueryParameters2D.create(from, to)
-	params.exclude = [self]
-	if my_floor_collider is CollisionObject2D:
-		params.exclude.append(my_floor_collider)
-	params.collision_mask = world_collision_mask
-	var hit: Dictionary = space.intersect_ray(params)
+	var hit: Dictionary = EnemyDropProbeUtilRef.raycast_landing_below(
+		get_world_2d().direct_space_state,
+		self,
+		world_collision_mask,
+		from,
+		maxf(safe_drop_max_distance, 120.0),
+		my_floor_collider
+	)
 	if hit.is_empty():
 		return false
 	var landing_collider: Variant = hit.get("collider", null)
@@ -1880,13 +1881,14 @@ func _can_force_dropthrough_descend() -> bool:
 	# Safety: ensure the first valid landing under us is not a forbidden surface.
 	var my_floor_collider: Variant = my_floor_hit.get("collider", null)
 	var from: Vector2 = Vector2(global_position.x, my_floor_y + 8.0)
-	var to: Vector2 = from + Vector2(0.0, maxf(safe_drop_max_distance, 120.0))
-	var params := PhysicsRayQueryParameters2D.create(from, to)
-	params.exclude = [self]
-	if my_floor_collider is CollisionObject2D:
-		params.exclude.append(my_floor_collider)
-	params.collision_mask = world_collision_mask
-	var hit: Dictionary = get_world_2d().direct_space_state.intersect_ray(params)
+	var hit: Dictionary = EnemyDropProbeUtilRef.raycast_landing_below(
+		get_world_2d().direct_space_state,
+		self,
+		world_collision_mask,
+		from,
+		maxf(safe_drop_max_distance, 120.0),
+		my_floor_collider
+	)
 	if hit.is_empty():
 		return false
 	if _is_forbidden_drop_surface(hit.get("collider", null)):
@@ -1914,13 +1916,14 @@ func _can_force_dropthrough_retreat() -> bool:
 	var my_floor_collider: Variant = floor_hit.get("collider", null)
 	var my_floor_y: float = (floor_hit["position"] as Vector2).y
 	var from: Vector2 = Vector2(global_position.x, my_floor_y + 8.0)
-	var to: Vector2 = from + Vector2(0.0, maxf(safe_drop_max_distance, 120.0))
-	var params := PhysicsRayQueryParameters2D.create(from, to)
-	params.exclude = [self]
-	if my_floor_collider is CollisionObject2D:
-		params.exclude.append(my_floor_collider)
-	params.collision_mask = world_collision_mask
-	var hit: Dictionary = get_world_2d().direct_space_state.intersect_ray(params)
+	var hit: Dictionary = EnemyDropProbeUtilRef.raycast_landing_below(
+		get_world_2d().direct_space_state,
+		self,
+		world_collision_mask,
+		from,
+		maxf(safe_drop_max_distance, 120.0),
+		my_floor_collider
+	)
 	if hit.is_empty():
 		return false
 	if _is_forbidden_drop_surface(hit.get("collider", null)):
@@ -1952,13 +1955,14 @@ func _can_force_dropthrough_retreat_same_level() -> bool:
 	var my_floor_collider: Variant = floor_hit.get("collider", null)
 	var my_floor_y: float = (floor_hit["position"] as Vector2).y
 	var from: Vector2 = Vector2(global_position.x, my_floor_y + 8.0)
-	var to: Vector2 = from + Vector2(0.0, maxf(safe_drop_max_distance, 120.0))
-	var params := PhysicsRayQueryParameters2D.create(from, to)
-	params.exclude = [self]
-	if my_floor_collider is CollisionObject2D:
-		params.exclude.append(my_floor_collider)
-	params.collision_mask = world_collision_mask
-	var hit: Dictionary = get_world_2d().direct_space_state.intersect_ray(params)
+	var hit: Dictionary = EnemyDropProbeUtilRef.raycast_landing_below(
+		get_world_2d().direct_space_state,
+		self,
+		world_collision_mask,
+		from,
+		maxf(safe_drop_max_distance, 120.0),
+		my_floor_collider
+	)
 	if hit.is_empty():
 		return false
 	if _is_forbidden_drop_surface(hit.get("collider", null)):
@@ -2143,13 +2147,14 @@ func _can_step_up_local_ledge_retreat(dir: int) -> bool:
 	return true
 
 func _is_safe_drop_toward_target(dir: int, target_y: float) -> bool:
-	var space := get_world_2d().direct_space_state
 	var from := global_position + Vector2(float(dir) * ground_probe_forward, ground_probe_origin_y)
-	var to := from + Vector2(0.0, maxf(safe_drop_max_distance, 80.0))
-	var params := PhysicsRayQueryParameters2D.create(from, to)
-	params.exclude = [self]
-	params.collision_mask = world_collision_mask
-	var hit: Dictionary = space.intersect_ray(params)
+	var hit: Dictionary = EnemyDropProbeUtilRef.raycast_landing_below(
+		get_world_2d().direct_space_state,
+		self,
+		world_collision_mask,
+		from,
+		maxf(safe_drop_max_distance, 80.0)
+	)
 	if hit.is_empty():
 		return false
 	var landing_collider: Variant = hit.get("collider", null)
@@ -2157,11 +2162,7 @@ func _is_safe_drop_toward_target(dir: int, target_y: float) -> bool:
 		return false
 	var hit_pos: Vector2 = hit.get("position", from)
 	var drop_distance: float = hit_pos.y - from.y
-	if drop_distance < 6.0:
-		return false
-	if drop_distance > safe_drop_max_distance:
-		return false
-	if drop_distance > maxf(drop_through_max_safe_landing_delta, 24.0):
+	if not EnemyDropProbeUtilRef.is_drop_distance_safe(drop_distance, 6.0, safe_drop_max_distance, drop_through_max_safe_landing_delta):
 		return false
 	var landing_body_y: float = hit_pos.y - ground_probe_origin_y
 	var y_tolerance: float = safe_drop_target_y_tolerance
@@ -2172,13 +2173,14 @@ func _is_safe_drop_toward_target(dir: int, target_y: float) -> bool:
 	return true
 
 func _is_safe_escape_drop(dir: int) -> bool:
-	var space := get_world_2d().direct_space_state
 	var from := global_position + Vector2(float(dir) * ground_probe_forward, ground_probe_origin_y)
-	var to := from + Vector2(0.0, maxf(safe_drop_max_distance, 80.0))
-	var params := PhysicsRayQueryParameters2D.create(from, to)
-	params.exclude = [self]
-	params.collision_mask = world_collision_mask
-	var hit: Dictionary = space.intersect_ray(params)
+	var hit: Dictionary = EnemyDropProbeUtilRef.raycast_landing_below(
+		get_world_2d().direct_space_state,
+		self,
+		world_collision_mask,
+		from,
+		maxf(safe_drop_max_distance, 80.0)
+	)
 	if hit.is_empty():
 		return false
 	var landing_collider: Variant = hit.get("collider", null)
@@ -2186,22 +2188,19 @@ func _is_safe_escape_drop(dir: int) -> bool:
 		return false
 	var hit_pos: Vector2 = hit.get("position", from)
 	var drop_distance: float = hit_pos.y - from.y
-	if drop_distance < 8.0:
-		return false
-	if drop_distance > safe_drop_max_distance:
-		return false
-	if drop_distance > maxf(drop_through_max_safe_landing_delta, 24.0):
+	if not EnemyDropProbeUtilRef.is_drop_distance_safe(drop_distance, 8.0, safe_drop_max_distance, drop_through_max_safe_landing_delta):
 		return false
 	return true
 
 func _is_forbidden_drop_ahead(dir: int) -> bool:
-	var space := get_world_2d().direct_space_state
 	var from := global_position + Vector2(float(dir) * ground_probe_forward, ground_probe_origin_y)
-	var to := from + Vector2(0.0, maxf(safe_drop_max_distance, 80.0))
-	var params := PhysicsRayQueryParameters2D.create(from, to)
-	params.exclude = [self]
-	params.collision_mask = world_collision_mask
-	var hit: Dictionary = space.intersect_ray(params)
+	var hit: Dictionary = EnemyDropProbeUtilRef.raycast_landing_below(
+		get_world_2d().direct_space_state,
+		self,
+		world_collision_mask,
+		from,
+		maxf(safe_drop_max_distance, 80.0)
+	)
 	if hit.is_empty():
 		# No floor detected in probe range -> treat as non-forbidden for retreat escape.
 		return false
