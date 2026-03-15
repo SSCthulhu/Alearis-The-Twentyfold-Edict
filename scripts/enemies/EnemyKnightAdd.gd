@@ -4,6 +4,7 @@ const VfxRenderUtil = preload("res://scripts/vfx/VfxRenderUtil.gd")
 const EnemySurfaceRulesRef = preload("res://scripts/enemies/EnemySurfaceRules.gd")
 const EnemyNavDebugUtilRef = preload("res://scripts/enemies/EnemyNavDebugUtil.gd")
 const EnemyTraversalScoringRef = preload("res://scripts/enemies/EnemyTraversalScoring.gd")
+const EnemyNavLabelsRef = preload("res://scripts/enemies/EnemyNavLabels.gd")
 
 @export var move_speed: float = 140.0
 @export var accel: float = 1800.0
@@ -904,7 +905,7 @@ func _physics_process(delta: float) -> void:
 			movement_owner,
 			desired_vx,
 			_intent_dir,
-			_nav_state_name(_nav_state),
+			EnemyNavLabelsRef.nav_state_name(_nav_state),
 			_target.global_position.y - global_position.y,
 			absf(_target.global_position.x - global_position.x),
 			_debug_floor_name_under(self),
@@ -1316,32 +1317,6 @@ func _has_confirmed_target_floor_below(min_delta: float) -> bool:
 	var my_floor_y: float = (my_floor_hit["position"] as Vector2).y
 	var target_floor_y: float = (target_floor_hit["position"] as Vector2).y
 	return (target_floor_y - my_floor_y) >= min_delta
-
-func _nav_state_name(state: NavState) -> String:
-	match state:
-		NavState.HOLD:
-			return "HOLD"
-		NavState.CHASE:
-			return "CHASE"
-		NavState.RETREAT:
-			return "RETREAT"
-		NavState.ASCEND:
-			return "ASCEND"
-		NavState.DESCEND:
-			return "DESCEND"
-	return "UNKNOWN"
-
-func _vertical_action_name(action: VerticalAction) -> String:
-	match action:
-		VerticalAction.NONE:
-			return "NONE"
-		VerticalAction.JUMP_UP:
-			return "JUMP_UP"
-		VerticalAction.DROP_THROUGH:
-			return "DROP_THROUGH"
-		VerticalAction.EDGE_DROP:
-			return "EDGE_DROP"
-	return "UNKNOWN"
 
 func _debug_nav(line: String) -> void:
 	if not debug_nav_decisions:
@@ -2044,7 +2019,7 @@ func _start_drop_through() -> void:
 	_drop_through_cd = maxf(drop_through_cooldown, 0.0)
 	velocity.y = maxf(velocity.y, drop_through_downward_boost)
 	_is_jumping = true
-	_debug_nav("action=DROP_THROUGH dir=%d nav=%s" % [_preferred_jump_dir, _nav_state_name(_nav_state)])
+	_debug_nav("action=DROP_THROUGH dir=%d nav=%s" % [_preferred_jump_dir, EnemyNavLabelsRef.nav_state_name(_nav_state)])
 
 func _can_jump_up_over_obstacle(dir: int) -> bool:
 	var gravity_abs: float = maxf(absf(gravity), 1.0)
@@ -2372,8 +2347,8 @@ func _try_jump_to_target() -> void:
 		_vertical_fail_timer = 0.0
 		_vertical_fail_reason = ""
 		_debug_nav("nav=%s action=%s reason=%s dy=%.1f dx=%.1f dir=%d floor=%s target_floor=%s" % [
-			_nav_state_name(_nav_state),
-			_vertical_action_name(VerticalAction.DROP_THROUGH),
+			EnemyNavLabelsRef.nav_state_name(_nav_state),
+			EnemyNavLabelsRef.vertical_action_name(VerticalAction.DROP_THROUGH),
 			"force_retreat_dropthrough",
 			vertical_diff,
 			dx_to_target,
@@ -2391,8 +2366,8 @@ func _try_jump_to_target() -> void:
 			_vertical_fail_timer = 0.0
 			_vertical_fail_reason = ""
 			_debug_nav("nav=%s action=%s reason=%s dy=%.1f dx=%.1f dir=%d floor=%s target_floor=%s" % [
-				_nav_state_name(_nav_state),
-				_vertical_action_name(VerticalAction.DROP_THROUGH),
+				EnemyNavLabelsRef.nav_state_name(_nav_state),
+				EnemyNavLabelsRef.vertical_action_name(VerticalAction.DROP_THROUGH),
 				"force_dropthrough",
 				vertical_diff,
 				dx_to_target,
@@ -2406,8 +2381,8 @@ func _try_jump_to_target() -> void:
 	var chosen_action: VerticalAction = int(decision.get("action", VerticalAction.NONE)) as VerticalAction
 	var reason_code: String = String(decision.get("reason", "none"))
 	_debug_nav("nav=%s action=%s reason=%s dy=%.1f dx=%.1f dir=%d floor=%s target_floor=%s" % [
-		_nav_state_name(_nav_state),
-		_vertical_action_name(chosen_action),
+		EnemyNavLabelsRef.nav_state_name(_nav_state),
+		EnemyNavLabelsRef.vertical_action_name(chosen_action),
 		reason_code,
 		vertical_diff,
 		dx_to_target,
