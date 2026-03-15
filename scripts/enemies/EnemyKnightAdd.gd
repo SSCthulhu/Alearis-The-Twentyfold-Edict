@@ -6,6 +6,7 @@ const EnemyNavDebugUtilRef = preload("res://scripts/enemies/EnemyNavDebugUtil.gd
 const EnemyTraversalScoringRef = preload("res://scripts/enemies/EnemyTraversalScoring.gd")
 const EnemyNavLabelsRef = preload("res://scripts/enemies/EnemyNavLabels.gd")
 const EnemyDropProbeUtilRef = preload("res://scripts/enemies/EnemyDropProbeUtil.gd")
+const EnemyFloorQueryUtilRef = preload("res://scripts/enemies/EnemyFloorQueryUtil.gd")
 
 @export var move_speed: float = 140.0
 @export var accel: float = 1800.0
@@ -1311,11 +1312,7 @@ func _has_confirmed_target_floor_below(min_delta: float) -> bool:
 		return false
 	var my_floor_hit: Dictionary = _floor_hit_under(self)
 	var target_floor_hit: Dictionary = _floor_hit_under(_target)
-	if my_floor_hit.is_empty() or target_floor_hit.is_empty():
-		return false
-	var my_floor_y: float = (my_floor_hit["position"] as Vector2).y
-	var target_floor_y: float = (target_floor_hit["position"] as Vector2).y
-	return (target_floor_y - my_floor_y) >= min_delta
+	return EnemyFloorQueryUtilRef.has_min_delta_below(my_floor_hit, target_floor_hit, min_delta)
 
 func _debug_nav(line: String) -> void:
 	if not debug_nav_decisions:
@@ -2222,23 +2219,19 @@ func _has_confirmed_target_floor_above(min_delta: float) -> bool:
 		return false
 	var my_floor_hit: Dictionary = _floor_hit_under(self)
 	var target_floor_hit: Dictionary = _floor_hit_under(_target)
-	if my_floor_hit.is_empty() or target_floor_hit.is_empty():
-		return false
-	var my_floor_y: float = (my_floor_hit["position"] as Vector2).y
-	var target_floor_y: float = (target_floor_hit["position"] as Vector2).y
-	return (my_floor_y - target_floor_y) >= min_delta
+	return EnemyFloorQueryUtilRef.has_min_delta_above(my_floor_hit, target_floor_hit, min_delta)
 
 func _is_small_floor_step_to_target(max_height: float) -> bool:
 	if _target == null or not is_instance_valid(_target):
 		return false
 	var my_floor_hit: Dictionary = _floor_hit_under(self)
 	var target_floor_hit: Dictionary = _floor_hit_under(_target)
-	if my_floor_hit.is_empty() or target_floor_hit.is_empty():
-		return false
-	var my_floor_y: float = (my_floor_hit["position"] as Vector2).y
-	var target_floor_y: float = (target_floor_hit["position"] as Vector2).y
-	var floor_delta: float = absf(target_floor_y - my_floor_y)
-	return floor_delta >= maxf(small_ledge_step_up_min_height, 6.0) and floor_delta <= maxf(max_height, small_ledge_step_up_min_height)
+	return EnemyFloorQueryUtilRef.is_small_step_between_hits(
+		my_floor_hit,
+		target_floor_hit,
+		small_ledge_step_up_min_height,
+		maxf(max_height, small_ledge_step_up_min_height)
+	)
 
 func _is_moving_away_from_target(desired_vx: float) -> bool:
 	if _target == null or not is_instance_valid(_target):
