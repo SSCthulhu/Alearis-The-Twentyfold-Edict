@@ -1,4 +1,4 @@
-extends "res://scripts/enemies/EnemyKnightAdd.gd"
+extends "res://scripts/enemies/EnemyRangedBase.gd"
 class_name EnemyRogueSkeleton
 
 # Rogue Skeleton - crossbow wielding ranged enemy with distance keeping
@@ -17,7 +17,6 @@ class_name EnemyRogueSkeleton
 @export var min_distance: float = 400.0  # Doubled from 200
 @export var max_distance: float = 800.0  # Doubled from 400
 @export var retreat_flip_deadzone: float = 64.0
-@export var retreat_cast_buffer: float = 24.0
 
 # State tracking
 var _aiming: bool = false
@@ -26,7 +25,6 @@ var _reloading: bool = false
 var _attack_timer: float = 0.0
 var _attack_state_duration: float = 0.0
 var _ranged_cd: float = 0.0
-var _retreat_mode: bool = false
 
 # Animation names
 var anim_aim: StringName = &"Player/Ranged_2H_Aiming"
@@ -113,12 +111,7 @@ func _can_ranged_attack() -> bool:
 	if _target == null:
 		return false
 	var dist: float = global_position.distance_to(_target.global_position)
-	if dist > ranged_range:
-		return false
-	if _retreat_mode:
-		return false
-	# Do not start a new aim cycle while still in close pressure range.
-	if dist < (preferred_distance + maxf(retreat_cast_buffer, 0.0)):
+	if not _ranged_attack_window_open(dist, ranged_range, preferred_distance):
 		return false
 	
 	if require_line_of_sight:
@@ -225,27 +218,7 @@ func _chase_desired_velocity() -> float:
 		return 0.0
 	if _aiming or _shooting:
 		return 0.0
-	
-	# Use base class distance keeping helper
-	var desired_vx: float = _distance_keeping_velocity(_target.global_position, min_distance, preferred_distance, max_distance)
-	var dx: float = _target.global_position.x - global_position.x
-	var dist: float = absf(dx)
-	# Keep retreat pressure active slightly outside preferred distance so ranged AI
-	# does not HOLD/RETREAT churn while preparing shots.
-	var pressure_dist: float = maxf(min_distance, preferred_distance + 32.0)
-	var retreat_exit_dist: float = pressure_dist + maxf(retreat_flip_deadzone, 24.0)
-	if _retreat_mode:
-		if dist >= retreat_exit_dist:
-			_retreat_mode = false
-	else:
-		if dist <= pressure_dist:
-			_retreat_mode = true
-	if _retreat_mode:
-		var retreat_dir: float = float(_stable_retreat_dir(dx, 0.24, retreat_flip_deadzone))
-		return retreat_dir * move_speed
-	# Do not step toward the player just to recover LOS; ranged should stop/attack,
-	# then continue retreating away.
-	return desired_vx
+	return _ranged_chase_desired_velocity(min_distance, preferred_distance, max_distance, retreat_flip_deadzone)
 
 # Override animation finished to unlock anim lock
 func _on_anim_finished(anim_name: StringName) -> void:

@@ -1,6 +1,7 @@
 extends CharacterBody2D
 class_name EnemyKnightAdd
 const VfxRenderUtil = preload("res://scripts/vfx/VfxRenderUtil.gd")
+const EnemySurfaceRulesRef = preload("res://scripts/enemies/EnemySurfaceRules.gd")
 
 @export var move_speed: float = 140.0
 @export var accel: float = 1800.0
@@ -250,13 +251,6 @@ enum VerticalAction {
 	JUMP_UP,
 	DROP_THROUGH,
 	EDGE_DROP
-}
-
-enum SurfaceKind {
-	UNKNOWN,
-	WALKABLE_FLOOR,
-	DROPTHROUGH_PLATFORM,
-	FORBIDDEN
 }
 
 # Vertical pathfinding
@@ -1479,20 +1473,11 @@ func _has_walkable_slope_in_direction(
 			return false
 	return true
 
-func _matches_surface_name_tokens(name_value: String, tokens: PackedStringArray) -> bool:
-	var name_lower: String = name_value.to_lower()
-	for token: String in tokens:
-		if token.is_empty():
-			continue
-		if name_lower.contains(token.to_lower()):
-			return true
-	return false
-
 func _is_no_drop_surface(collider_obj: Variant) -> bool:
 	if not (collider_obj is Node):
 		return false
 	var node_name: String = String((collider_obj as Node).name)
-	return _matches_surface_name_tokens(node_name, no_drop_surface_name_tokens)
+	return EnemySurfaceRulesRef.matches_surface_name_tokens(node_name, no_drop_surface_name_tokens)
 
 func _is_no_drop_platform_surface() -> bool:
 	if not is_on_floor():
@@ -1502,21 +1487,16 @@ func _is_no_drop_platform_surface() -> bool:
 	return _is_no_drop_surface(collider_obj)
 
 func _is_forbidden_drop_surface(collider_obj: Variant) -> bool:
-	return _surface_kind_for_collider(collider_obj) == SurfaceKind.FORBIDDEN
+	return _surface_kind_for_collider(collider_obj) == EnemySurfaceRulesRef.SurfaceKind.FORBIDDEN
 
-func _surface_kind_for_collider(collider_obj: Variant) -> SurfaceKind:
-	if not (collider_obj is Node):
-		return SurfaceKind.UNKNOWN
-	var node_name: String = String((collider_obj as Node).name)
-	if _matches_surface_name_tokens(node_name, forbidden_drop_surface_name_tokens):
-		return SurfaceKind.FORBIDDEN
-	if _matches_surface_name_tokens(node_name, no_drop_surface_name_tokens):
-		return SurfaceKind.WALKABLE_FLOOR
-	if _matches_surface_name_tokens(node_name, never_dropthrough_surface_name_tokens):
-		return SurfaceKind.WALKABLE_FLOOR
-	if _matches_surface_name_tokens(node_name, drop_surface_name_tokens):
-		return SurfaceKind.DROPTHROUGH_PLATFORM
-	return SurfaceKind.WALKABLE_FLOOR
+func _surface_kind_for_collider(collider_obj: Variant) -> EnemySurfaceRules.SurfaceKind:
+	return EnemySurfaceRulesRef.surface_kind_for_collider(
+		collider_obj,
+		forbidden_drop_surface_name_tokens,
+		no_drop_surface_name_tokens,
+		never_dropthrough_surface_name_tokens,
+		drop_surface_name_tokens
+	)
 
 func _chase_desired_velocity() -> float:
 	if _target == null:
@@ -1859,7 +1839,7 @@ func _can_drop_from_current_surface() -> bool:
 		return false
 	if not (collider_obj is Node):
 		return allow_drop_from_unknown_surface
-	if _surface_kind_for_collider(collider_obj) == SurfaceKind.DROPTHROUGH_PLATFORM:
+	if _surface_kind_for_collider(collider_obj) == EnemySurfaceRulesRef.SurfaceKind.DROPTHROUGH_PLATFORM:
 		return true
 	return allow_drop_from_unknown_surface
 
@@ -1870,7 +1850,7 @@ func _is_dropthrough_platform_surface() -> bool:
 	var collider_obj: Variant = floor_hit.get("collider", null) if not floor_hit.is_empty() else _get_floor_collider_from_slide()
 	if collider_obj == null:
 		return false
-	return _surface_kind_for_collider(collider_obj) == SurfaceKind.DROPTHROUGH_PLATFORM
+	return _surface_kind_for_collider(collider_obj) == EnemySurfaceRulesRef.SurfaceKind.DROPTHROUGH_PLATFORM
 
 func _get_floor_collider_from_slide() -> Variant:
 	if not is_on_floor():
@@ -2085,7 +2065,7 @@ func _start_drop_through() -> void:
 		return
 	var floor_hit: Dictionary = _floor_hit_under(self)
 	var current_floor_collider: Variant = floor_hit.get("collider", null) if not floor_hit.is_empty() else _get_floor_collider_from_slide()
-	if _surface_kind_for_collider(current_floor_collider) != SurfaceKind.DROPTHROUGH_PLATFORM:
+	if _surface_kind_for_collider(current_floor_collider) != EnemySurfaceRulesRef.SurfaceKind.DROPTHROUGH_PLATFORM:
 		# Hard safety: never disable world collision on solid floors (ice/floor/cloud/etc).
 		return
 	var bit: int = clampi(drop_through_world_collision_layer_bit, 1, 32)
