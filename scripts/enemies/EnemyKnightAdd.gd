@@ -359,8 +359,6 @@ func _ready() -> void:
 		health_bar.max_value = health.max_hp
 		health_bar.value = health.hp
 
-	_active = not use_floor_activation
-
 	if view_3d != null:
 		if not view_3d.stage_animation_finished.is_connected(_on_anim_finished):
 			view_3d.stage_animation_finished.connect(_on_anim_finished)
@@ -370,11 +368,6 @@ func _ready() -> void:
 		view_3d.set_facing(_facing_dir)
 		_view_default_modulate = view_3d.modulate
 
-	# ✅ Signals (death only here; DamageNumberEmitter handles damaged signals)
-	if health != null:
-		if not health.died.is_connected(_on_died):
-			health.died.connect(_on_died)
-	
 	# ⚡ OPTIMIZATION: Cache player reference to avoid tree walks every frame
 	_player_cached = get_tree().get_first_node_in_group("player")
 	_setup_melee_telegraph()
@@ -1534,16 +1527,6 @@ func _face_toward_position(target_pos: Vector2) -> void:
 	elif dx < -16.0:
 		_facing_dir = -1
 	_apply_sprite_facing(_facing_dir)
-
-func _has_clear_line_to_target(target_pos: Vector2, y_offset: float = -40.0) -> bool:
-	var space := get_world_2d().direct_space_state
-	var from := global_position + Vector2(0.0, y_offset)
-	var to := target_pos + Vector2(0.0, y_offset)
-	var params := PhysicsRayQueryParameters2D.create(from, to)
-	params.exclude = [self]
-	params.collision_mask = world_collision_mask
-	var hit: Dictionary = space.intersect_ray(params)
-	return hit.is_empty()
 
 func _try_attack() -> void:
 	if _attack_cd > 0.0:
