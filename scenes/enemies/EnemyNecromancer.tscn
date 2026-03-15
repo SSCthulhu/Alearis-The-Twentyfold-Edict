@@ -40,6 +40,7 @@ collision_layer = 4
 script = ExtResource("1_necro")
 minion_scene = ExtResource("3_minion")
 projectile_scene = ExtResource("3_projectile")
+allow_retreat_step_up_jump = true
 melee_spawn_forward_px = 50.0
 edge_aggro_lockout_time = 0.35
 aggro_range = 1200.0

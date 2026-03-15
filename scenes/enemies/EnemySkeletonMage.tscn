@@ -41,6 +41,7 @@ script = ExtResource("1_mage")
 projectile_scene = ExtResource("3_projectile")
 cast_aura_vfx_scene = ExtResource("14_castaura")
 cast_aura_y_offset = -45.0
+allow_retreat_step_up_jump = true
 debug_nav_decisions = true
 melee_spawn_forward_px = 50.0
 edge_aggro_lockout_time = 0.35

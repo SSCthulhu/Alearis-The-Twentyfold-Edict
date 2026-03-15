@@ -230,9 +230,6 @@ floor4_camera_limit_bottom = 15000
 script = ExtResource("6_imtto")
 enemy_scenes = Array[PackedScene]([ExtResource("3_61woi"), ExtResource("3_necro"), ExtResource("3_rogue"), ExtResource("3_mage")])
 golem_scene = ExtResource("3_golem")
-enable_forced_enemy_scene = true
-forced_enemy_type = 2
-forced_enemy_count = 1
 floor_activation_mode = 1
 enable_strict_ledge_guard = true
 

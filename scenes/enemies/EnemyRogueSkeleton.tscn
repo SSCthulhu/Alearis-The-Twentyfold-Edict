@@ -51,6 +51,7 @@ collision_layer = 4
 script = ExtResource("1_rogue")
 projectile_scene = ExtResource("6_projectile")
 move_speed = 120.0
+allow_retreat_step_up_jump = true
 debug_nav_decisions = true
 debug_nav_arbiter = true
 melee_spawn_forward_px = 50.0

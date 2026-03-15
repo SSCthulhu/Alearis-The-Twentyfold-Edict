@@ -31,6 +31,12 @@ func _ready() -> void:
 	melee_spawn_forward_px = 0.0  # Same as knight
 	
 	# Ground probes use default knight values (no override needed)
+	# Keep minion melee navigation behavior aligned with Knight.
+	enable_vertical_traversal = true
+	allow_upward_jump_traversal = true
+	stop_when_in_attack_range = true
+	melee_never_move_away_from_target = true
+	require_confirmed_higher_target_floor_for_jump_up = true
 	
 	# Play spawn animation first
 	if _has_anim(spawn_animation):

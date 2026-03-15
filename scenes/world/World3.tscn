@@ -622,7 +622,7 @@ repeat_times = 15
 follow_viewport = false
 
 [node name="Mountain" type="Sprite2D" parent="ParallaxRoot/Near"]
-position = Vector2(-217, 891)
+position = Vector2(-217, 905)
 texture = ExtResource("3_r7c4k")
 
 [node name="Lava" type="Parallax2D" parent="ParallaxRoot"]
@@ -716,7 +716,7 @@ frame_progress = 0.045564953
 [node name="Geometry" parent="Arena" index="0"]
 z_as_relative = false
 
-[node name="RightWall" parent="Arena/Geometry" index="4"]
+[node name="RightWall" parent="Arena/Geometry" index="5"]
 position = Vector2(-238, 95)
 
 [node name="CollisionShape2D" parent="Arena/Geometry/Cave/ArenaWall2" index="0"]
@@ -876,10 +876,10 @@ debug_socket = true
 [node name="UI" parent="." instance=ExtResource("29_x3lom")]
 
 [node name="PlayerHUDCluster" parent="UI/ScreenRoot/HUDRoot/BottomRight" index="0"]
-offset_left = -414.8
-offset_top = -175.375
-offset_right = -16.775
-offset_bottom = -16.775
+offset_left = -684.5333
+offset_top = -289.41666
+offset_right = -27.683332
+offset_bottom = -27.683332
 style = ExtResource("30_pghea")
 
 [node name="TeleportFade" type="ColorRect" parent="UI/ScreenRoot/HUDRoot" index="6"]
