@@ -6,6 +6,7 @@ signal active_floor_changed(floor_number: int)
 signal floor_unlocked(floor_index: int)
 signal floor_status_changed(floor_number: int, enemies_left: int, floor_complete: bool)
 signal chest_opened(floor_number: int)
+signal floor_fast_clear_timer_changed(floor_number: int, time_left: float, active: bool)
 
 @export var player_path: NodePath = ^"../Player"
 @export var encounter_controller_path: NodePath = ^"../EncounterController"
@@ -39,6 +40,9 @@ var _derived_floor_wall_x: PackedFloat32Array = PackedFloat32Array()
 @export var boss_start_y: float = -2900.0
 @export var boss_start_x: float = 15000.0  # For horizontal mode (World3)
 @export var max_floor_number: int = 5
+@export_group("Fast Floor Clear")
+@export var fast_clear_time_limit_seconds: float = 30.0
+@export var fast_clear_meter_reward: float = 15.0
 
 # -----------------------------
 # Reward chest + Dice UI
@@ -331,6 +335,12 @@ var _chest_spawned: PackedByteArray = PackedByteArray()
 var _floor_spawned: PackedByteArray = PackedByteArray([1, 0, 0, 0])  # Floor 1 spawns on ready
 
 var _last_floor_number: int = -1
+var _fast_clear_start_times: PackedFloat32Array = PackedFloat32Array()
+var _fast_clear_elapsed_times: PackedFloat32Array = PackedFloat32Array()
+var _fast_clear_active_flags: PackedByteArray = PackedByteArray()
+var _last_fast_clear_floor: int = -1
+var _last_fast_clear_left: float = -1.0
+var _last_fast_clear_active: bool = false
 var _world1_floor3_transition_started: bool = false
 var _world1_floor3_transition_running: bool = false
 var _world1_floor3_post_teleport_camera_active: bool = false
@@ -399,6 +409,7 @@ func _ready() -> void:
 		_set_gate_open(i, false)
 
 	_build_floor_ceiling_y_from_gates()
+	_init_fast_clear_timers()
 
 	if hide_platforms_on_ready:
 		_prepare_and_hide_unlock_platforms()
@@ -425,6 +436,83 @@ func _ready() -> void:
 	_apply_per_floor_player_camera_limits(true)
 
 	#print("[Floors] Ready. Groups=", floor_enemy_groups, " Gates=", gate_paths)
+
+func _init_fast_clear_timers() -> void:
+	var floor_count: int = maxi(max_floor_number, 5)
+	_fast_clear_start_times.resize(floor_count)
+	_fast_clear_elapsed_times.resize(floor_count)
+	_fast_clear_active_flags.resize(floor_count)
+	for i: int in range(floor_count):
+		_fast_clear_start_times[i] = -1.0
+		_fast_clear_elapsed_times[i] = -1.0
+		_fast_clear_active_flags[i] = 0
+
+func _now_seconds() -> float:
+	return float(Time.get_ticks_msec()) / 1000.0
+
+func _is_valid_floor_index(index: int) -> bool:
+	return index >= 0 and index < _fast_clear_active_flags.size()
+
+func _start_fast_clear_timer_if_needed(index: int) -> void:
+	if not _is_valid_floor_index(index):
+		return
+	if index >= 4:
+		return
+	if _fast_clear_active_flags[index] == 1:
+		return
+	if index >= _floor_spawned.size() or _floor_spawned[index] == 0:
+		return
+	_fast_clear_start_times[index] = _now_seconds()
+	_fast_clear_elapsed_times[index] = -1.0
+	_fast_clear_active_flags[index] = 1
+
+func _stop_fast_clear_timer(index: int) -> float:
+	if not _is_valid_floor_index(index):
+		return -1.0
+	if _fast_clear_active_flags[index] == 0:
+		return float(_fast_clear_elapsed_times[index])
+	var started_at: float = float(_fast_clear_start_times[index])
+	var elapsed: float = 0.0
+	if started_at >= 0.0:
+		elapsed = maxf(_now_seconds() - started_at, 0.0)
+	_fast_clear_active_flags[index] = 0
+	_fast_clear_elapsed_times[index] = elapsed
+	return elapsed
+
+func get_floor_fast_clear_time_left(floor_number: int) -> float:
+	var idx: int = floor_number - 1
+	if not _is_valid_floor_index(idx):
+		return 0.0
+	if _fast_clear_active_flags[idx] == 1:
+		var started_at: float = float(_fast_clear_start_times[idx])
+		if started_at < 0.0:
+			return maxf(fast_clear_time_limit_seconds, 0.0)
+		var elapsed: float = maxf(_now_seconds() - started_at, 0.0)
+		return maxf(fast_clear_time_limit_seconds - elapsed, 0.0)
+	return 0.0
+
+func is_floor_fast_clear_active(floor_number: int) -> bool:
+	var idx: int = floor_number - 1
+	if not _is_valid_floor_index(idx):
+		return false
+	return _fast_clear_active_flags[idx] == 1
+
+func get_current_floor_fast_clear_time_left() -> float:
+	return get_floor_fast_clear_time_left(_current_floor_number)
+
+func is_current_floor_fast_clear_active() -> bool:
+	return is_floor_fast_clear_active(_current_floor_number)
+
+func _emit_fast_clear_timer_if_changed() -> void:
+	var floor_num: int = _current_floor_number
+	var active: bool = is_current_floor_fast_clear_active()
+	var left: float = get_current_floor_fast_clear_time_left()
+	if floor_num == _last_fast_clear_floor and is_equal_approx(left, _last_fast_clear_left) and active == _last_fast_clear_active:
+		return
+	_last_fast_clear_floor = floor_num
+	_last_fast_clear_left = left
+	_last_fast_clear_active = active
+	floor_fast_clear_timer_changed.emit(floor_num, left, active)
 
 func _setup_orb_flight() -> void:
 	_light_beam_station = null
@@ -712,6 +800,7 @@ func _update_current_floor_from_player() -> void:
 	if _current_floor_number != _last_floor_number:
 		_last_floor_number = _current_floor_number
 		active_floor_changed.emit(_current_floor_number)
+		_start_fast_clear_timer_if_needed(_current_floor_number - 1)
 		_apply_per_floor_player_camera_limits(false)
 
 func _apply_per_floor_player_camera_limits(force: bool) -> void:
@@ -885,6 +974,7 @@ func _process(_delta: float) -> void:
 	_update_world3_boss_camera_live_tuning()
 	_sync_runstate_floor()
 	_emit_floor_status_if_changed()
+	_emit_fast_clear_timer_if_changed()
 
 	# World2 door interaction (only when enabled)
 	_update_world2_door_interaction()
@@ -1697,6 +1787,13 @@ func _set_boss_combat_paused(p: bool) -> void:
 		boss.call("set_combat_paused", p)
 
 func _on_floor_cleared(index: int) -> void:
+	var elapsed: float = _stop_fast_clear_timer(index)
+	if index < 4 and elapsed >= 0.0 and elapsed <= maxf(fast_clear_time_limit_seconds, 0.0):
+		var tree: SceneTree = get_tree()
+		if tree != null:
+			var dice_meter: Node = tree.root.get_node_or_null("DiceMeterSingleton")
+			if dice_meter != null and dice_meter.has_method("add_charge"):
+				dice_meter.call("add_charge", fast_clear_meter_reward, &"fast_floor_clear")
 	_unlocked[index] = 1
 
 	_set_boss_combat_paused(true)

@@ -1,0 +1,11 @@
+[gd_resource type="Resource" script_class="DiceEvent" load_steps=2 format=3]
+[ext_resource type="Script" path="res://scripts/systems/dice/DiceEvent.gd" id="1"]
+[resource]
+script = ExtResource("1")
+id = &"dm2_roll08_lightning_council"
+display_name = "Voltarch Punishment"
+brief_text = "Lightning pressure tracks your position."
+description = "Arc bursts punish greed and force movement mistakes."
+effect_id = &"apply_false_crown"
+duration_seconds = 6.0
+effect_params = {"enemy_damage_mult": 1.35, "drain_interval": 0.7, "drain_percent": 0.02, "enemy_blast_percent": 0.0, "enemy_blast_flat": 0}

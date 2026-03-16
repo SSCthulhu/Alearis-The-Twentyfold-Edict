@@ -1,0 +1,11 @@
+[gd_resource type="Resource" script_class="DiceEvent" load_steps=2 format=3]
+[ext_resource type="Script" path="res://scripts/systems/dice/DiceEvent.gd" id="1"]
+[resource]
+script = ExtResource("1")
+id = &"dm2_roll04_gravity_divine"
+display_name = "Heavenly Gravity Well"
+brief_text = "Enemies are burdened by severe weight."
+description = "Hostiles struggle through heavy divine gravity and lose initiative."
+effect_id = &"apply_gravity_well"
+duration_seconds = 8.0
+effect_params = {"cooldown_mult": 0.9, "slow_mult": 0.55}

@@ -1,0 +1,11 @@
+[gd_resource type="Resource" script_class="DiceEvent" load_steps=2 format=3]
+[ext_resource type="Script" path="res://scripts/systems/dice/DiceEvent.gd" id="1"]
+[resource]
+script = ExtResource("1")
+id = &"dm2_roll16_corruption_divine"
+display_name = "Purified Corruption"
+brief_text = "Corrupt power bends to your damage output."
+description = "The same force now fuels your offense against hostile targets."
+effect_id = &"apply_celestial_overdrive"
+duration_seconds = 8.0
+effect_params = {"damage_mult": 1.22, "damage_taken_mult": 0.92}

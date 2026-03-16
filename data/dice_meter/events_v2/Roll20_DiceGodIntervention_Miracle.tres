@@ -1,0 +1,13 @@
+[gd_resource type="Resource" script_class="DiceEvent" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/systems/dice/DiceEvent.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = &"dm2_roll20_dice_god_intervention"
+display_name = "Dice God Intervention"
+brief_text = "A divine beam scorches foes and staggers survivors."
+description = "The Dice God parts the battlefield with a holy strike, heavily punishing enemies without trivializing bosses."
+effect_id = &"apply_royal_decree"
+duration_seconds = 8.0
+effect_params = {"opening_percent": 0.08, "opening_flat": 8, "cleave_percent": 0.03, "cleave_flat": 3, "player_damage_mult": 1.15, "cooldown_mult": 0.88, "shield_percent": 0.08, "shield_duration": 5.0, "shield_cap_percent": 0.2, "tick_interval": 1.0, "tick_percent": 0.015, "tick_flat": 2, "freeze_interval": 0.85, "freeze_seconds": 0.25}

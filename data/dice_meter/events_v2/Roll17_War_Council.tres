@@ -1,0 +1,11 @@
+[gd_resource type="Resource" script_class="DiceEvent" load_steps=2 format=3]
+[ext_resource type="Script" path="res://scripts/systems/dice/DiceEvent.gd" id="1"]
+[resource]
+script = ExtResource("1")
+id = &"dm2_roll17_war_council"
+display_name = "War Marshal's Reinforcements"
+brief_text = "Additional hostiles join the battle."
+description = "Council war doctrine calls in extra troops to overwhelm tempo."
+effect_id = &"spawn_enemy_reinforcements"
+duration_seconds = 7.0
+effect_params = {"spawn_scene": "res://scenes/enemies/EnemyKnightAdd.tscn", "spawn_count": 3, "enemy_damage_mult": 1.15, "despawn_after_duration": false}

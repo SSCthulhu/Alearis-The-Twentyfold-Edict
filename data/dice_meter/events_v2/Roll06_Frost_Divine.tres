@@ -1,0 +1,11 @@
+[gd_resource type="Resource" script_class="DiceEvent" load_steps=2 format=3]
+[ext_resource type="Script" path="res://scripts/systems/dice/DiceEvent.gd" id="1"]
+[resource]
+script = ExtResource("1")
+id = &"dm2_roll06_frost_divine"
+display_name = "Glacial Favor"
+brief_text = "Enemies freeze in intermittent windows."
+description = "Icy pulses repeatedly hinder hostile movement."
+effect_id = &"apply_enemy_freeze_pulses"
+duration_seconds = 7.0
+effect_params = {"interval": 1.0, "freeze_seconds": 0.35, "include_boss": false}

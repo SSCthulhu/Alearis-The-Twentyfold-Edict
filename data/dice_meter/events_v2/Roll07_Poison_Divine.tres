@@ -1,0 +1,11 @@
+[gd_resource type="Resource" script_class="DiceEvent" load_steps=2 format=3]
+[ext_resource type="Script" path="res://scripts/systems/dice/DiceEvent.gd" id="1"]
+[resource]
+script = ExtResource("1")
+id = &"dm2_roll07_poison_divine"
+display_name = "Purging Toxins"
+brief_text = "Poisonous bursts spread through enemy packs."
+description = "Corrosive clouds now punish hostiles instead of the player."
+effect_id = &"trigger_echo_storm"
+duration_seconds = 8.0
+effect_params = {"pulse_count": 0, "pulse_interval": 0.85, "pulse_percent": 0.014, "pulse_flat": 3}

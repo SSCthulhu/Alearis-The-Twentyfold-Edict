@@ -39,6 +39,21 @@ func _is_debug_enemy_death_locked() -> bool:
 		return false
 	return bool(dice_meter.call("is_debug_enemy_death_locked"))
 
+func _is_player_outgoing_source(source: Node) -> bool:
+	if source == null:
+		return false
+	if source.is_in_group(&"player"):
+		return true
+	if source.is_in_group(&"player_hitbox"):
+		return true
+	var source_owner: Node = source.get_owner()
+	if source_owner != null and source_owner.is_in_group(&"player"):
+		return true
+	var parent: Node = source.get_parent()
+	if parent != null and parent.is_in_group(&"player"):
+		return true
+	return false
+
 func _ready() -> void:
 	hp = max_hp
 	
@@ -81,6 +96,9 @@ func take_damage(amount: int, _source: Node = null, tag: StringName = &"", is_cr
 					return
 
 	hp = maxi(hp - amount, 0)
+	var dice_meter: Node = _get_dice_meter_singleton()
+	if dice_meter != null and dice_meter.has_method("on_outgoing_damage_dealt") and _is_player_outgoing_source(_source):
+		dice_meter.call("on_outgoing_damage_dealt", float(amount))
 	
 	# Spawn hit VFX at enemy position (crit VFX if applicable)
 	if spawn_hit_vfx:
@@ -100,7 +118,6 @@ func take_damage(amount: int, _source: Node = null, tag: StringName = &"", is_cr
 		if _is_debug_enemy_death_locked():
 			hp = 1
 			return
-		var dice_meter: Node = _get_dice_meter_singleton()
 		if dice_meter != null and dice_meter.has_method("on_enemy_killed"):
 			var enemy: Node = get_parent()
 			var is_elite: bool = enemy != null and enemy.is_in_group(&"elites")

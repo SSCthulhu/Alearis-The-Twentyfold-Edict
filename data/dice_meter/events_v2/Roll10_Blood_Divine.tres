@@ -1,0 +1,11 @@
+[gd_resource type="Resource" script_class="DiceEvent" load_steps=2 format=3]
+[ext_resource type="Script" path="res://scripts/systems/dice/DiceEvent.gd" id="1"]
+[resource]
+script = ExtResource("1")
+id = &"dm2_roll10_blood_divine"
+display_name = "Crimson Benediction"
+brief_text = "Your strikes return a trickle of vitality."
+description = "Divine bloodrite stabilizes sustain through combat pressure."
+effect_id = &"apply_player_lifesteal"
+duration_seconds = 8.0
+effect_params = {"lifesteal_ratio": 0.5}

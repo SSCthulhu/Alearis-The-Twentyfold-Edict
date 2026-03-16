@@ -1,0 +1,11 @@
+[gd_resource type="Resource" script_class="DiceEvent" load_steps=2 format=3]
+[ext_resource type="Script" path="res://scripts/systems/dice/DiceEvent.gd" id="1"]
+[resource]
+script = ExtResource("1")
+id = &"dm2_roll09_time_council"
+display_name = "Chronarch Rush"
+brief_text = "Enemy actions accelerate."
+description = "Temporal distortion grants hostiles a brief speed and damage edge."
+effect_id = &"apply_hex_barrage"
+duration_seconds = 7.0
+effect_params = {"enemy_damage_mult": 1.16, "player_damage_mult": 0.92}

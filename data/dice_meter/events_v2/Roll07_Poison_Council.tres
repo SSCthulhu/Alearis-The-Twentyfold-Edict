@@ -1,0 +1,11 @@
+[gd_resource type="Resource" script_class="DiceEvent" load_steps=2 format=3]
+[ext_resource type="Script" path="res://scripts/systems/dice/DiceEvent.gd" id="1"]
+[resource]
+script = ExtResource("1")
+id = &"dm2_roll07_poison_council"
+display_name = "Venomseer Miasma"
+brief_text = "Poison clouds gather around your routes."
+description = "Toxic pressure drains health and tightens safe movement lanes."
+effect_id = &"apply_void_tax"
+duration_seconds = 8.0
+effect_params = {"cooldown_mult": 1.12, "drain_interval": 0.85, "drain_percent": 0.022, "enemy_blast_percent": 0.0, "enemy_blast_flat": 0}

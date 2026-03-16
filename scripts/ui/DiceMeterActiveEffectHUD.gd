@@ -2,6 +2,7 @@ extends Control
 class_name DiceMeterActiveEffectHUD
 
 @export var update_rate_seconds: float = 0.05
+@export var use_combined_banner_mode: bool = true
 @export var danger_color: Color = Color(1.0, 0.40, 0.40, 1.0)
 @export var chaos_color: Color = Color(0.85, 0.60, 1.0, 1.0)
 @export var neutral_color: Color = Color(0.95, 0.95, 0.95, 1.0)
@@ -11,6 +12,8 @@ class_name DiceMeterActiveEffectHUD
 
 @onready var _label: Label = $EffectLabel
 var _refresh_accum: float = 0.0
+var _suppress_left: float = 0.0
+@export var suppress_after_roll_seconds: float = 2.4
 
 func _ready() -> void:
 	visible = false
@@ -19,8 +22,22 @@ func _ready() -> void:
 	if _label != null:
 		_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 		_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	_connect_dice_meter()
+
+func _exit_tree() -> void:
+	var meter: Node = _get_dice_meter_singleton()
+	if meter != null and meter.has_signal("roll_resolved"):
+		if meter.roll_resolved.is_connected(_on_roll_resolved):
+			meter.roll_resolved.disconnect(_on_roll_resolved)
 
 func _process(delta: float) -> void:
+	if use_combined_banner_mode:
+		visible = false
+		return
+	if _suppress_left > 0.0:
+		_suppress_left = maxf(_suppress_left - delta, 0.0)
+		visible = false
+		return
 	_refresh_accum += delta
 	if _refresh_accum < update_rate_seconds:
 		return
@@ -51,6 +68,17 @@ func _refresh_from_meter() -> void:
 		_label.add_theme_color_override("font_color", band_color)
 		_label.self_modulate = band_color
 	visible = true
+
+func _connect_dice_meter() -> void:
+	var meter: Node = _get_dice_meter_singleton()
+	if meter == null:
+		return
+	if meter.has_signal("roll_resolved"):
+		if not meter.roll_resolved.is_connected(_on_roll_resolved):
+			meter.roll_resolved.connect(_on_roll_resolved)
+
+func _on_roll_resolved(_roll_value: int, _event_id: StringName, _band: int) -> void:
+	_suppress_left = maxf(suppress_after_roll_seconds, 0.0)
 
 func _get_dice_meter_singleton() -> Node:
 	var tree: SceneTree = get_tree()

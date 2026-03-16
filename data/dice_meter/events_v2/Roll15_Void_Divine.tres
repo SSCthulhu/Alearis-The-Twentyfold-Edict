@@ -1,0 +1,11 @@
+[gd_resource type="Resource" script_class="DiceEvent" load_steps=2 format=3]
+[ext_resource type="Script" path="res://scripts/systems/dice/DiceEvent.gd" id="1"]
+[resource]
+script = ExtResource("1")
+id = &"dm2_roll15_void_divine"
+display_name = "Void Purge"
+brief_text = "Void zones consume enemy formations."
+description = "The same null force turns outward and devours hostile packs."
+effect_id = &"trigger_echo_storm"
+duration_seconds = 8.0
+effect_params = {"pulse_count": 0, "pulse_interval": 0.8, "pulse_percent": 0.013, "pulse_flat": 3}

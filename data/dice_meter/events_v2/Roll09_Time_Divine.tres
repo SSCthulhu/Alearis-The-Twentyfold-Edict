@@ -1,0 +1,11 @@
+[gd_resource type="Resource" script_class="DiceEvent" load_steps=2 format=3]
+[ext_resource type="Script" path="res://scripts/systems/dice/DiceEvent.gd" id="1"]
+[resource]
+script = ExtResource("1")
+id = &"dm2_roll09_time_divine"
+display_name = "Stillpoint Grace"
+brief_text = "Enemies move as if time thickens."
+description = "Temporal drag suppresses hostile speed and opens punish windows."
+effect_id = &"apply_enemy_slow_field"
+duration_seconds = 7.0
+effect_params = {"slow_mult": 0.62}

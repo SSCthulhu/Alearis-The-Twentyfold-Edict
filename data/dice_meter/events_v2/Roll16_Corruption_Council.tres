@@ -1,0 +1,11 @@
+[gd_resource type="Resource" script_class="DiceEvent" load_steps=2 format=3]
+[ext_resource type="Script" path="res://scripts/systems/dice/DiceEvent.gd" id="1"]
+[resource]
+script = ExtResource("1")
+id = &"dm2_roll16_corruption_council"
+display_name = "Blight Ascendant"
+brief_text = "Corruption empowers enemy lethality."
+description = "Blighted force grants hostiles dangerous burst potential."
+effect_id = &"apply_hex_barrage"
+duration_seconds = 8.0
+effect_params = {"enemy_damage_mult": 1.2, "player_damage_mult": 0.9}

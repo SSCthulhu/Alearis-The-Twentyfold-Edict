@@ -1,0 +1,11 @@
+[gd_resource type="Resource" script_class="DiceEvent" load_steps=2 format=3]
+[ext_resource type="Script" path="res://scripts/systems/dice/DiceEvent.gd" id="1"]
+[resource]
+script = ExtResource("1")
+id = &"dm2_roll08_lightning_divine"
+display_name = "Heavenstrike Conduction"
+brief_text = "Repeated lightning lashes enemy clusters."
+description = "Divine arcs repeatedly seek hostile formations."
+effect_id = &"trigger_echo_storm"
+duration_seconds = 6.0
+effect_params = {"pulse_count": 0, "pulse_interval": 0.7, "pulse_percent": 0.012, "pulse_flat": 3}

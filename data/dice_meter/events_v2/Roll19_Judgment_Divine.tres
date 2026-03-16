@@ -1,0 +1,11 @@
+[gd_resource type="Resource" script_class="DiceEvent" load_steps=2 format=3]
+[ext_resource type="Script" path="res://scripts/systems/dice/DiceEvent.gd" id="1"]
+[resource]
+script = ExtResource("1")
+id = &"dm2_roll19_judgment_divine"
+display_name = "Guiding Spirit"
+brief_text = "A divine spirit aids your offense."
+description = "A celestial helper pressures enemies while empowering your strikes."
+effect_id = &"spawn_divine_spirit_support"
+duration_seconds = 9.0
+effect_params = {"player_damage_mult": 1.18, "cooldown_mult": 0.85, "pulse_count": 0, "pulse_interval": 0.8, "pulse_percent": 0.012, "pulse_flat": 3}

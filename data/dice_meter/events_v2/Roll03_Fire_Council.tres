@@ -1,0 +1,11 @@
+[gd_resource type="Resource" script_class="DiceEvent" load_steps=2 format=3]
+[ext_resource type="Script" path="res://scripts/systems/dice/DiceEvent.gd" id="1"]
+[resource]
+script = ExtResource("1")
+id = &"dm2_roll03_fire_council"
+display_name = "Pyraxis Erupts"
+brief_text = "Scorching eruptions pressure your footing."
+description = "Fire blooms beneath your routes, forcing risky repositioning."
+effect_id = &"spawn_void_spike_rain"
+duration_seconds = 7.0
+effect_params = {"player_hit_interval": 0.95, "player_hit_percent": 0.015, "enemy_blast_percent": 0.0, "enemy_blast_flat": 0}

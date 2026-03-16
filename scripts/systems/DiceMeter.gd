@@ -1,6 +1,8 @@
 extends Node
 class_name DiceMeter
 
+const DiceCouncilRegistryScript = preload("res://scripts/systems/dice/DiceCouncilRegistry.gd")
+
 signal charge_changed(current_charge: float, max_charge: float)
 signal meter_filled()
 signal roll_resolved(roll_value: int, event_id: StringName, band: int)
@@ -13,9 +15,10 @@ const RELIC_TWIN_FATE: StringName = &"e3_twin_fate"
 @export var max_charge: float = 100.0
 @export var charge_per_enemy_kill: float = 8.0
 @export var charge_per_elite_kill: float = 20.0
-@export var charge_per_perfect_dodge: float = 10.0
-@export var boss_damage_step: float = 250.0
-@export var charge_per_boss_damage_step: float = 8.0
+@export var charge_per_perfect_dodge: float = 5.0
+@export var outgoing_damage_step: float = 50.0
+@export var charge_per_outgoing_damage_step: float = 4.0
+@export var charge_per_boss_kill: float = 20.0
 @export var loaded_edge_backlash_percent: float = 0.06
 @export var trigger_action: StringName = &"dice_meter_trigger"
 @export var input_buffer_seconds: float = 0.15
@@ -31,7 +34,7 @@ const RELIC_TWIN_FATE: StringName = &"e3_twin_fate"
 @export var event_table: DiceMeterEventTable
 
 var current_charge: float = 0.0
-var _pending_boss_damage: float = 0.0
+var _pending_outgoing_damage: float = 0.0
 var _trigger_count: int = 0
 
 var last_roll: int = -1
@@ -47,32 +50,70 @@ var _active_enemy_slow_effects: Array[Dictionary] = []
 var _active_echo_pulses: Array[Dictionary] = []
 var _active_player_hp_drain_effects: Array[Dictionary] = []
 var _active_target_execution_effects: Array[Dictionary] = []
+var _active_enemy_freeze_effects: Array[Dictionary] = []
+var _active_enemy_freeze_pulses: Array[Dictionary] = []
+var _active_player_root_effects: Array[Dictionary] = []
+var _active_player_freeze_pulses: Array[Dictionary] = []
+var _active_player_visual_effects: Array[Dictionary] = []
+var _active_lifesteal_effects: Array[Dictionary] = []
+var _active_enemy_regen_effects: Array[Dictionary] = []
+var _active_wind_effects: Array[Dictionary] = []
 var _trigger_buffer_left: float = 0.0
+var _council_members: Dictionary = {}
+var _council_catastrophe_event: Resource = null
+var _divine_miracle_event: Resource = null
+
+enum FateAlignment {
+	COUNCIL = 0,
+	CHAOS = 1,
+	DIVINE = 2,
+	COUNCIL_CATASTROPHE = 3,
+	DIVINE_MIRACLE = 4
+}
 
 func _ready() -> void:
 	process_mode = Node.PROCESS_MODE_INHERIT
 	set_process(true)
 	if event_table == null and ResourceLoader.exists(default_event_table_path):
 		event_table = load(default_event_table_path) as DiceMeterEventTable
+	_council_members = DiceCouncilRegistryScript.build_members()
+	_council_catastrophe_event = DiceCouncilRegistryScript.load_council_catastrophe_event()
+	_divine_miracle_event = DiceCouncilRegistryScript.load_divine_miracle_event()
 	_emit_charge_changed()
 
 func _process(delta: float) -> void:
 	_apply_debug_test_mode_overrides()
+	_tick_wind_effects(delta)
 	_tick_enemy_slow_effects(delta)
+	_tick_enemy_freeze_effects(delta)
+	_tick_enemy_freeze_pulses(delta)
 	_tick_echo_pulses(delta)
 	_tick_player_hp_drain_effects(delta)
+	_tick_player_root_effects(delta)
+	_tick_player_freeze_pulses(delta)
+	_tick_player_visual_effects(delta)
+	_tick_lifesteal_effects(delta)
+	_tick_enemy_regen_effects(delta)
 	_tick_target_execution_effects(delta)
 	_tick_temp_effects(delta)
 	_process_trigger_input(delta)
 
 func reset_meter() -> void:
 	_clear_enemy_slow_effects()
+	_clear_enemy_freeze_effects()
+	_clear_enemy_freeze_pulses()
 	_clear_echo_pulses()
 	_clear_player_hp_drain_effects()
+	_clear_player_root_effects()
+	_clear_player_freeze_pulses()
+	_clear_player_visual_effects()
+	_clear_lifesteal_effects()
+	_clear_enemy_regen_effects()
+	_clear_wind_effects()
 	_clear_target_execution_effects()
 	_clear_temp_effects()
 	current_charge = 0.0
-	_pending_boss_damage = 0.0
+	_pending_outgoing_damage = 0.0
 	_trigger_count = 0
 	last_roll = -1
 	last_event_id = &""
@@ -118,59 +159,80 @@ func on_perfect_dodge() -> void:
 	add_charge(charge_per_perfect_dodge, &"perfect_dodge")
 
 func on_boss_damage(amount: float) -> void:
+	on_outgoing_damage_dealt(amount)
+
+func on_outgoing_damage_dealt(amount: float) -> void:
 	if amount <= 0.0:
 		return
-	if boss_damage_step <= 0.0:
+	_apply_lifesteal_from_damage(amount)
+	if outgoing_damage_step <= 0.0:
 		return
-	# Clamp per-hit contribution so overkill hits (e.g. boss death blow)
-	# cannot flood the meter with multiple milestone grants at once.
-	var contributed: float = minf(amount, boss_damage_step)
-	_pending_boss_damage += contributed
-	while _pending_boss_damage >= boss_damage_step:
-		_pending_boss_damage -= boss_damage_step
-		add_charge(charge_per_boss_damage_step, &"boss_damage_step")
+	_pending_outgoing_damage += amount
+	while _pending_outgoing_damage >= outgoing_damage_step:
+		_pending_outgoing_damage -= outgoing_damage_step
+		add_charge(charge_per_outgoing_damage_step, &"outgoing_damage_step")
+
+func on_boss_killed() -> void:
+	add_charge(charge_per_boss_kill, &"boss_kill")
 
 func can_trigger_roll() -> bool:
-	return current_charge >= max_charge and event_table != null
+	return current_charge >= max_charge
 
 func trigger_roll(forced_roll: int = -1) -> Dictionary:
 	if not can_trigger_roll():
 		return {"ok": false, "reason": "meter_not_ready"}
 
 	var roll: int = _resolve_roll_value(forced_roll)
-	var rng: RandomNumberGenerator = _resolve_event_pick_rng(roll)
-	var event_data: DiceMeterEventData = event_table.pick_event_for_roll(rng, roll)
-	if event_data == null:
-		return {"ok": false, "reason": "no_event_for_roll", "roll": roll}
-	if _has_bent_die_relic() and _is_negative_band(int(event_data.band)):
-		var bent_result: Dictionary = _apply_bent_die_reroll(roll, event_data)
+	var alignment: int = _determine_alignment(roll)
+	var selection: Dictionary = _select_event_for_roll(roll, alignment)
+	if _has_bent_die_relic() and _is_negative_alignment(alignment):
+		var bent_result: Dictionary = _apply_bent_die_alignment_reroll(roll, alignment)
 		roll = int(bent_result.get("roll", roll))
-		event_data = bent_result.get("event_data", event_data) as DiceMeterEventData
+		alignment = int(bent_result.get("alignment", alignment))
+		selection = bent_result.get("selection", selection)
+	var event_resource: Resource = selection.get("event_resource", null) as Resource
+	if event_resource == null:
+		return {"ok": false, "reason": "no_event_for_roll", "roll": roll}
+	var event_payload: Dictionary = _event_resource_to_payload(event_resource)
+	if event_payload.is_empty():
+		return {"ok": false, "reason": "invalid_event_payload", "roll": roll}
+	var member: Variant = selection.get("member", null)
+	var member_name: String = String(selection.get("member_name", ""))
+	var member_theme: String = String(selection.get("member_theme", ""))
+	if member is DiceCouncilMember:
+		member_name = String((member as DiceCouncilMember).name)
+		member_theme = String((member as DiceCouncilMember).theme)
 
 	current_charge = 0.0
-	_pending_boss_damage = 0.0
+	_pending_outgoing_damage = 0.0
 	_trigger_count += 1
 	last_roll = roll
-	last_event_id = event_data.id
-	last_event_band = int(event_data.band)
+	last_event_id = event_payload.get("event_id", &"")
+	last_event_band = _alignment_to_outcome_band(alignment)
 	_sync_roll_to_run_state(roll)
 
 	last_result = {
 		"ok": true,
 		"roll": roll,
-		"event_id": event_data.id,
-		"display_name": event_data.display_name,
-		"brief_text": event_data.brief_text,
-		"description": event_data.description,
-		"band": int(event_data.band),
-		"effect_id": event_data.effect_id,
-		"duration_seconds": event_data.duration_seconds,
-		"effect_params": event_data.effect_params
+		"event_id": event_payload.get("event_id", &""),
+		"display_name": event_payload.get("display_name", ""),
+		"brief_text": event_payload.get("brief_text", ""),
+		"description": event_payload.get("description", ""),
+		"band": _alignment_to_outcome_band(alignment),
+		"alignment": alignment,
+		"alignment_label": _alignment_to_label(alignment),
+		"midpoint": _get_current_dice_range().midpoint(),
+		"member_number": clampi(roll, 1, 20),
+		"member_name": member_name,
+		"member_theme": member_theme,
+		"effect_id": event_payload.get("effect_id", &""),
+		"duration_seconds": float(event_payload.get("duration_seconds", 0.0)),
+		"effect_params": event_payload.get("effect_params", {})
 	}
-	active_effect_name = event_data.display_name
-	active_effect_brief_text = event_data.brief_text
-	active_effect_band = int(event_data.band)
-	active_effect_time_left = event_data.duration_seconds
+	active_effect_name = String(last_result.get("display_name", ""))
+	active_effect_brief_text = String(last_result.get("brief_text", ""))
+	active_effect_band = int(last_result.get("band", int(DiceMeterEventData.OutcomeBand.NEUTRAL)))
+	active_effect_time_left = float(last_result.get("duration_seconds", 0.0))
 	var result_to_apply: Dictionary = last_result.duplicate(true)
 	var roll_bounds: Vector2i = _get_meter_roll_bounds()
 	if _has_relic(RELIC_LOADED_EDGE):
@@ -182,14 +244,14 @@ func trigger_roll(forced_roll: int = -1) -> Dictionary:
 			_apply_player_percent_damage_nonlethal(clampf(loaded_edge_backlash_percent, 0.0, 1.0))
 			_log_debug("Loaded Edge: min roll backlash applied.")
 	_apply_event_result(result_to_apply)
-	roll_resolved.emit(roll, event_data.id, int(event_data.band))
+	roll_resolved.emit(roll, last_event_id, int(last_event_band))
 	_emit_charge_changed()
 	_log_debug("Roll=%d, Event=%s, Band=%d, Effect=%s, Duration=%.2fs" % [
 		roll,
-		String(event_data.id),
-		int(event_data.band),
-		String(event_data.effect_id),
-		event_data.duration_seconds
+		String(last_event_id),
+		int(last_event_band),
+		String(last_result.get("effect_id", &"")),
+		float(last_result.get("duration_seconds", 0.0))
 	])
 
 	return last_result
@@ -226,6 +288,175 @@ func _can_player_trigger_meter() -> bool:
 		return false
 	return true
 
+func _get_current_dice_range() -> DiceRange:
+	var bounds: Vector2i = _get_meter_roll_bounds()
+	return DiceRange.new(bounds.x, bounds.y)
+
+func _determine_alignment(roll: int) -> int:
+	if roll == 1:
+		return FateAlignment.COUNCIL_CATASTROPHE
+	if roll == 20:
+		return FateAlignment.DIVINE_MIRACLE
+	var dice_range: DiceRange = _get_current_dice_range()
+	var midpoint: float = dice_range.midpoint()
+	if float(roll) < midpoint:
+		return FateAlignment.COUNCIL
+	if float(roll) > midpoint:
+		return FateAlignment.DIVINE
+	return FateAlignment.CHAOS
+
+func _alignment_to_outcome_band(alignment: int) -> int:
+	match alignment:
+		FateAlignment.COUNCIL, FateAlignment.COUNCIL_CATASTROPHE:
+			return int(DiceMeterEventData.OutcomeBand.DANGER)
+		FateAlignment.DIVINE, FateAlignment.DIVINE_MIRACLE:
+			return int(DiceMeterEventData.OutcomeBand.MIRACLE)
+		_:
+			return int(DiceMeterEventData.OutcomeBand.CHAOS)
+
+func _alignment_to_label(alignment: int) -> String:
+	match alignment:
+		FateAlignment.COUNCIL:
+			return "COUNCIL"
+		FateAlignment.COUNCIL_CATASTROPHE:
+			return "COUNCIL_CATASTROPHE"
+		FateAlignment.DIVINE:
+			return "DIVINE"
+		FateAlignment.DIVINE_MIRACLE:
+			return "DIVINE_MIRACLE"
+		_:
+			return "CHAOS"
+
+func _select_event_for_roll(roll: int, alignment: int) -> Dictionary:
+	if alignment == FateAlignment.COUNCIL_CATASTROPHE:
+		return {
+			"event_resource": _council_catastrophe_event,
+			"member_name": "Council Catastrophe",
+			"member_theme": "Catastrophe"
+		}
+	if alignment == FateAlignment.DIVINE_MIRACLE:
+		return {
+			"event_resource": _divine_miracle_event,
+			"member_name": "Divine Miracle",
+			"member_theme": "Miracle"
+		}
+	var clamped_roll: int = clampi(roll, 2, 19)
+	if not _council_members.has(clamped_roll):
+		return {}
+	var member: DiceCouncilMember = _council_members[clamped_roll] as DiceCouncilMember
+	if member == null:
+		return {}
+	var picked_event: Resource = null
+	if alignment == FateAlignment.COUNCIL:
+		picked_event = member.council_event
+	elif alignment == FateAlignment.DIVINE:
+		picked_event = member.divine_event
+	else:
+		var choose_divine: bool = false
+		if RunStateSingleton != null and RunStateSingleton.has_method("roll_for_domain_in_range"):
+			choose_divine = int(RunStateSingleton.call("roll_for_domain_in_range", &"dice_meter_chaos_pick", 0, 1, _trigger_count + roll)) == 1
+		else:
+			choose_divine = randi() % 2 == 1
+		picked_event = member.divine_event if choose_divine else member.council_event
+	return {
+		"event_resource": picked_event,
+		"member": member,
+		"member_name": member.name,
+		"member_theme": member.theme
+	}
+
+func _event_resource_to_payload(event_resource: Resource) -> Dictionary:
+	if event_resource == null:
+		return {}
+	var event_id: StringName = &""
+	var display_name: String = "Unnamed Event"
+	var brief_text: String = ""
+	var description: String = ""
+	var effect_id: StringName = &""
+	var duration_seconds: float = 0.0
+	var effect_params: Dictionary = {}
+	if _resource_has_property(event_resource, "id"):
+		event_id = event_resource.get("id")
+	if _resource_has_property(event_resource, "display_name"):
+		display_name = String(event_resource.get("display_name"))
+	if _resource_has_property(event_resource, "brief_text"):
+		brief_text = String(event_resource.get("brief_text"))
+	if _resource_has_property(event_resource, "description"):
+		description = String(event_resource.get("description"))
+	if _resource_has_property(event_resource, "effect_id"):
+		effect_id = event_resource.get("effect_id")
+	if _resource_has_property(event_resource, "duration_seconds"):
+		duration_seconds = maxf(float(event_resource.get("duration_seconds")), 0.0)
+	if _resource_has_property(event_resource, "effect_params"):
+		var value: Variant = event_resource.get("effect_params")
+		if value is Dictionary:
+			effect_params = (value as Dictionary).duplicate(true)
+	if display_name.strip_edges() == "":
+		display_name = "Unnamed Event"
+	if brief_text.strip_edges() == "":
+		brief_text = "Fate twists in battle."
+	if description.strip_edges() == "":
+		description = brief_text
+	return {
+		"event_id": event_id,
+		"display_name": display_name,
+		"brief_text": brief_text,
+		"description": description,
+		"effect_id": effect_id,
+		"duration_seconds": duration_seconds,
+		"effect_params": effect_params
+	}
+
+func _resource_has_property(resource: Resource, property_name: String) -> bool:
+	if resource == null:
+		return false
+	for prop: Dictionary in resource.get_property_list():
+		if String(prop.get("name", "")) == property_name:
+			return true
+	return false
+
+func _is_negative_alignment(alignment: int) -> bool:
+	return alignment == FateAlignment.COUNCIL or alignment == FateAlignment.COUNCIL_CATASTROPHE
+
+func _alignment_rank(alignment: int) -> int:
+	match alignment:
+		FateAlignment.COUNCIL_CATASTROPHE:
+			return 0
+		FateAlignment.COUNCIL:
+			return 1
+		FateAlignment.CHAOS:
+			return 2
+		FateAlignment.DIVINE:
+			return 3
+		FateAlignment.DIVINE_MIRACLE:
+			return 4
+		_:
+			return 2
+
+func _apply_bent_die_alignment_reroll(current_roll: int, current_alignment: int) -> Dictionary:
+	var bounds: Vector2i = _get_meter_roll_bounds()
+	var reroll_value: int = current_roll
+	if RunStateSingleton != null and RunStateSingleton.has_method("roll_for_domain_in_range"):
+		reroll_value = int(RunStateSingleton.call("roll_for_domain_in_range", &"dice_meter_bent_die_reroll", bounds.x, bounds.y, _trigger_count))
+	else:
+		var rng := RandomNumberGenerator.new()
+		rng.randomize()
+		reroll_value = rng.randi_range(bounds.x, bounds.y)
+	var reroll_alignment: int = _determine_alignment(reroll_value)
+	var current_rank: int = _alignment_rank(current_alignment)
+	var reroll_rank: int = _alignment_rank(reroll_alignment)
+	if reroll_rank > current_rank or (reroll_rank == current_rank and reroll_value > current_roll):
+		return {
+			"roll": reroll_value,
+			"alignment": reroll_alignment,
+			"selection": _select_event_for_roll(reroll_value, reroll_alignment)
+		}
+	return {
+		"roll": current_roll,
+		"alignment": current_alignment,
+		"selection": _select_event_for_roll(current_roll, current_alignment)
+	}
+
 func _apply_event_result(result: Dictionary) -> void:
 	if result.is_empty():
 		return
@@ -236,19 +467,22 @@ func _apply_event_result(result: Dictionary) -> void:
 		&"apply_nat1_oof":
 			_apply_nat1_oof(duration, params)
 		&"spawn_void_spike_rain":
-			_apply_temp_mult_to_runstate("enemy_damage_mult", 1.12, duration)
-			_apply_floorwide_enemy_damage(0.015, 3)
+			_apply_void_spike_rain(duration, params)
 		&"apply_hex_barrage":
 			_apply_temp_mult_to_runstate("enemy_damage_mult", float(params.get("enemy_damage_mult", 1.16)), duration)
 			_apply_temp_mult_to_runstate("player_damage_mult", float(params.get("player_damage_mult", 0.88)), duration)
 		&"apply_crosswind_pressure":
 			_apply_temp_mult_to_runstate("player_damage_mult", 0.92, duration)
 			_apply_temp_mult_to_runstate("cooldown_mult", 1.10, duration)
+			_start_wind_push_effect(duration, true, 120.0, 0.65)
 		&"apply_gravity_well":
 			_apply_temp_mult_to_runstate("cooldown_mult", float(params.get("cooldown_mult", 1.12)), duration)
 			_apply_enemy_slow_field(duration, {"slow_mult": float(params.get("slow_mult", 0.85))})
 		&"apply_weighted_calm":
-			_apply_temp_mult_to_runstate("cooldown_mult", float(params.get("enemy_haste_mult", 0.95)), duration)
+			_apply_temp_mult_to_runstate("cooldown_mult", float(params.get("enemy_haste_mult", 1.10)), duration)
+			_apply_temp_mult_to_runstate("player_move_speed_mult", float(params.get("player_move_speed_mult", 0.65)), duration)
+			_apply_temp_mult_to_runstate("player_jump_height_mult", float(params.get("player_jump_height_mult", 0.82)), duration)
+			_apply_temp_mult_to_runstate("player_gravity_mult", float(params.get("player_gravity_mult", 1.25)), duration)
 		&"apply_coinflip_tempo":
 			_apply_temp_mult_to_runstate("player_damage_mult", float(params.get("player_damage_mult", 1.05)), duration)
 			_apply_temp_mult_to_runstate("enemy_damage_mult", float(params.get("enemy_damage_mult", 1.05)), duration)
@@ -260,6 +494,7 @@ func _apply_event_result(result: Dictionary) -> void:
 			_heal_player_percent(float(params.get("bonus_heal_percent", 0.10)))
 			_grant_player_shield_percent(float(params.get("shield_percent", 0.12)), float(params.get("shield_duration", 6.0)), float(params.get("shield_cap_percent", 0.20)))
 			_apply_temp_mult_to_runstate("cooldown_mult", float(params.get("cooldown_mult", 0.90)), duration)
+			_apply_player_visual_effect(duration, float(params.get("player_alpha", 0.75)))
 		&"apply_enemy_slow_field":
 			_apply_enemy_slow_field(duration, params)
 		&"apply_celestial_overdrive":
@@ -291,6 +526,30 @@ func _apply_event_result(result: Dictionary) -> void:
 			_apply_void_tax(duration, params)
 		&"apply_ascension_draft":
 			_apply_ascension_draft(duration, params)
+		&"spawn_council_catastrophe":
+			_apply_council_catastrophe(duration, params)
+		&"spawn_enemy_reinforcements":
+			_apply_enemy_reinforcements(duration, params)
+		&"spawn_council_avatar":
+			_apply_council_avatar(duration, params)
+		&"spawn_divine_spirit_support":
+			_apply_divine_spirit_support(duration, params)
+		&"apply_player_chain":
+			_apply_player_chain(duration, params)
+		&"apply_enemy_chain":
+			_apply_enemy_chain(duration, params)
+		&"apply_enemy_freeze_pulses":
+			_apply_enemy_freeze_pulses(duration, params)
+		&"apply_player_freeze_pulses":
+			_apply_player_freeze_pulses(duration, params)
+		&"apply_player_lifesteal":
+			_apply_player_lifesteal(duration, params)
+		&"apply_enemy_regen":
+			_apply_enemy_regen(duration, params)
+		&"apply_wind_push_enemies":
+			_start_wind_push_effect(duration, false, float(params.get("push_speed", 140.0)), float(params.get("counter_move_mult", 0.6)))
+		&"apply_wind_push_player":
+			_start_wind_push_effect(duration, true, float(params.get("push_speed", 140.0)), float(params.get("counter_move_mult", 0.6)))
 		_:
 			pass
 
@@ -365,10 +624,12 @@ func _apply_miracle_effect(duration: float, params: Dictionary) -> void:
 	_grant_player_shield_percent(float(params.get("shield_percent", 0.20)), float(params.get("shield_duration", 8.0)), float(params.get("shield_cap_percent", 0.30)))
 
 func _start_echo_pulses(duration: float, params: Dictionary) -> void:
-	var pulse_count: int = int(params.get("pulse_count", 4))
+	var pulse_interval: float = maxf(0.1, float(params.get("pulse_interval", 0.7)))
+	var pulse_count: int = int(params.get("pulse_count", 0))
+	if pulse_count <= 0:
+		pulse_count = maxi(1, int(ceil(maxf(duration, 0.1) / pulse_interval)))
 	if pulse_count <= 0:
 		return
-	var pulse_interval: float = maxf(0.1, float(params.get("pulse_interval", 0.7)))
 	var pulse_percent: float = maxf(0.0, float(params.get("pulse_percent", 0.05)))
 	var pulse_flat: int = maxi(0, int(params.get("pulse_flat", 10)))
 	if pulse_percent <= 0.0 and pulse_flat <= 0:
@@ -379,7 +640,9 @@ func _start_echo_pulses(duration: float, params: Dictionary) -> void:
 		"pulses_left": pulse_count,
 		"pulse_percent": pulse_percent,
 		"pulse_flat": pulse_flat,
-		"max_duration": duration
+		"max_duration": duration,
+		"friendly_fire_to_player": bool(params.get("friendly_fire_to_player", false)),
+		"player_pulse_percent": maxf(0.0, float(params.get("player_pulse_percent", 0.0)))
 	})
 	_log_debug("Echo pulses armed: count=%d interval=%.2f" % [pulse_count, pulse_interval])
 
@@ -450,16 +713,21 @@ func _apply_royal_decree(duration: float, params: Dictionary) -> void:
 		"tick_percent": maxf(float(params.get("tick_percent", 0.06)), 0.0),
 		"tick_flat": maxi(int(params.get("tick_flat", 8)), 0)
 	})
+	_apply_enemy_freeze_pulses(duration, {
+		"interval": maxf(float(params.get("freeze_interval", 0.9)), 0.1),
+		"freeze_seconds": maxf(float(params.get("freeze_seconds", 0.22)), 0.05),
+		"include_boss": false
+	})
 
 func _apply_false_crown(duration: float, params: Dictionary) -> void:
-	_apply_temp_mult_to_runstate("player_damage_mult", float(params.get("player_damage_mult", 1.45)), duration)
+	_apply_temp_mult_to_runstate("enemy_damage_mult", float(params.get("enemy_damage_mult", 1.30)), duration)
 	_active_player_hp_drain_effects.append({
 		"time_left": duration,
 		"interval_left": maxf(float(params.get("drain_interval", 1.0)), 0.1),
 		"interval": maxf(float(params.get("drain_interval", 1.0)), 0.1),
 		"drain_percent": maxf(float(params.get("drain_percent", 0.06)), 0.0),
-		"enemy_blast_percent": maxf(float(params.get("enemy_blast_percent", 0.04)), 0.0),
-		"enemy_blast_flat": maxi(int(params.get("enemy_blast_flat", 4)), 0)
+		"enemy_blast_percent": maxf(float(params.get("enemy_blast_percent", 0.0)), 0.0),
+		"enemy_blast_flat": maxi(int(params.get("enemy_blast_flat", 0)), 0)
 	})
 
 func _apply_echo_mirror(duration: float, params: Dictionary) -> void:
@@ -478,8 +746,8 @@ func _apply_void_tax(duration: float, params: Dictionary) -> void:
 		"interval_left": maxf(float(params.get("drain_interval", 0.8)), 0.1),
 		"interval": maxf(float(params.get("drain_interval", 0.8)), 0.1),
 		"drain_percent": maxf(float(params.get("drain_percent", 0.02)), 0.0),
-		"enemy_blast_percent": maxf(float(params.get("enemy_blast_percent", 0.06)), 0.0),
-		"enemy_blast_flat": maxi(int(params.get("enemy_blast_flat", 6)), 0)
+		"enemy_blast_percent": maxf(float(params.get("enemy_blast_percent", 0.0)), 0.0),
+		"enemy_blast_flat": maxi(int(params.get("enemy_blast_flat", 0)), 0)
 	})
 
 func _apply_ascension_draft(duration: float, params: Dictionary) -> void:
@@ -487,6 +755,124 @@ func _apply_ascension_draft(duration: float, params: Dictionary) -> void:
 	_apply_temp_mult_to_runstate("cooldown_mult", float(params.get("cooldown_mult", 0.80)), duration)
 	_apply_enemy_slow_field(duration, {"slow_mult": float(params.get("slow_mult", 0.85))})
 	_grant_player_shield_percent(float(params.get("shield_percent", 0.10)), float(params.get("shield_duration", 5.0)), float(params.get("shield_cap_percent", 0.20)))
+
+func _apply_void_spike_rain(duration: float, params: Dictionary) -> void:
+	_apply_temp_mult_to_runstate("enemy_damage_mult", float(params.get("enemy_damage_mult", 1.12)), duration)
+	_active_player_hp_drain_effects.append({
+		"time_left": duration,
+		"interval_left": maxf(float(params.get("player_hit_interval", 0.9)), 0.1),
+		"interval": maxf(float(params.get("player_hit_interval", 0.9)), 0.1),
+		"drain_percent": maxf(float(params.get("player_hit_percent", 0.015)), 0.0),
+		"enemy_blast_percent": maxf(float(params.get("enemy_blast_percent", 0.0)), 0.0),
+		"enemy_blast_flat": maxi(int(params.get("enemy_blast_flat", 0)), 0)
+	})
+
+func _apply_council_catastrophe(duration: float, params: Dictionary) -> void:
+	_apply_temp_mult_to_runstate("enemy_damage_mult", float(params.get("enemy_damage_mult", 1.18)), duration)
+	_apply_temp_mult_to_runstate("player_damage_mult", float(params.get("player_damage_mult", 0.90)), duration)
+	_apply_player_percent_damage_nonlethal(float(params.get("opening_player_damage_percent", 0.08)))
+	_spawn_temporary_enemy_wave(params, duration, true)
+	_start_echo_pulses(duration, {
+		"pulse_count": maxi(2, int(round(duration / 0.9))),
+		"pulse_interval": 0.9,
+		"pulse_percent": 0.02,
+		"pulse_flat": 4,
+		"friendly_fire_to_player": true,
+		"player_pulse_percent": 0.01
+	})
+
+func _apply_enemy_reinforcements(duration: float, params: Dictionary) -> void:
+	_apply_temp_mult_to_runstate("enemy_damage_mult", float(params.get("enemy_damage_mult", 1.08)), duration)
+	_spawn_temporary_enemy_wave(params, duration, false)
+
+func _apply_council_avatar(duration: float, params: Dictionary) -> void:
+	_apply_temp_mult_to_runstate("enemy_damage_mult", float(params.get("enemy_damage_mult", 1.10)), duration)
+	_spawn_temporary_enemy_wave(params, duration, true)
+
+func _apply_divine_spirit_support(duration: float, params: Dictionary) -> void:
+	_apply_temp_mult_to_runstate("player_damage_mult", float(params.get("player_damage_mult", 1.12)), duration)
+	_apply_temp_mult_to_runstate("cooldown_mult", float(params.get("cooldown_mult", 0.90)), duration)
+	_start_echo_pulses(duration, {
+		"pulse_count": maxi(1, int(params.get("pulse_count", 4))),
+		"pulse_interval": maxf(0.1, float(params.get("pulse_interval", 0.8))),
+		"pulse_percent": maxf(0.0, float(params.get("pulse_percent", 0.03))),
+		"pulse_flat": maxi(0, int(params.get("pulse_flat", 6)))
+	})
+
+func _spawn_temporary_enemy_wave(params: Dictionary, duration: float, force_elite: bool) -> void:
+	var scene_path: String = String(params.get("spawn_scene", "res://scenes/enemies/EnemyKnightAdd.tscn"))
+	if scene_path == "":
+		return
+	if not ResourceLoader.exists(scene_path):
+		return
+	var scene: PackedScene = load(scene_path) as PackedScene
+	if scene == null:
+		return
+	var spawn_count: int = maxi(1, int(params.get("spawn_count", 1)))
+	var alpha: float = clampf(float(params.get("spirit_alpha", 0.85)), 0.2, 1.0)
+	var tree: SceneTree = get_tree()
+	if tree == null or tree.current_scene == null:
+		return
+	var player: Node = tree.get_first_node_in_group("player")
+	var floor_group: StringName = _resolve_primary_enemy_floor_group()
+	var anchors: Array[Vector2] = _collect_spawn_anchors_for_group(floor_group)
+	var anchor: Vector2 = Vector2.ZERO
+	if not anchors.is_empty():
+		anchor = anchors[0]
+	elif player is Node2D:
+		anchor = (player as Node2D).global_position
+	var rng: RandomNumberGenerator = RandomNumberGenerator.new()
+	if RunStateSingleton != null and RunStateSingleton.has_method("make_rng_for_domain"):
+		var seeded: RandomNumberGenerator = RunStateSingleton.call("make_rng_for_domain", &"dice_meter_temp_spawns", (_trigger_count * 101) + spawn_count) as RandomNumberGenerator
+		if seeded != null:
+			rng.seed = seeded.seed
+		else:
+			rng.randomize()
+	else:
+		rng.randomize()
+	var despawn_after: bool = bool(params.get("despawn_after_duration", false))
+	for i: int in range(spawn_count):
+		var node: Node = scene.instantiate()
+		if node == null:
+			continue
+		tree.current_scene.add_child(node)
+		if node is Node2D:
+			var n2d: Node2D = node as Node2D
+			if not anchors.is_empty():
+				var pick: int = rng.randi_range(0, anchors.size() - 1)
+				n2d.global_position = anchors[pick]
+			else:
+				var offset: Vector2 = Vector2(rng.randf_range(-220.0, 220.0), rng.randf_range(-40.0, 40.0))
+				n2d.global_position = anchor + offset
+			var tint: Color = n2d.modulate
+			tint.a = alpha
+			n2d.modulate = tint
+		node.add_to_group(floor_group)
+		if force_elite:
+			node.add_to_group(&"elites")
+		if despawn_after:
+			_schedule_temp_enemy_cleanup(node, maxf(duration + 0.8, 6.0))
+
+func _schedule_temp_enemy_cleanup(node: Node, delay_seconds: float) -> void:
+	if node == null or not is_instance_valid(node):
+		return
+	var tree: SceneTree = get_tree()
+	if tree == null:
+		return
+	var timer: SceneTreeTimer = tree.create_timer(maxf(delay_seconds, 0.1))
+	timer.timeout.connect(func() -> void:
+		if node != null and is_instance_valid(node):
+			node.queue_free()
+	)
+
+func _resolve_primary_enemy_floor_group() -> StringName:
+	var tree: SceneTree = get_tree()
+	if tree == null:
+		return &"subarena_enemies"
+	for g: StringName in [&"floor1_enemies", &"floor2_enemies", &"floor3_enemies", &"floor4_enemies", &"floor5_enemies"]:
+		if not tree.get_nodes_in_group(g).is_empty():
+			return g
+	return &"subarena_enemies"
 
 func _tick_echo_pulses(delta: float) -> void:
 	if _active_echo_pulses.is_empty():
@@ -499,6 +885,10 @@ func _tick_echo_pulses(delta: float) -> void:
 			_active_echo_pulses[i] = pulse
 			continue
 		_apply_floorwide_enemy_damage(float(pulse.get("pulse_percent", 0.05)), int(pulse.get("pulse_flat", 10)))
+		if bool(pulse.get("friendly_fire_to_player", false)):
+			var player_pct: float = float(pulse.get("player_pulse_percent", 0.01))
+			if player_pct > 0.0:
+				_apply_player_percent_damage_nonlethal(player_pct)
 		var left: int = int(pulse.get("pulses_left", 1)) - 1
 		if left <= 0:
 			_active_echo_pulses.remove_at(i)
@@ -632,6 +1022,335 @@ func _clear_enemy_slow_effects() -> void:
 			n.set(field_name, float(e.get("original", n.get(field_name))))
 	_active_enemy_slow_effects.clear()
 
+func _apply_enemy_chain(duration: float, params: Dictionary) -> void:
+	_apply_enemy_freeze_state(maxf(duration, 0.1), bool(params.get("include_boss", false)))
+
+func _apply_player_chain(duration: float, params: Dictionary) -> void:
+	var run_state: Node = _get_run_state()
+	if run_state == null:
+		return
+	if not ("player_move_speed_mult" in run_state):
+		return
+	var original_speed_mult: float = float(run_state.get("player_move_speed_mult"))
+	run_state.set("player_move_speed_mult", minf(original_speed_mult, float(params.get("move_mult", 0.01))))
+	_active_player_root_effects.append({
+		"time_left": maxf(duration, 0.1),
+		"original_move_speed_mult": original_speed_mult,
+		"break_actions": PackedStringArray(["dash", "defend", "interact"])
+	})
+
+func _tick_player_root_effects(delta: float) -> void:
+	if _active_player_root_effects.is_empty():
+		return
+	var run_state: Node = _get_run_state()
+	if run_state == null or not ("player_move_speed_mult" in run_state):
+		_active_player_root_effects.clear()
+		return
+	for i: int in range(_active_player_root_effects.size() - 1, -1, -1):
+		var e: Dictionary = _active_player_root_effects[i]
+		var break_actions: PackedStringArray = e.get("break_actions", PackedStringArray()) as PackedStringArray
+		var broken: bool = false
+		for action_name: String in break_actions:
+			if Input.is_action_just_pressed(action_name):
+				broken = true
+				break
+		var time_left: float = float(e.get("time_left", 0.0)) - delta
+		if broken or time_left <= 0.0:
+			run_state.set("player_move_speed_mult", float(e.get("original_move_speed_mult", 1.0)))
+			_active_player_root_effects.remove_at(i)
+			continue
+		e["time_left"] = time_left
+		_active_player_root_effects[i] = e
+
+func _clear_player_root_effects() -> void:
+	var run_state: Node = _get_run_state()
+	if run_state != null and ("player_move_speed_mult" in run_state):
+		for e: Dictionary in _active_player_root_effects:
+			run_state.set("player_move_speed_mult", float(e.get("original_move_speed_mult", 1.0)))
+	_active_player_root_effects.clear()
+
+func _apply_enemy_freeze_pulses(duration: float, params: Dictionary) -> void:
+	_active_enemy_freeze_pulses.append({
+		"time_left": maxf(duration, 0.1),
+		"interval_left": maxf(float(params.get("interval", 0.9)), 0.1),
+		"interval": maxf(float(params.get("interval", 0.9)), 0.1),
+		"freeze_seconds": maxf(float(params.get("freeze_seconds", 0.35)), 0.05),
+		"include_boss": bool(params.get("include_boss", false))
+	})
+
+func _tick_enemy_freeze_pulses(delta: float) -> void:
+	if _active_enemy_freeze_pulses.is_empty():
+		return
+	for i: int in range(_active_enemy_freeze_pulses.size() - 1, -1, -1):
+		var e: Dictionary = _active_enemy_freeze_pulses[i]
+		var time_left: float = float(e.get("time_left", 0.0)) - delta
+		var interval_left: float = float(e.get("interval_left", 0.0)) - delta
+		if interval_left <= 0.0 and time_left > 0.0:
+			_apply_enemy_freeze_state(float(e.get("freeze_seconds", 0.35)), bool(e.get("include_boss", false)))
+			interval_left += float(e.get("interval", 0.9))
+		if time_left <= 0.0:
+			_active_enemy_freeze_pulses.remove_at(i)
+			continue
+		e["time_left"] = time_left
+		e["interval_left"] = interval_left
+		_active_enemy_freeze_pulses[i] = e
+
+func _clear_enemy_freeze_pulses() -> void:
+	_active_enemy_freeze_pulses.clear()
+
+func _apply_player_freeze_pulses(duration: float, params: Dictionary) -> void:
+	_active_player_freeze_pulses.append({
+		"time_left": maxf(duration, 0.1),
+		"interval_left": maxf(float(params.get("interval", 1.0)), 0.1),
+		"interval": maxf(float(params.get("interval", 1.0)), 0.1),
+		"freeze_seconds": maxf(float(params.get("freeze_seconds", 0.25)), 0.05)
+	})
+
+func _tick_player_freeze_pulses(delta: float) -> void:
+	if _active_player_freeze_pulses.is_empty():
+		return
+	for i: int in range(_active_player_freeze_pulses.size() - 1, -1, -1):
+		var e: Dictionary = _active_player_freeze_pulses[i]
+		var time_left: float = float(e.get("time_left", 0.0)) - delta
+		var interval_left: float = float(e.get("interval_left", 0.0)) - delta
+		if interval_left <= 0.0 and time_left > 0.0:
+			_apply_player_chain(float(e.get("freeze_seconds", 0.25)), {"move_mult": 0.01})
+			interval_left += float(e.get("interval", 1.0))
+		if time_left <= 0.0:
+			_active_player_freeze_pulses.remove_at(i)
+			continue
+		e["time_left"] = time_left
+		e["interval_left"] = interval_left
+		_active_player_freeze_pulses[i] = e
+
+func _clear_player_freeze_pulses() -> void:
+	_active_player_freeze_pulses.clear()
+
+func _apply_enemy_freeze_state(duration: float, include_boss: bool) -> void:
+	for enemy: Node in _get_active_enemy_nodes():
+		if enemy == null or not is_instance_valid(enemy):
+			continue
+		if not include_boss and enemy.is_in_group(&"boss"):
+			continue
+		var entry := {
+			"node_id": enemy.get_instance_id(),
+			"time_left": maxf(duration, 0.05),
+			"process": enemy.is_processing(),
+			"physics": enemy.is_physics_processing()
+		}
+		enemy.set_process(false)
+		enemy.set_physics_process(false)
+		if enemy is CharacterBody2D:
+			(enemy as CharacterBody2D).velocity = Vector2.ZERO
+		_active_enemy_freeze_effects.append(entry)
+
+func _tick_enemy_freeze_effects(delta: float) -> void:
+	if _active_enemy_freeze_effects.is_empty():
+		return
+	for i: int in range(_active_enemy_freeze_effects.size() - 1, -1, -1):
+		var e: Dictionary = _active_enemy_freeze_effects[i]
+		var obj: Object = instance_from_id(int(e.get("node_id", 0)))
+		if obj == null or not is_instance_valid(obj) or not (obj is Node):
+			_active_enemy_freeze_effects.remove_at(i)
+			continue
+		var n: Node = obj as Node
+		var time_left: float = float(e.get("time_left", 0.0)) - delta
+		if time_left > 0.0:
+			e["time_left"] = time_left
+			_active_enemy_freeze_effects[i] = e
+			continue
+		n.set_process(bool(e.get("process", true)))
+		n.set_physics_process(bool(e.get("physics", true)))
+		_active_enemy_freeze_effects.remove_at(i)
+
+func _clear_enemy_freeze_effects() -> void:
+	for e: Dictionary in _active_enemy_freeze_effects:
+		var obj: Object = instance_from_id(int(e.get("node_id", 0)))
+		if obj == null or not is_instance_valid(obj) or not (obj is Node):
+			continue
+		var n: Node = obj as Node
+		n.set_process(bool(e.get("process", true)))
+		n.set_physics_process(bool(e.get("physics", true)))
+	_active_enemy_freeze_effects.clear()
+
+func _apply_player_visual_effect(duration: float, alpha: float) -> void:
+	var tree: SceneTree = get_tree()
+	if tree == null:
+		return
+	var player: Node = tree.get_first_node_in_group("player")
+	if not (player is CanvasItem):
+		return
+	var ci: CanvasItem = player as CanvasItem
+	_active_player_visual_effects.append({
+		"node_id": ci.get_instance_id(),
+		"time_left": maxf(duration, 0.1),
+		"original_modulate": ci.modulate
+	})
+	var c: Color = ci.modulate
+	c.a = clampf(alpha, 0.2, 1.0)
+	ci.modulate = c
+
+func _tick_player_visual_effects(delta: float) -> void:
+	if _active_player_visual_effects.is_empty():
+		return
+	for i: int in range(_active_player_visual_effects.size() - 1, -1, -1):
+		var e: Dictionary = _active_player_visual_effects[i]
+		var obj: Object = instance_from_id(int(e.get("node_id", 0)))
+		if obj == null or not is_instance_valid(obj) or not (obj is CanvasItem):
+			_active_player_visual_effects.remove_at(i)
+			continue
+		var ci: CanvasItem = obj as CanvasItem
+		var time_left: float = float(e.get("time_left", 0.0)) - delta
+		if time_left > 0.0:
+			e["time_left"] = time_left
+			_active_player_visual_effects[i] = e
+			continue
+		ci.modulate = e.get("original_modulate", ci.modulate)
+		_active_player_visual_effects.remove_at(i)
+
+func _clear_player_visual_effects() -> void:
+	for e: Dictionary in _active_player_visual_effects:
+		var obj: Object = instance_from_id(int(e.get("node_id", 0)))
+		if obj != null and is_instance_valid(obj) and obj is CanvasItem:
+			(obj as CanvasItem).modulate = e.get("original_modulate", (obj as CanvasItem).modulate)
+	_active_player_visual_effects.clear()
+
+func _apply_player_lifesteal(duration: float, params: Dictionary) -> void:
+	_active_lifesteal_effects.append({
+		"time_left": maxf(duration, 0.1),
+		"ratio": clampf(float(params.get("lifesteal_ratio", 0.5)), 0.0, 1.0)
+	})
+
+func _apply_lifesteal_from_damage(amount: float) -> void:
+	if _active_lifesteal_effects.is_empty():
+		return
+	var top_ratio: float = 0.0
+	for e: Dictionary in _active_lifesteal_effects:
+		top_ratio = maxf(top_ratio, float(e.get("ratio", 0.0)))
+	if top_ratio <= 0.0:
+		return
+	var heal_flat: int = maxi(1, int(round(amount * top_ratio)))
+	_heal_player_flat(heal_flat)
+
+func _tick_lifesteal_effects(delta: float) -> void:
+	if _active_lifesteal_effects.is_empty():
+		return
+	for i: int in range(_active_lifesteal_effects.size() - 1, -1, -1):
+		var e: Dictionary = _active_lifesteal_effects[i]
+		var time_left: float = float(e.get("time_left", 0.0)) - delta
+		if time_left <= 0.0:
+			_active_lifesteal_effects.remove_at(i)
+			continue
+		e["time_left"] = time_left
+		_active_lifesteal_effects[i] = e
+
+func _clear_lifesteal_effects() -> void:
+	_active_lifesteal_effects.clear()
+
+func _apply_enemy_regen(duration: float, params: Dictionary) -> void:
+	_apply_temp_mult_to_runstate("enemy_damage_mult", float(params.get("enemy_damage_mult", 1.12)), duration)
+	_active_enemy_regen_effects.append({
+		"time_left": maxf(duration, 0.1),
+		"interval_left": maxf(float(params.get("interval", 1.0)), 0.1),
+		"interval": maxf(float(params.get("interval", 1.0)), 0.1),
+		"heal_percent": maxf(float(params.get("heal_percent", 0.02)), 0.0),
+		"heal_flat": maxi(int(params.get("heal_flat", 4)), 0)
+	})
+
+func _tick_enemy_regen_effects(delta: float) -> void:
+	if _active_enemy_regen_effects.is_empty():
+		return
+	for i: int in range(_active_enemy_regen_effects.size() - 1, -1, -1):
+		var e: Dictionary = _active_enemy_regen_effects[i]
+		var time_left: float = float(e.get("time_left", 0.0)) - delta
+		var interval_left: float = float(e.get("interval_left", 0.0)) - delta
+		if interval_left <= 0.0 and time_left > 0.0:
+			_heal_active_enemies(float(e.get("heal_percent", 0.02)), int(e.get("heal_flat", 4)))
+			interval_left += float(e.get("interval", 1.0))
+		if time_left <= 0.0:
+			_active_enemy_regen_effects.remove_at(i)
+			continue
+		e["time_left"] = time_left
+		e["interval_left"] = interval_left
+		_active_enemy_regen_effects[i] = e
+
+func _clear_enemy_regen_effects() -> void:
+	_active_enemy_regen_effects.clear()
+
+func _heal_active_enemies(percent_of_max: float, flat_heal: int) -> void:
+	for enemy: Node in _get_active_enemy_nodes():
+		if enemy == null or not is_instance_valid(enemy):
+			continue
+		var hp_node: Node = enemy.get_node_or_null("Health")
+		if hp_node == null:
+			continue
+		if not ("hp" in hp_node) or not ("max_hp" in hp_node):
+			continue
+		var cur: int = int(hp_node.get("hp"))
+		var mx: int = int(hp_node.get("max_hp"))
+		if mx <= 0:
+			continue
+		var heal: int = maxi(flat_heal, 0) + int(round(float(mx) * maxf(percent_of_max, 0.0)))
+		if heal <= 0:
+			continue
+		var new_hp: int = mini(mx, cur + heal)
+		hp_node.set("hp", new_hp)
+		if hp_node.has_signal("health_changed"):
+			hp_node.emit_signal("health_changed", new_hp, mx)
+
+func _start_wind_push_effect(duration: float, affect_player: bool, push_speed: float, counter_move_mult: float) -> void:
+	_active_wind_effects.append({
+		"time_left": maxf(duration, 0.1),
+		"affect_player": affect_player,
+		"push_speed": push_speed,
+		"counter_move_mult": counter_move_mult
+	})
+
+func _tick_wind_effects(delta: float) -> void:
+	if _active_wind_effects.is_empty():
+		return
+	for i: int in range(_active_wind_effects.size() - 1, -1, -1):
+		var e: Dictionary = _active_wind_effects[i]
+		var time_left: float = float(e.get("time_left", 0.0)) - delta
+		var push_speed: float = float(e.get("push_speed", 120.0))
+		var affect_player: bool = bool(e.get("affect_player", false))
+		if affect_player:
+			var player: Node = get_tree().get_first_node_in_group("player")
+			if player is CharacterBody2D:
+				var body: CharacterBody2D = player as CharacterBody2D
+				body.velocity.x -= push_speed * delta
+		else:
+			for enemy: Node in _get_active_enemy_nodes():
+				if enemy is CharacterBody2D:
+					var body_e: CharacterBody2D = enemy as CharacterBody2D
+					body_e.velocity.x -= push_speed * delta
+		if time_left <= 0.0:
+			_active_wind_effects.remove_at(i)
+			continue
+		e["time_left"] = time_left
+		_active_wind_effects[i] = e
+
+func _clear_wind_effects() -> void:
+	_active_wind_effects.clear()
+
+func _heal_player_flat(amount: int) -> void:
+	if amount <= 0:
+		return
+	var health: Node = _get_player_health_node()
+	if health == null:
+		return
+	if health.has_method("heal"):
+		health.call("heal", amount)
+		return
+	if not ("hp" in health) or not ("max_hp" in health):
+		return
+	var hp_now: int = int(health.get("hp"))
+	var hp_max: int = int(health.get("max_hp"))
+	var new_hp: int = mini(hp_max, hp_now + amount)
+	health.set("hp", new_hp)
+	if health.has_signal("health_changed"):
+		health.emit_signal("health_changed", new_hp, hp_max)
+
 func _apply_floorwide_enemy_damage(percent_of_max: float, flat_damage: int) -> void:
 	for target: Node in _get_active_enemy_nodes():
 		if target == null or not is_instance_valid(target):
@@ -641,6 +1360,9 @@ func _apply_floorwide_enemy_damage(percent_of_max: float, flat_damage: int) -> v
 		if hp_node != null and "max_hp" in hp_node:
 			var mx: int = int(hp_node.get("max_hp"))
 			dmg += int(round(float(mx) * maxf(percent_of_max, 0.0)))
+		if dmg <= 0:
+			continue
+		dmg = _scale_dice_damage_for_target(target, dmg)
 		if dmg <= 0:
 			continue
 		if hp_node != null and hp_node.has_method("take_damage"):
@@ -660,13 +1382,22 @@ func _calc_enemy_damage_value(target: Node, percent_of_max: float, flat_damage: 
 func _apply_damage_to_enemy_node(target: Node, damage: int, tag: StringName) -> void:
 	if target == null or not is_instance_valid(target):
 		return
-	if damage <= 0:
+	var final_damage: int = _scale_dice_damage_for_target(target, damage)
+	if final_damage <= 0:
 		return
 	var hp_node: Node = target.get_node_or_null("Health")
 	if hp_node != null and hp_node.has_method("take_damage"):
-		hp_node.call("take_damage", damage, self, tag, false)
+		hp_node.call("take_damage", final_damage, self, tag, false)
 	elif target.has_method("take_damage"):
-		target.call("take_damage", damage, self)
+		target.call("take_damage", final_damage, self)
+
+func _scale_dice_damage_for_target(target: Node, amount: int) -> int:
+	var value: int = maxi(amount, 0)
+	if value <= 0:
+		return 0
+	if target != null and target.is_in_group(&"boss"):
+		return maxi(1, int(round(float(value) * 0.35)))
+	return value
 
 func _node_global_pos_or_zero(node: Node) -> Vector2:
 	if node == null or not is_instance_valid(node):
@@ -851,8 +1582,22 @@ func _get_active_enemy_nodes() -> Array[Node]:
 		_collect_enemy_like_nodes(current_scene, out, seen)
 	return out
 
+func _collect_spawn_anchors_for_group(group_name: StringName) -> Array[Vector2]:
+	var out: Array[Vector2] = []
+	var tree: SceneTree = get_tree()
+	if tree == null:
+		return out
+	for n: Node in tree.get_nodes_in_group(group_name):
+		if n == null or not is_instance_valid(n):
+			continue
+		if n is Node2D:
+			out.append((n as Node2D).global_position)
+	return out
+
 func _collect_enemy_like_nodes(node: Node, out: Array[Node], seen: Dictionary) -> void:
 	if node == null:
+		return
+	if _is_node_under_player(node):
 		return
 	if not node.is_in_group(&"player"):
 		var enemy_like: bool = false
@@ -867,6 +1612,16 @@ func _collect_enemy_like_nodes(node: Node, out: Array[Node], seen: Dictionary) -
 				out.append(node)
 	for child: Node in node.get_children():
 		_collect_enemy_like_nodes(child, out, seen)
+
+func _is_node_under_player(node: Node) -> bool:
+	if node == null:
+		return false
+	var cur: Node = node
+	while cur != null:
+		if cur.is_in_group(&"player"):
+			return true
+		cur = cur.get_parent()
+	return false
 
 func _apply_temp_mult_to_runstate(field_name: String, factor: float, duration: float) -> void:
 	var run_state := _get_run_state()

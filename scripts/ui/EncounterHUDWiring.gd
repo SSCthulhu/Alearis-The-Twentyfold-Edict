@@ -169,6 +169,14 @@ func _update_floor_chip() -> void:
 
 	if _floor_status_hud.has_method("set_floor_complete"):
 		_floor_status_hud.call("set_floor_complete", complete)
+	if _floor_status_hud.has_method("set_fast_clear_timer"):
+		var timer_left: float = 0.0
+		var timer_active: bool = false
+		if _floors.has_method("get_current_floor_fast_clear_time_left"):
+			timer_left = float(_floors.call("get_current_floor_fast_clear_time_left"))
+		if _floors.has_method("is_current_floor_fast_clear_active"):
+			timer_active = bool(_floors.call("is_current_floor_fast_clear_active"))
+		_floor_status_hud.call("set_fast_clear_timer", timer_left, timer_active)
 	
 	# ✅ NEW: Count elites on current floor
 	if _floor_status_hud.has_method("set_elites_count"):

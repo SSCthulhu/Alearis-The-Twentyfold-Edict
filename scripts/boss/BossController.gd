@@ -79,6 +79,21 @@ func _is_debug_enemy_death_locked() -> bool:
 		return false
 	return bool(dice_meter.call("is_debug_enemy_death_locked"))
 
+func _is_player_outgoing_source(source: Node) -> bool:
+	if source == null:
+		return false
+	if source.is_in_group(&"player"):
+		return true
+	if source.is_in_group(&"player_hitbox"):
+		return true
+	var source_owner: Node = source.get_owner()
+	if source_owner != null and source_owner.is_in_group(&"player"):
+		return true
+	var parent: Node = source.get_parent()
+	if parent != null and parent.is_in_group(&"player"):
+		return true
+	return false
+
 
 func _ready() -> void:
 	add_to_group(&"boss")
@@ -233,7 +248,7 @@ func take_damage(amount: int, _source: Node = null, tag: StringName = &"", is_cr
 		hp = 1
 	#print("[Boss] took ", amount, " dmg. HP now=", hp)
 	var dice_meter: Node = _get_dice_meter_singleton()
-	if dice_meter != null and dice_meter.has_method("on_boss_damage"):
+	if dice_meter != null and dice_meter.has_method("on_boss_damage") and _is_player_outgoing_source(_source):
 		dice_meter.call("on_boss_damage", float(amount))
 
 	health_changed.emit(hp, max_hp)
@@ -249,6 +264,8 @@ func take_damage(amount: int, _source: Node = null, tag: StringName = &"", is_cr
 
 	if hp <= 0:
 		_dead = true
+		if dice_meter != null and dice_meter.has_method("on_boss_killed"):
+			dice_meter.call("on_boss_killed")
 		#print("[Boss] defeated (prototype).")
 		
 		# Play death animation

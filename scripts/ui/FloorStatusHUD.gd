@@ -62,6 +62,8 @@ class_name FloorStatusHUD
 @export var complete_text: String = "FLOOR COMPLETE"
 @export var complete_text_color: Color = Color(0.95, 0.96, 0.98, 1.0)
 @export var complete_font_size: int = 16
+@export var timer_text_color: Color = Color(0.95, 0.86, 0.42, 1.0)
+@export var timer_font_size: int = 14
 
 # -----------------------------
 # Public state
@@ -73,6 +75,8 @@ var _enemies_total: int = 0
 var _floor_complete: bool = false
 var _is_boss_floor: bool = false
 var _elites_left: int = 0  # ✅ NEW: Count of elites remaining on current floor
+var _fast_clear_active: bool = false
+var _fast_clear_time_left: float = 0.0
 
 # -----------------------------
 # Node refs
@@ -83,6 +87,7 @@ var _footer_label: Label = null
 var _dot_row: HBoxContainer = null
 var _dot_texture: Texture2D = null
 var _complete_label: Label = null
+var _timer_label: Label = null
 var _sep_top: HSeparator = null
 var _sep_bottom: HSeparator = null
 
@@ -130,6 +135,11 @@ func set_elites_count(count: int) -> void:
 	_elites_left = max(0, count)
 	_refresh_targets()
 
+func set_fast_clear_timer(time_left: float, active: bool) -> void:
+	_fast_clear_time_left = maxf(time_left, 0.0)
+	_fast_clear_active = active
+	_refresh_footer()
+
 
 # -----------------------------
 # Internal: node setup
@@ -173,6 +183,15 @@ func _ensure_nodes() -> void:
 		_vbox.add_child(_complete_label)
 		_vbox.move_child(_complete_label, footer_idx2)
 
+	_timer_label = _vbox.get_node_or_null("TimerLabel") as Label
+	if _timer_label == null:
+		_timer_label = Label.new()
+		_timer_label.name = "TimerLabel"
+		_timer_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		_timer_label.visible = false
+		_vbox.add_child(_timer_label)
+		_vbox.move_child(_timer_label, _footer_label.get_index())
+
 	_sep_top = _vbox.get_node_or_null("SepTop") as HSeparator
 	if _sep_top == null:
 		_sep_top = HSeparator.new()
@@ -189,6 +208,8 @@ func _ensure_nodes() -> void:
 
 	_header_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	_footer_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	if _timer_label != null:
+		_timer_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 
 
 # -----------------------------
@@ -287,6 +308,11 @@ func _apply_typography() -> void:
 		_complete_label.add_theme_font_size_override("font_size", complete_font_size)
 		_complete_label.add_theme_color_override("font_color", complete_text_color)
 		_complete_label.add_theme_constant_override("spacing_char", header_letter_spacing)
+	if _timer_label != null:
+		if font_override != null:
+			_timer_label.add_theme_font_override("font", font_override)
+		_timer_label.add_theme_font_size_override("font_size", timer_font_size)
+		_timer_label.add_theme_color_override("font_color", timer_text_color)
 
 	_header_label.add_theme_font_size_override("font_size", header_font_size)
 	_footer_label.add_theme_font_size_override("font_size", footer_font_size)
@@ -340,6 +366,11 @@ func _refresh_footer() -> void:
 	if _footer_label == null:
 		return
 	_footer_label.text = "FLOOR: %d / %d" % [_floor_index, _floor_total]
+	if _timer_label != null:
+		var show_timer: bool = _fast_clear_active and _floor_index < _floor_total
+		_timer_label.visible = show_timer
+		if show_timer:
+			_timer_label.text = "FAST CLEAR: %s" % _format_seconds(_fast_clear_time_left)
 
 func _refresh_targets() -> void:
 	# ✅ Boss floor: Show elite dots FIRST, then "DEFEAT BOSS" after elites are cleared
@@ -437,3 +468,9 @@ func _refresh_targets() -> void:
 			else:
 				dot_rect.visible = true
 				dot_rect.modulate = dot_off_color
+
+func _format_seconds(value: float) -> String:
+	var seconds_total: int = maxi(int(ceil(value)), 0)
+	var minutes: int = int(seconds_total / 60.0)
+	var seconds: int = seconds_total % 60
+	return "%02d:%02d" % [minutes, seconds]

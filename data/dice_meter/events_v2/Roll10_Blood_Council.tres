@@ -1,0 +1,11 @@
+[gd_resource type="Resource" script_class="DiceEvent" load_steps=2 format=3]
+[ext_resource type="Script" path="res://scripts/systems/dice/DiceEvent.gd" id="1"]
+[resource]
+script = ExtResource("1")
+id = &"dm2_roll10_blood_council"
+display_name = "Hemalord's Tithe"
+brief_text = "Enemies siphon momentum through bloodshed."
+description = "Blood rites tax your HP while empowering hostile trades."
+effect_id = &"apply_enemy_regen"
+duration_seconds = 8.0
+effect_params = {"enemy_damage_mult": 1.2, "interval": 1.0, "heal_percent": 0.03, "heal_flat": 8}

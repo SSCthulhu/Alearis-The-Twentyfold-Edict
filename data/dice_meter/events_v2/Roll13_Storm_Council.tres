@@ -1,0 +1,11 @@
+[gd_resource type="Resource" script_class="DiceEvent" load_steps=2 format=3]
+[ext_resource type="Script" path="res://scripts/systems/dice/DiceEvent.gd" id="1"]
+[resource]
+script = ExtResource("1")
+id = &"dm2_roll13_storm_council"
+display_name = "Tempest Vicar's Gale"
+brief_text = "Rogue winds shove you out of comfort."
+description = "Cyclonic pressure breaks stable footing and pathing discipline."
+effect_id = &"apply_wind_push_player"
+duration_seconds = 7.0
+effect_params = {"push_speed": 180.0, "counter_move_mult": 0.5}

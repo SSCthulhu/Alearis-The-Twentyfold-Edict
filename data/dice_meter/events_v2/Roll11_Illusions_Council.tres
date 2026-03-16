@@ -1,0 +1,11 @@
+[gd_resource type="Resource" script_class="DiceEvent" load_steps=2 format=3]
+[ext_resource type="Script" path="res://scripts/systems/dice/DiceEvent.gd" id="1"]
+[resource]
+script = ExtResource("1")
+id = &"dm2_roll11_illusions_council"
+display_name = "Mirrormask Phantoms"
+brief_text = "Illusory doubles fracture target priority."
+description = "Hostile mirages create burst threats and punish poor spacing."
+effect_id = &"apply_bone_lottery"
+duration_seconds = 7.0
+effect_params = {"splash_radius": 220.0, "mark_percent": 0.16, "splash_percent": 0.05, "splash_flat": 6, "cooldown_mult": 1.02}

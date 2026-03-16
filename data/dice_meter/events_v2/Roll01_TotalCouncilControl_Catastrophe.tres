@@ -1,0 +1,13 @@
+[gd_resource type="Resource" script_class="DiceEvent" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/systems/dice/DiceEvent.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = &"dm2_roll01_total_council_control"
+display_name = "Total Council Control"
+brief_text = "An elite enters and enemies surge with power."
+description = "The Council seizes the arena: a dangerous elite manifests while hostile forces grow deadlier."
+effect_id = &"spawn_council_catastrophe"
+duration_seconds = 8.0
+effect_params = {"enemy_damage_mult": 1.25, "spawn_scene": "res://scenes/enemies/EnemySkeletonGolem.tscn", "spawn_count": 1, "spirit_alpha": 0.9, "opening_player_damage_percent": 0.12, "despawn_after_duration": false}

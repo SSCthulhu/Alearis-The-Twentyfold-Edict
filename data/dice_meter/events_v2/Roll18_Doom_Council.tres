@@ -1,0 +1,11 @@
+[gd_resource type="Resource" script_class="DiceEvent" load_steps=2 format=3]
+[ext_resource type="Script" path="res://scripts/systems/dice/DiceEvent.gd" id="1"]
+[resource]
+script = ExtResource("1")
+id = &"dm2_roll18_doom_council"
+display_name = "Doom Bell Rain"
+brief_text = "Lethal projectiles pour from above."
+description = "The bell tolls and the arena is saturated with falling threats."
+effect_id = &"spawn_void_spike_rain"
+duration_seconds = 9.0
+effect_params = {"player_hit_interval": 0.7, "player_hit_percent": 0.02, "enemy_blast_percent": 0.0, "enemy_blast_flat": 0}

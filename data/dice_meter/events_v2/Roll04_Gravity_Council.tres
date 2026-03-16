@@ -1,0 +1,11 @@
+[gd_resource type="Resource" script_class="DiceEvent" load_steps=2 format=3]
+[ext_resource type="Script" path="res://scripts/systems/dice/DiceEvent.gd" id="1"]
+[resource]
+script = ExtResource("1")
+id = &"dm2_roll04_gravity_council"
+display_name = "Crushing Pull"
+brief_text = "Your movement feels heavier and less forgiving."
+description = "Gravitic pressure drags your tempo and makes movement commitments costly."
+effect_id = &"apply_weighted_calm"
+duration_seconds = 8.0
+effect_params = {"enemy_haste_mult": 1.12}

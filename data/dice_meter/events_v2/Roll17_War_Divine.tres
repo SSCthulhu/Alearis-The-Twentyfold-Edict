@@ -1,0 +1,11 @@
+[gd_resource type="Resource" script_class="DiceEvent" load_steps=2 format=3]
+[ext_resource type="Script" path="res://scripts/systems/dice/DiceEvent.gd" id="1"]
+[resource]
+script = ExtResource("1")
+id = &"dm2_roll17_war_divine"
+display_name = "War Hymn"
+brief_text = "Your attack cadence accelerates."
+description = "A divine war-chant sharpens offensive pressure windows."
+effect_id = &"apply_ascension_draft"
+duration_seconds = 7.0
+effect_params = {"player_damage_mult": 1.16, "cooldown_mult": 0.78, "slow_mult": 0.9, "shield_percent": 0.06, "shield_duration": 4.5, "shield_cap_percent": 0.14}

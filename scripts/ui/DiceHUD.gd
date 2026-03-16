@@ -65,6 +65,8 @@ class_name DiceHUD
 @export var show_last_roll: bool = false
 @export var show_meter_status: bool = true
 @export var meter_ready_text: String = "Dice Meter: READY"
+@export var show_alignment_hint: bool = true
+@export var alignment_hint_text: String = "MIN - BALANCE - MAX"
 
 # Optional: if you want to reuse your existing DiceLabel (will be repurposed as VALUE)
 @export var label_path: NodePath = ^"VBoxContainer/DiceLabel"
@@ -86,6 +88,7 @@ var _vbox: VBoxContainer = null
 var _header_label: Label = null
 var _value_label: Label = null
 var _sub_label: Label = null
+var _alignment_label: Label = null
 var _sep_top: HSeparator = null
 var _pulse_t: float = 0.0
 var _ready_glow_active: bool = false
@@ -187,6 +190,11 @@ func _ensure_nodes() -> void:
 		_sub_label = Label.new()
 		_sub_label.name = "SubLabel"
 		_vbox.add_child(_sub_label)
+	_alignment_label = _vbox.get_node_or_null("AlignmentLabel") as Label
+	if _alignment_label == null:
+		_alignment_label = Label.new()
+		_alignment_label.name = "AlignmentLabel"
+		_vbox.add_child(_alignment_label)
 		
 	# Force the exact visual order in the VBox:
 	# Header -> Divider -> Value -> Sub
@@ -200,12 +208,15 @@ func _ensure_nodes() -> void:
 		_vbox.move_child(_value_label, 2)
 
 	if _sub_label != null:
-		_vbox.move_child(_sub_label, 3)
+		_vbox.move_child(_sub_label, 4)
+	if _alignment_label != null:
+		_vbox.move_child(_alignment_label, 3)
 
 	# Alignment
 	_header_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	_value_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	_sub_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_alignment_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 
 
 # -----------------------------
@@ -269,6 +280,9 @@ func _apply_typography() -> void:
 	_header_label.add_theme_color_override("font_color", header_text_color)
 	_value_label.add_theme_color_override("font_color", value_text_color)
 	_sub_label.add_theme_color_override("font_color", sub_text_color)
+	if _alignment_label != null:
+		_alignment_label.add_theme_font_size_override("font_size", sub_font_size)
+		_alignment_label.add_theme_color_override("font_color", sub_text_color)
 
 	_header_label.add_theme_constant_override("spacing_char", header_letter_spacing)
 	_value_label.add_theme_constant_override("spacing_char", value_letter_spacing)
@@ -305,8 +319,8 @@ func _update_text(min_value: int, max_value: int, current_roll: int) -> void:
 		_header_label.text = header_text
 
 	if _value_label != null:
-		# Nice compact display
-		_value_label.text = "%d–%d" % [_min_value, _max_value]
+		var midpoint: float = (float(_min_value) + float(_max_value)) * 0.5
+		_value_label.text = "%d - %s - %d" % [_min_value, _format_midpoint(midpoint), _max_value]
 
 		# Optional: gold highlight when the range includes 20 (your “important/ready” gold language)
 		if use_gold_on_max_20 and _max_value >= 20:
@@ -332,6 +346,19 @@ func _update_text(min_value: int, max_value: int, current_roll: int) -> void:
 			_sub_label.text = meter_text
 		else:
 			_sub_label.text = roll_text
+	if _alignment_label != null:
+		_alignment_label.visible = show_alignment_hint
+		if show_alignment_hint:
+			_alignment_label.text = alignment_hint_text
+
+func _format_midpoint(value: float) -> String:
+	if is_equal_approx(value, round(value)):
+		return str(int(round(value)))
+	var lo: int = int(floor(value))
+	var hi: int = int(ceil(value))
+	if lo != hi:
+		return "%d/%d" % [lo, hi]
+	return "%.1f" % value
 
 func _get_dice_meter_singleton() -> Node:
 	var tree: SceneTree = get_tree()

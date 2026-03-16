@@ -1,0 +1,11 @@
+[gd_resource type="Resource" script_class="DiceEvent" load_steps=2 format=3]
+[ext_resource type="Script" path="res://scripts/systems/dice/DiceEvent.gd" id="1"]
+[resource]
+script = ExtResource("1")
+id = &"dm2_roll19_judgment_council"
+display_name = "Arbiter's Avatar"
+brief_text = "A council avatar enters the battle."
+description = "Judgment manifests as a temporary elite enforcer."
+effect_id = &"spawn_council_avatar"
+duration_seconds = 9.0
+effect_params = {"spawn_scene": "res://scenes/enemies/EnemySkeletonGolem.tscn", "spawn_count": 1, "spirit_alpha": 0.85, "enemy_damage_mult": 1.2, "despawn_after_duration": false}

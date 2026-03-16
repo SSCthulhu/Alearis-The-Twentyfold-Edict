@@ -1,0 +1,11 @@
+[gd_resource type="Resource" script_class="DiceEvent" load_steps=2 format=3]
+[ext_resource type="Script" path="res://scripts/systems/dice/DiceEvent.gd" id="1"]
+[resource]
+script = ExtResource("1")
+id = &"dm2_roll14_stone_council"
+display_name = "Stone Regent's Bastion"
+brief_text = "Rising stone constricts your movement lanes."
+description = "Earthen pressure narrows safe routes and drags combat pace."
+effect_id = &"apply_player_chain"
+duration_seconds = 8.0
+effect_params = {"move_mult": 0.4}

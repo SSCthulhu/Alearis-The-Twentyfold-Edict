@@ -1,0 +1,11 @@
+[gd_resource type="Resource" script_class="DiceEvent" load_steps=2 format=3]
+[ext_resource type="Script" path="res://scripts/systems/dice/DiceEvent.gd" id="1"]
+[resource]
+script = ExtResource("1")
+id = &"dm2_roll05_chains_divine"
+display_name = "Sanctified Chains"
+brief_text = "Enemies are snared in place."
+description = "Divine bindings constrain hostile movement and grant breathing room."
+effect_id = &"apply_enemy_chain"
+duration_seconds = 6.0
+effect_params = {"include_boss": false}
