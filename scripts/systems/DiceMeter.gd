@@ -999,6 +999,11 @@ func _spawn_player_reflection_copy(player_root: Node, params: Dictionary = {}) -
 		if debug_logs:
 			_log_debug("11G reflection marker spawn player=%s spawn=%s" % [str(player_pos), str(spawn_pos)])
 		return marker_root
+	var snapshot_actor: Node2D = _spawn_reflection_snapshot_actor(player_root, spawn_pos, float(params.get("clone_alpha", 0.95)))
+	if snapshot_actor != null:
+		if debug_logs:
+			_log_debug("11G reflection snapshot spawn player=%s spawn=%s" % [str(player_pos), str(spawn_pos)])
+		return snapshot_actor
 	var reflection_root: Node2D = PLAYER_REFLECTION_CLONE_SCENE.instantiate() as Node2D
 	if reflection_root == null or not (reflection_root is Node2D):
 		return null
@@ -1032,8 +1037,6 @@ func _spawn_player_reflection_copy(player_root: Node, params: Dictionary = {}) -
 		reflection_root.call("set_clone_alpha", 0.95)
 	if reflection_root.has_method("set_debug_marker_mode"):
 		reflection_root.call("set_debug_marker_mode", false)
-	if reflection_root.has_method("configure_surface_from_player_view"):
-		reflection_root.call("configure_surface_from_player_view", player_root)
 	if "character_data" in player_root and reflection_root.has_method("configure_from_character_data"):
 		var cdata: Object = player_root.get("character_data") as Object
 		reflection_root.call("configure_from_character_data", cdata)
@@ -1045,6 +1048,51 @@ func _spawn_player_reflection_copy(player_root: Node, params: Dictionary = {}) -
 	if debug_logs:
 		_log_debug("11G reflection anchor spawn player=%s spawn=%s" % [str(player_pos), str(spawn_pos)])
 	return reflection_root
+
+func _spawn_reflection_snapshot_actor(player_root: Node, spawn_pos: Vector2, alpha: float) -> Node2D:
+	var tree: SceneTree = get_tree()
+	if tree == null or tree.current_scene == null:
+		return null
+	if player_root == null or not is_instance_valid(player_root):
+		return null
+	var body_view: Node2D = player_root.get_node_or_null("Visual/Body3DView") as Node2D
+	if body_view == null:
+		return null
+	var src_sprite: Sprite2D = body_view.get_node_or_null("ScreenSprite") as Sprite2D
+	if src_sprite == null or src_sprite.texture == null:
+		return null
+	var src_tex: Texture2D = src_sprite.texture
+	if src_tex == null:
+		return null
+	var img: Image = src_tex.get_image()
+	if img == null or img.is_empty():
+		return null
+	var tex: ImageTexture = ImageTexture.create_from_image(img)
+	if tex == null:
+		return null
+	var root: Node2D = Node2D.new()
+	root.name = "ReflectionActor"
+	root.top_level = true
+	root.process_mode = Node.PROCESS_MODE_PAUSABLE
+	root.add_to_group(&"dice_meter_reflection_actor")
+	root.set_meta("dice_meter_reflection", true)
+	root.set_meta("reflection_source", "11g_player_anchor")
+	root.set_meta("reflection_target_id", 0)
+	var spr: Sprite2D = Sprite2D.new()
+	spr.name = "SnapshotSprite"
+	spr.texture = tex
+	spr.centered = src_sprite.centered
+	spr.region_enabled = src_sprite.region_enabled
+	spr.region_rect = src_sprite.region_rect
+	# Match player's rendered on-screen size using one effective scale source.
+	spr.scale = src_sprite.global_scale
+	spr.rotation = src_sprite.global_rotation
+	spr.texture_filter = src_sprite.texture_filter
+	spr.modulate = Color(1.0, 1.0, 1.0, clampf(alpha, 0.05, 1.0))
+	root.add_child(spr)
+	tree.current_scene.add_child(root)
+	root.global_position = spawn_pos
+	return root
 
 func _cleanup_reflection_artifacts_under_player(player_root: Node) -> void:
 	if player_root == null or not is_instance_valid(player_root):

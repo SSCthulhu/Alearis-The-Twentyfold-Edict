@@ -8,4 +8,4 @@ brief_text = "A player reflection appears beside you."
 description = "A faithful reflection appears offset from the player and persists briefly."
 effect_id = &"apply_reflection_combo"
 duration_seconds = 7.0
-effect_params = {"player_damage_mult": 1.12, "copy_lifetime": 7.0, "spawn_offset_x": 100.0, "spawn_offset_y": 0.0, "debug_marker_mode": true}
+effect_params = {"player_damage_mult": 1.12, "copy_lifetime": 7.0, "spawn_offset_x": 100.0, "spawn_offset_y": 0.0, "debug_marker_mode": false, "clone_alpha": 0.95}
