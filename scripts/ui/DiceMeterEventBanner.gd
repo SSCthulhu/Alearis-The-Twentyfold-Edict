@@ -4,6 +4,7 @@ class_name DiceMeterEventBanner
 @export var display_seconds: float = 2.2
 @export var fade_in_seconds: float = 0.08
 @export var fade_out_seconds: float = 0.2
+@export var hide_delay_after_end_seconds: float = 0.2
 @export var font_size: int = 34
 @export var font_override: Font = null
 @export var text_color: Color = Color(1.0, 0.95, 0.8, 1.0)
@@ -20,6 +21,8 @@ class_name DiceMeterEventBanner
 @export var backdrop_padding: Vector2 = Vector2(48.0, 34.0)
 @export var backdrop_size_scale: float = 1.2
 @export var backdrop_min_size: Vector2 = Vector2(920.0, 220.0)
+@export var content_margin: Vector2 = Vector2(42.0, 26.0)
+@export var max_box_width_ratio: float = 0.96
 
 @onready var _event_label: Label = $EventLabel
 var _hide_tween: Tween = null
@@ -28,6 +31,7 @@ var _tracking_effect: bool = false
 var _roll_value: int = 0
 var _event_name: String = ""
 var _summary_text: String = ""
+var _box_rect: Rect2 = Rect2()
 
 func _ready() -> void:
 	visible = false
@@ -38,6 +42,7 @@ func _ready() -> void:
 		_event_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 		_event_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 		_event_label.autowrap_mode = TextServer.AUTOWRAP_OFF
+		_event_label.clip_text = false
 		_event_label.add_theme_font_size_override("font_size", font_size)
 		_event_label.add_theme_color_override("font_color", text_color)
 		if font_override != null:
@@ -125,21 +130,28 @@ func _refresh_banner_text() -> void:
 	var time_left: float = 0.0
 	if "active_effect_time_left" in dice_meter:
 		time_left = float(dice_meter.active_effect_time_left)
+	var hide_timer: bool = false
+	if "active_effect_hide_timer" in dice_meter:
+		hide_timer = bool(dice_meter.active_effect_hide_timer)
 	var timer_text: String = ""
-	if time_left > 0.0:
+	if time_left > 0.0 and not hide_timer:
 		timer_text = "Time Left: %.1fs" % time_left
-	elif display_seconds > 0.0:
-		timer_text = "Time Left: %.1fs" % 0.0
 	if _event_label != null:
 		var lines: Array[String] = []
+		var max_box_width: float = maxf(backdrop_min_size.x, size.x * clampf(max_box_width_ratio, 0.5, 1.0))
+		max_box_width = minf(max_box_width, size.x - 20.0)
+		var wrap_width: float = maxf(240.0, max_box_width - (content_margin.x * 2.0))
 		lines.append("Rolled %d" % _roll_value)
 		lines.append(_event_name)
 		if _summary_text != "":
-			lines.append(_summary_text)
+			var wrapped_summary: String = _wrap_text_for_width(_summary_text, wrap_width)
+			for wrapped_line: String in wrapped_summary.split("\n"):
+				lines.append(wrapped_line)
 		if timer_text != "":
 			lines.append(timer_text)
 		_event_label.text = "\n".join(lines)
-	if time_left <= 0.0:
+		_update_text_layout()
+	if time_left <= 0.0 and not hide_timer:
 		_tracking_effect = false
 		_fade_and_hide()
 
@@ -147,7 +159,7 @@ func _fade_and_hide() -> void:
 	if _hide_tween != null:
 		_hide_tween.kill()
 	_hide_tween = create_tween()
-	_hide_tween.tween_interval(maxf(display_seconds, 0.05))
+	_hide_tween.tween_interval(maxf(hide_delay_after_end_seconds, 0.0))
 	_hide_tween.tween_property(self, "modulate:a", 0.0, maxf(fade_out_seconds, 0.01))
 	_hide_tween.finished.connect(func() -> void:
 		visible = false
@@ -164,19 +176,12 @@ func _draw() -> void:
 		return
 	if _event_label.text.strip_edges() == "":
 		return
-	var label_size: Vector2 = _measure_label_text_size()
-	if label_size.x <= 0.0 or label_size.y <= 0.0:
-		label_size = Vector2(360.0, 120.0)
-	var box_size: Vector2 = Vector2(
-		minf(size.x - 20.0, (label_size.x * backdrop_size_scale) + (backdrop_padding.x * 2.0)),
-		(label_size.y * backdrop_size_scale) + (backdrop_padding.y * 2.0)
-	)
-	box_size.x = maxf(box_size.x, backdrop_min_size.x)
-	box_size.y = maxf(box_size.y, backdrop_min_size.y)
-	var box_pos: Vector2 = Vector2((size.x - box_size.x) * 0.5, (size.y - box_size.y) * 0.5)
-	var r: Rect2 = Rect2(box_pos, box_size)
-	draw_rect(r, backdrop_color, true)
-	draw_rect(r, backdrop_border_color, false, 2.0)
+	if _box_rect.size.x <= 0.0 or _box_rect.size.y <= 0.0:
+		_update_text_layout()
+	if _box_rect.size.x <= 0.0 or _box_rect.size.y <= 0.0:
+		return
+	draw_rect(_box_rect, backdrop_color, true)
+	draw_rect(_box_rect, backdrop_border_color, false, 2.0)
 
 func _measure_label_text_size() -> Vector2:
 	if _event_label == null:
@@ -198,6 +203,50 @@ func _measure_label_text_size() -> Vector2:
 	var line_count: int = maxi(lines.size(), 1)
 	var height: float = (font.get_height(text_font_size) * float(line_count)) + (6.0 * float(maxi(line_count - 1, 0)))
 	return Vector2(max_width, height)
+
+func _update_text_layout() -> void:
+	if _event_label == null:
+		return
+	var max_box_width: float = maxf(backdrop_min_size.x, size.x * clampf(max_box_width_ratio, 0.5, 1.0))
+	max_box_width = minf(max_box_width, size.x - 20.0)
+	var measured: Vector2 = _measure_label_text_size()
+	if measured.x <= 0.0 or measured.y <= 0.0:
+		measured = Vector2(420.0, 140.0)
+	var box_width: float = maxf(backdrop_min_size.x, minf(max_box_width, measured.x + (content_margin.x * 2.0)))
+	var box_height: float = maxf(backdrop_min_size.y, (measured.y * backdrop_size_scale) + (content_margin.y * 2.0))
+	var box_pos: Vector2 = Vector2((size.x - box_width) * 0.5, (size.y - box_height) * 0.5)
+	_box_rect = Rect2(box_pos, Vector2(box_width, box_height))
+	_event_label.position = box_pos + content_margin
+	_event_label.size = Vector2(maxf(120.0, box_width - (content_margin.x * 2.0)), maxf(80.0, box_height - (content_margin.y * 2.0)))
+
+func _wrap_text_for_width(text: String, max_width: float) -> String:
+	if text.strip_edges() == "":
+		return ""
+	var font: Font = _event_label.get_theme_font("font")
+	if font == null:
+		return text
+	var text_font_size: int = _event_label.get_theme_font_size("font_size")
+	if text_font_size <= 0:
+		text_font_size = font_size
+	var paragraphs: PackedStringArray = text.split("\n")
+	var out_lines: Array[String] = []
+	for para: String in paragraphs:
+		var words: PackedStringArray = para.split(" ", false)
+		if words.is_empty():
+			out_lines.append("")
+			continue
+		var line: String = ""
+		for w: String in words:
+			var candidate: String = w if line == "" else "%s %s" % [line, w]
+			var width: float = font.get_string_size(candidate, HORIZONTAL_ALIGNMENT_LEFT, -1, text_font_size).x
+			if width <= max_width or line == "":
+				line = candidate
+			else:
+				out_lines.append(line)
+				line = w
+		if line != "":
+			out_lines.append(line)
+	return "\n".join(out_lines)
 
 func _get_band_color(band: int) -> Color:
 	match band:

@@ -847,6 +847,25 @@ scale = Vector2(0.8, 0.8)
 sprite_frames = SubResource("SpriteFrames_j04tu")
 animation = &"closed"
 
+[node name="Floor2Door2" type="AnimatedSprite2D" parent="Doorways" groups=["door"]]
+z_index = -1
+position = Vector2(-1253, -431)
+scale = Vector2(0.8, 0.8)
+sprite_frames = SubResource("SpriteFrames_j04tu")
+animation = &"closed"
+
+[node name="InteractArea" type="Area2D" parent="Doorways/Floor2Door2"]
+position = Vector2(0, 100)
+collision_mask = 2
+monitoring = false
+monitorable = false
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Doorways/Floor2Door2/InteractArea"]
+position = Vector2(-10.625, -27.5)
+scale = Vector2(0.99999964, 0.99999964)
+shape = SubResource("RectangleShape2D_door1")
+metadata/_edit_group_ = true
+
 [node name="ArenaArt" type="Node2D" parent="."]
 
 [node name="BackWalls" type="Node2D" parent="ArenaArt"]

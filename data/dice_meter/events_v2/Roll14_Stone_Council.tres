@@ -4,8 +4,8 @@
 script = ExtResource("1")
 id = &"dm2_roll14_stone_council"
 display_name = "Stone Regent's Bastion"
-brief_text = "Rising stone constricts your movement lanes."
-description = "Earthen pressure narrows safe routes and drags combat pace."
-effect_id = &"apply_player_chain"
+brief_text = "Stone burden stalls your rhythm and freezes cooldown momentum."
+description = "The Regent's weight drags your movement and damage while your active cooldown timers temporarily stop ticking."
+effect_id = &"apply_weighted_calm"
 duration_seconds = 8.0
-effect_params = {"move_mult": 0.4}
+effect_params = {"player_move_speed_mult": 0.62, "player_gravity_mult": 1.2, "player_damage_mult": 0.78, "pause_player_cooldowns": true}

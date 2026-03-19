@@ -1106,7 +1106,7 @@ func _is_input_against_facing() -> bool:
 func _get_speed_multiplier() -> float:
 	var run_mult: float = 1.0
 	if RunStateSingleton != null and ("player_move_speed_mult" in RunStateSingleton):
-		run_mult = clampf(float(RunStateSingleton.player_move_speed_mult), 0.5, 2.0)
+		run_mult = clampf(float(RunStateSingleton.player_move_speed_mult), 0.25, 2.0)
 	if character_data != null:
 		return character_data.move_speed_multiplier * run_mult
 	return run_mult

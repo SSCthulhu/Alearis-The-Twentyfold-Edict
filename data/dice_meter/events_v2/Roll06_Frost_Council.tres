@@ -4,8 +4,8 @@
 script = ExtResource("1")
 id = &"dm2_roll06_frost_council"
 display_name = "Rimecaller Chill"
-brief_text = "A freezing aura slows your combat rhythm."
-description = "Cold pressure reduces responsiveness and punishes overextension."
+brief_text = "Frost pulses lock your movement in short stutters."
+description = "Rimecaller chill repeatedly freezes you for brief windows that interrupt repositioning."
 effect_id = &"apply_player_freeze_pulses"
 duration_seconds = 7.0
-effect_params = {"interval": 1.1, "freeze_seconds": 0.25}
+effect_params = {"interval": 0.85, "freeze_seconds": 0.32}

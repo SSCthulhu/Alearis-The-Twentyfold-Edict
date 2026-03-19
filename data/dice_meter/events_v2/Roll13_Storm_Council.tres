@@ -8,4 +8,4 @@ brief_text = "Rogue winds shove you out of comfort."
 description = "Cyclonic pressure breaks stable footing and pathing discipline."
 effect_id = &"apply_wind_push_player"
 duration_seconds = 7.0
-effect_params = {"push_speed": 180.0, "counter_move_mult": 0.5}
+effect_params = {"push_speed": 130.0, "counter_move_mult": 0.9, "player_move_speed_mult": 0.72, "idle_drift_scale": 0.9}

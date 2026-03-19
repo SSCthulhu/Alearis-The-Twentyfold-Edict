@@ -97,6 +97,7 @@ var _BIGD_ready_time: float = 0.0
 var _paused_time_accum_sec: float = 0.0
 var _pause_started_raw_sec: float = 0.0
 var _is_tracking_pause: bool = false
+var _external_cooldown_pause_sec: float = 0.0
 
 func _ready() -> void:
 	_player = get_parent() as CharacterBody2D
@@ -122,7 +123,10 @@ func _now() -> float:
 	var effective_paused_sec: float = _paused_time_accum_sec
 	if _is_tracking_pause:
 		effective_paused_sec += maxf(raw_now_sec - _pause_started_raw_sec, 0.0)
-	return raw_now_sec - effective_paused_sec
+	return raw_now_sec - effective_paused_sec - maxf(_external_cooldown_pause_sec, 0.0)
+
+func add_external_cooldown_pause(seconds: float) -> void:
+	_external_cooldown_pause_sec += maxf(seconds, 0.0)
 
 func _raw_now_seconds() -> float:
 	return float(Time.get_ticks_msec()) / 1000.0

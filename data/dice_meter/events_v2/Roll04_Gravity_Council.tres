@@ -4,8 +4,8 @@
 script = ExtResource("1")
 id = &"dm2_roll04_gravity_council"
 display_name = "Crushing Pull"
-brief_text = "Your movement feels heavier and less forgiving."
-description = "Gravitic pressure drags your tempo and makes movement commitments costly."
+brief_text = "You are weighed down; movement and recovery feel brutally heavy."
+description = "Council gravity crushes mobility with stronger pull, slower pace, and longer combat recovery."
 effect_id = &"apply_weighted_calm"
 duration_seconds = 8.0
-effect_params = {"enemy_haste_mult": 1.12}
+effect_params = {"player_move_speed_mult": 0.25, "player_gravity_mult": 1.45, "cooldown_mult": 1.25}

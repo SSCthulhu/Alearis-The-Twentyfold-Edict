@@ -4,8 +4,8 @@
 script = ExtResource("1")
 id = &"dm2_roll02_shadows_council"
 display_name = "Shadows of Umbrix"
-brief_text = "Darkness presses in; enemies fade between strikes."
-description = "Vision and tempo collapse as shadow pressure favors hostile movement windows."
+brief_text = "Darkness bites; your output drops while shadows drain you."
+description = "Umbrix smothers the arena, reducing your pressure and applying visible health drain ticks."
 effect_id = &"apply_crosswind_pressure"
 duration_seconds = 7.0
-effect_params = {"player_damage_mult": 0.78, "cooldown_mult": 1.22}
+effect_params = {"player_damage_mult": 0.7, "cooldown_mult": 1.25, "drain_interval": 0.85, "drain_percent": 0.012}

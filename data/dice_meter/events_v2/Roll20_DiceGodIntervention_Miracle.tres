@@ -9,5 +9,5 @@ display_name = "Dice God Intervention"
 brief_text = "A divine beam scorches foes and staggers survivors."
 description = "The Dice God parts the battlefield with a holy strike, heavily punishing enemies without trivializing bosses."
 effect_id = &"apply_royal_decree"
-duration_seconds = 8.0
-effect_params = {"opening_percent": 0.08, "opening_flat": 8, "cleave_percent": 0.03, "cleave_flat": 3, "player_damage_mult": 1.15, "cooldown_mult": 0.88, "shield_percent": 0.08, "shield_duration": 5.0, "shield_cap_percent": 0.2, "tick_interval": 1.0, "tick_percent": 0.015, "tick_flat": 2, "freeze_interval": 0.85, "freeze_seconds": 0.25}
+duration_seconds = 3.0
+effect_params = {"single_hit_floorwide": true, "cleave_percent": 0.06, "cleave_flat": 8, "opening_percent": 0.0, "opening_flat": 0, "player_damage_mult": 1.1, "cooldown_mult": 0.9, "shield_percent": 0.06, "shield_duration": 3.0, "shield_cap_percent": 0.15, "tick_interval": 1.0, "tick_percent": 0.0, "tick_flat": 0, "hard_freeze_seconds": 3.0}

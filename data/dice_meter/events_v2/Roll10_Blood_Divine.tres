@@ -8,4 +8,4 @@ brief_text = "Your strikes return a trickle of vitality."
 description = "Divine bloodrite stabilizes sustain through combat pressure."
 effect_id = &"apply_player_lifesteal"
 duration_seconds = 8.0
-effect_params = {"lifesteal_ratio": 0.5}
+effect_params = {"lifesteal_ratio": 0.3}

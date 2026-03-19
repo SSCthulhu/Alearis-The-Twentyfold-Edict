@@ -4,8 +4,8 @@
 script = ExtResource("1")
 id = &"dm2_roll11_illusions_divine"
 display_name = "Faithful Reflections"
-brief_text = "Friendly echoes harry your enemies."
-description = "Divine reflections mirror your aggression through repeated aftershocks."
-effect_id = &"apply_echo_mirror"
+brief_text = "A player reflection appears beside you."
+description = "A faithful reflection appears offset from the player and persists briefly."
+effect_id = &"apply_reflection_combo"
 duration_seconds = 7.0
-effect_params = {"player_damage_mult": 1.12, "pulse_count": 5, "pulse_interval": 0.7, "pulse_percent": 0.015, "pulse_flat": 4}
+effect_params = {"player_damage_mult": 1.12, "copy_lifetime": 7.0, "spawn_offset_x": 100.0, "spawn_offset_y": 0.0, "debug_marker_mode": true}

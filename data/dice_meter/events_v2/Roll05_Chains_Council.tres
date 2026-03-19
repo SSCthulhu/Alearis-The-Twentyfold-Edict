@@ -4,8 +4,8 @@
 script = ExtResource("1")
 id = &"dm2_roll05_chains_council"
 display_name = "Council Chains"
-brief_text = "Binding force disrupts your offense."
-description = "Chains erupt to suppress your agency and tighten combat windows."
+brief_text = "Chains lock you in place until you Dash or Dodge free."
+description = "Council chains hold you indefinitely until you break them with Dash or Dodge."
 effect_id = &"apply_player_chain"
-duration_seconds = 6.0
-effect_params = {"move_mult": 0.01}
+duration_seconds = 0.0
+effect_params = {"allow_break": true, "lock_until_break": true}

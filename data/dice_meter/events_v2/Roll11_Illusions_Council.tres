@@ -4,8 +4,8 @@
 script = ExtResource("1")
 id = &"dm2_roll11_illusions_council"
 display_name = "Mirrormask Phantoms"
-brief_text = "Illusory doubles fracture target priority."
-description = "Hostile mirages create burst threats and punish poor spacing."
-effect_id = &"apply_bone_lottery"
-duration_seconds = 7.0
-effect_params = {"splash_radius": 220.0, "mark_percent": 0.16, "splash_percent": 0.05, "splash_flat": 6, "cooldown_mult": 1.02}
+brief_text = "Enemy Phantoms arise to assist their allies."
+description = "Enemy Phantoms arise to assist their allies."
+effect_id = &"spawn_illusion_phantoms"
+duration_seconds = 10.0
+effect_params = {"spirit_alpha": 0.72, "enemy_damage_mult": 1.1, "spawn_offset_radius": 120.0, "despawn_after_duration": true}
