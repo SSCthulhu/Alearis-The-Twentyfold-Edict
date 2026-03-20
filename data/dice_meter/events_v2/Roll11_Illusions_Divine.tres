@@ -4,8 +4,8 @@
 script = ExtResource("1")
 id = &"dm2_roll11_illusions_divine"
 display_name = "Faithful Reflections"
-brief_text = "A player reflection appears beside you."
-description = "A faithful reflection appears offset from the player and persists briefly."
+brief_text = "A reflection appears behind each enemy and heavy-strikes."
+description = "Faithful reflections appear behind each enemy, execute a heavy strike, and apply player-like heavy damage with bleed."
 effect_id = &"apply_reflection_combo"
 duration_seconds = 7.0
-effect_params = {"player_damage_mult": 1.12, "copy_lifetime": 7.0, "spawn_offset_x": 100.0, "spawn_offset_y": 0.0, "debug_marker_mode": false, "clone_alpha": 0.95}
+effect_params = {"player_damage_mult": 1.12, "copy_lifetime": 1.0, "strike_delay": 0.16, "strike_stagger": 0.06, "spawn_distance": 110.0, "debug_marker_mode": false, "clone_alpha": 0.95, "bleed_tick_damage": 2, "bleed_duration": 4.0, "bleed_tick_interval": 0.5}

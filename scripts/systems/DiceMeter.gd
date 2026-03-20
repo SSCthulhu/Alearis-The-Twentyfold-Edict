@@ -4,7 +4,7 @@ class_name DiceMeter
 const DiceCouncilRegistryScript = preload("res://scripts/systems/dice/DiceCouncilRegistry.gd")
 const ROGUE_HEAVY_VFX_SCENE: PackedScene = preload("res://scenes/vfx/HeavyAttackVFX.tscn")
 const KNIGHT_HEAVY_VFX_SCENE: PackedScene = preload("res://scenes/vfx/KnightHeavyAttackVFX.tscn")
-const PLAYER_REFLECTION_CLONE_SCENE: PackedScene = preload("res://scenes/vfx/PlayerReflectionCloneVFX.tscn")
+const PLAYER_REFLECTION_INDEPENDENT_SCENE: PackedScene = preload("res://scenes/vfx/PlayerReflectionIndependentVFX.tscn")
 const PLAYER_CONTROLLER_SCRIPT_PATH: String = "res://scripts/player/PlayerControllerV3.gd"
 const PLAYER_3D_VIEW_SCRIPT_PATH: String = "res://scripts/player/Player3DView.gd"
 const PLAYER_REFLECTION_CLONE_SCRIPT_PATH: String = "res://scripts/vfx/PlayerReflectionCloneVFX.gd"
@@ -261,6 +261,10 @@ func trigger_roll(forced_roll: int = -1) -> Dictionary:
 	var effect_params: Dictionary = last_result.get("effect_params", {})
 	if effect_id == &"apply_player_chain" and bool(effect_params.get("lock_until_break", false)):
 		active_effect_time_left = 9999.0
+		active_effect_hide_timer = true
+	elif effect_id == &"apply_reflection_combo":
+		# 11G is a burst/spawn effect; hide countdown timer text in UI.
+		active_effect_time_left = maxf(float(effect_params.get("ui_display_seconds", 3.0)), 0.1)
 		active_effect_hide_timer = true
 	var result_to_apply: Dictionary = last_result.duplicate(true)
 	var roll_bounds: Vector2i = _get_meter_roll_bounds()
@@ -939,49 +943,77 @@ func _apply_illusion_phantoms(duration: float, params: Dictionary) -> void:
 func _apply_reflection_combo(duration: float, params: Dictionary) -> void:
 	_apply_temp_mult_to_runstate("player_damage_mult", float(params.get("player_damage_mult", 1.10)), duration)
 	_clear_all_reflection_combo_actors()
-	_cleanup_stray_reflection_visuals()
 	_active_reflection_combo_effects.clear()
 	if debug_logs:
 		_log_reflection_debug_state("pre_spawn")
 	var player_root: Node = _resolve_player_node()
 	if player_root == null or not (player_root is Node2D):
 		return
-	_normalize_player_body3d_view_render_nodes(player_root)
-	_prune_player_body3d_duplicate_models(player_root)
-	_cleanup_reflection_artifacts_under_player(player_root)
-	var reflection: Node2D = _spawn_player_reflection_copy(player_root, params)
-	if reflection == null:
+	var enemies: Array[Node] = _get_reflection_combo_enemy_targets()
+	if enemies.is_empty():
 		return
+	var player_pos: Vector2 = (player_root as Node2D).global_position
 	var life: float = maxf(float(params.get("copy_lifetime", maxf(duration, 0.1))), 0.1)
-	_active_reflection_combo_effects.append({
-		"time_left": life,
-		"reflection_id": reflection.get_instance_id()
-	})
+	var strike_delay: float = maxf(float(params.get("strike_delay", 0.16)), 0.01)
+	var strike_stagger: float = maxf(float(params.get("strike_stagger", 0.06)), 0.0)
+	var seen_target_ids: Dictionary = {}
+	for i: int in range(enemies.size()):
+		var enemy: Node = enemies[i]
+		if enemy == null or not is_instance_valid(enemy) or not (enemy is Node2D):
+			continue
+		var target_id: int = enemy.get_instance_id()
+		if target_id == 0 or seen_target_ids.has(target_id):
+			continue
+		seen_target_ids[target_id] = true
+		var target_pos: Vector2 = (enemy as Node2D).global_position
+		var spawn_pos: Vector2 = _compute_reflection_spawn_pos_for_enemy(enemy, player_pos, target_pos, params)
+		var reflection: Node2D = _spawn_player_reflection_copy(player_root, params, spawn_pos, target_id)
+		if reflection == null:
+			continue
+		if debug_logs:
+			_log_reflection_anim_debug("spawn", reflection, enemy)
+		_active_reflection_combo_effects.append({
+			"time_left": life,
+			"strike_left": strike_delay + (float(i) * strike_stagger),
+			"strike_done": false,
+			"target_id": target_id,
+			"target_pos": target_pos,
+			"reflection_id": reflection.get_instance_id(),
+			"params": params.duplicate(true)
+		})
 	if debug_logs:
 		_log_reflection_debug_state("post_spawn")
 		_log_reflection_forensic_scan("post_spawn")
 
-func _spawn_player_reflection_copy(player_root: Node, params: Dictionary = {}) -> Node2D:
+func _compute_reflection_spawn_pos_for_enemy(enemy: Node, player_pos: Vector2, target_pos: Vector2, params: Dictionary) -> Vector2:
+	var spawn_distance: float = maxf(float(params.get("spawn_distance", 110.0)), 32.0)
+	var dir: float = 1.0 if target_pos.x >= player_pos.x else -1.0
+	if enemy != null and ("_facing_dir" in enemy):
+		var enemy_facing: float = signf(float(enemy.get("_facing_dir")))
+		if absf(enemy_facing) >= 0.5:
+			dir = -enemy_facing
+	return target_pos + Vector2(spawn_distance * dir, 0.0)
+
+func _spawn_player_reflection_copy(player_root: Node, params: Dictionary = {}, spawn_pos: Vector2 = Vector2.ZERO, target_id: int = 0) -> Node2D:
 	var tree: SceneTree = get_tree()
 	if tree == null or tree.current_scene == null:
 		return null
 	if player_root == null or not (player_root is Node2D):
 		return null
-	if PLAYER_REFLECTION_CLONE_SCENE == null:
-		return null
 	var player_pos: Vector2 = (player_root as Node2D).global_position
-	var offset_x: float = float(params.get("spawn_offset_x", 100.0))
-	var offset_y: float = float(params.get("spawn_offset_y", 0.0))
-	# Step-0 baseline: fixed world offset, no facing-based side swaps.
-	var spawn_pos: Vector2 = player_pos + Vector2(offset_x, offset_y)
-	var debug_marker_mode: bool = bool(params.get("debug_marker_mode", true))
+	var final_spawn: Vector2 = spawn_pos
+	if final_spawn == Vector2.ZERO:
+		var offset_x: float = float(params.get("spawn_offset_x", 100.0))
+		var offset_y: float = float(params.get("spawn_offset_y", 0.0))
+		final_spawn = player_pos + Vector2(offset_x, offset_y)
+	var debug_marker_mode: bool = bool(params.get("debug_marker_mode", false))
 	if debug_marker_mode:
 		var marker_root: Node2D = Node2D.new()
 		marker_root.name = "ReflectionActor"
 		marker_root.add_to_group(&"dice_meter_reflection_actor")
 		marker_root.set_meta("dice_meter_reflection", true)
 		marker_root.set_meta("reflection_source", "11g_player_anchor")
-		marker_root.set_meta("reflection_target_id", 0)
+		marker_root.set_meta("reflection_target_id", target_id)
 		marker_root.top_level = true
 		marker_root.process_mode = Node.PROCESS_MODE_PAUSABLE
 		var marker_poly: Polygon2D = Polygon2D.new()
@@ -995,59 +1027,80 @@ func _spawn_player_reflection_copy(player_root: Node, params: Dictionary = {}) -
 		])
 		marker_root.add_child(marker_poly)
 		tree.current_scene.add_child(marker_root)
-		marker_root.global_position = spawn_pos
+		marker_root.global_position = final_spawn
+		_apply_reflection_actor_player_z(marker_root)
 		if debug_logs:
-			_log_debug("11G reflection marker spawn player=%s spawn=%s" % [str(player_pos), str(spawn_pos)])
+			_log_debug("11G reflection marker spawn player=%s target=%d spawn=%s" % [str(player_pos), target_id, str(final_spawn)])
 		return marker_root
-	var snapshot_actor: Node2D = _spawn_reflection_snapshot_actor(player_root, spawn_pos, float(params.get("clone_alpha", 0.95)))
-	if snapshot_actor != null:
-		if debug_logs:
-			_log_debug("11G reflection snapshot spawn player=%s spawn=%s" % [str(player_pos), str(spawn_pos)])
-		return snapshot_actor
-	var reflection_root: Node2D = PLAYER_REFLECTION_CLONE_SCENE.instantiate() as Node2D
-	if reflection_root == null or not (reflection_root is Node2D):
-		return null
-	var reflection_script: Script = reflection_root.get_script() as Script
-	var reflection_script_path: String = String(reflection_script.resource_path) if reflection_script != null else ""
-	if reflection_script_path != PLAYER_REFLECTION_CLONE_SCRIPT_PATH:
-		if debug_logs:
-			_log_debug("11G rejected reflection root: unexpected script=%s" % reflection_script_path)
-		reflection_root.queue_free()
-		return null
-	if not reflection_root.has_method("configure_from_player"):
-		if debug_logs:
-			_log_debug("11G rejected reflection root: missing configure_from_player")
-		reflection_root.queue_free()
-		return null
-	reflection_root.name = "ReflectionActor"
-	reflection_root.add_to_group(&"dice_meter_reflection_actor")
-	reflection_root.set_meta("dice_meter_reflection", true)
-	reflection_root.set_meta("reflection_source", "11g_player_anchor")
-	reflection_root.set_meta("reflection_target_id", 0)
-	reflection_root.process_mode = Node.PROCESS_MODE_PAUSABLE
-	reflection_root.top_level = true
-	tree.current_scene.add_child(reflection_root)
-	reflection_root.global_position = spawn_pos
-	var copy_canvas: CanvasItem = reflection_root as CanvasItem
-	var player_canvas: CanvasItem = _resolve_player_canvas_item()
-	if copy_canvas != null and player_canvas != null:
-		copy_canvas.z_as_relative = false
-		copy_canvas.z_index = player_canvas.z_index
-	if reflection_root.has_method("set_clone_alpha"):
-		reflection_root.call("set_clone_alpha", 0.95)
-	if reflection_root.has_method("set_debug_marker_mode"):
-		reflection_root.call("set_debug_marker_mode", false)
-	if "character_data" in player_root and reflection_root.has_method("configure_from_character_data"):
+	if PLAYER_REFLECTION_INDEPENDENT_SCENE != null:
+		var reflection_root: Node2D = PLAYER_REFLECTION_INDEPENDENT_SCENE.instantiate() as Node2D
+		if reflection_root != null:
+			reflection_root.name = "ReflectionActor"
+			reflection_root.add_to_group(&"dice_meter_reflection_actor")
+			reflection_root.set_meta("dice_meter_reflection", true)
+			reflection_root.set_meta("reflection_source", "11g_player_anchor")
+			reflection_root.set_meta("reflection_target_id", target_id)
+			reflection_root.process_mode = Node.PROCESS_MODE_PAUSABLE
+			reflection_root.top_level = true
+			tree.current_scene.add_child(reflection_root)
+			reflection_root.global_position = final_spawn
+			_apply_reflection_actor_player_z(reflection_root)
+			var character_name: String = _resolve_player_character_name_only(player_root)
+			var alpha: float = float(params.get("clone_alpha", 0.95))
+			var visual_scale: float = float(params.get("clone_scale", _resolve_player_visual_scale_once(player_root)))
+			if reflection_root.has_method("configure_character"):
+				reflection_root.call("configure_character", character_name, alpha, visual_scale)
+			if reflection_root.has_method("configure_render_profile"):
+				var render_profile: Dictionary = _resolve_player_render_profile_once(player_root)
+				reflection_root.call(
+					"configure_render_profile",
+					render_profile.get("viewport", Vector2i(512, 512)),
+					render_profile.get("screen", Vector2i(256, 256))
+				)
+			if reflection_root.has_method("play_idle"):
+				reflection_root.call("play_idle")
+			if debug_logs:
+				_log_debug("11G reflection independent spawn character=%s target=%d spawn=%s" % [character_name, target_id, str(final_spawn)])
+			return reflection_root
+	return null
+
+func _resolve_player_character_name_only(player_root: Node) -> String:
+	if player_root != null and ("character_data" in player_root):
 		var cdata: Object = player_root.get("character_data") as Object
-		reflection_root.call("configure_from_character_data", cdata)
-	# Keep spawn path isolated: do not mutate live player view or bind reflection to live player animation state.
-	if reflection_root.has_method("play_idle"):
-		reflection_root.call("play_idle")
-	if reflection_root.has_method("freeze_clone_visual"):
-		reflection_root.call("freeze_clone_visual")
-	if debug_logs:
-		_log_debug("11G reflection anchor spawn player=%s spawn=%s" % [str(player_pos), str(spawn_pos)])
-	return reflection_root
+		if cdata != null and ("character_name" in cdata):
+			return String(cdata.get("character_name"))
+	return CharacterDatabase.get_selected_character()
+
+func _resolve_player_visual_scale_once(player_root: Node) -> float:
+	if player_root == null or not is_instance_valid(player_root):
+		return 1.0
+	var body_view: Node2D = player_root.get_node_or_null("Visual/Body3DView") as Node2D
+	if body_view == null:
+		return 1.0
+	var sx: float = absf(body_view.global_scale.x)
+	if sx <= 0.001:
+		return 1.0
+	return sx
+
+func _resolve_player_render_profile_once(player_root: Node) -> Dictionary:
+	var out: Dictionary = {
+		"viewport": Vector2i(512, 512),
+		"screen": Vector2i(256, 256)
+	}
+	if player_root == null or not is_instance_valid(player_root):
+		return out
+	var body_view: Node = player_root.get_node_or_null("Visual/Body3DView")
+	if body_view == null or not is_instance_valid(body_view):
+		return out
+	if "viewport_size" in body_view:
+		var vp: Variant = body_view.get("viewport_size")
+		if vp is Vector2i:
+			out["viewport"] = vp as Vector2i
+	if "screen_pixels" in body_view:
+		var sp: Variant = body_view.get("screen_pixels")
+		if sp is Vector2i:
+			out["screen"] = sp as Vector2i
+	return out
 
 func _spawn_reflection_snapshot_actor(player_root: Node, spawn_pos: Vector2, alpha: float) -> Node2D:
 	var tree: SceneTree = get_tree()
@@ -1078,6 +1131,7 @@ func _spawn_reflection_snapshot_actor(player_root: Node, spawn_pos: Vector2, alp
 	root.set_meta("dice_meter_reflection", true)
 	root.set_meta("reflection_source", "11g_player_anchor")
 	root.set_meta("reflection_target_id", 0)
+	root.set_meta("spawn_player_anim", _get_player_body_view_anim(player_root))
 	var spr: Sprite2D = Sprite2D.new()
 	spr.name = "SnapshotSprite"
 	spr.texture = tex
@@ -1092,7 +1146,18 @@ func _spawn_reflection_snapshot_actor(player_root: Node, spawn_pos: Vector2, alp
 	root.add_child(spr)
 	tree.current_scene.add_child(root)
 	root.global_position = spawn_pos
+	_apply_reflection_actor_player_z(root)
 	return root
+
+func _apply_reflection_actor_player_z(actor: Node2D) -> void:
+	if actor == null or not is_instance_valid(actor):
+		return
+	var actor_canvas: CanvasItem = actor as CanvasItem
+	var player_canvas: CanvasItem = _resolve_player_canvas_item()
+	if actor_canvas == null or player_canvas == null:
+		return
+	actor_canvas.z_as_relative = false
+	actor_canvas.z_index = player_canvas.z_index
 
 func _cleanup_reflection_artifacts_under_player(player_root: Node) -> void:
 	if player_root == null or not is_instance_valid(player_root):
@@ -1670,7 +1735,6 @@ func _play_reflection_heavy_vfx(origin: Vector2, facing: int) -> void:
 		return
 	tree.current_scene.add_child(n2d)
 	n2d.global_position = origin
-	n2d.set_meta("dice_meter_reflection", true)
 	var vfx_canvas: CanvasItem = n2d as CanvasItem
 	var player_canvas: CanvasItem = _resolve_player_canvas_item()
 	if vfx_canvas != null and player_canvas != null:
@@ -1679,6 +1743,65 @@ func _play_reflection_heavy_vfx(origin: Vector2, facing: int) -> void:
 	if n2d.has_method("set_facing"):
 		n2d.call("set_facing", facing)
 	_schedule_temp_enemy_cleanup(n2d, 1.0)
+
+func _get_player_body_view_anim(player_root: Node = null) -> String:
+	var root: Node = player_root
+	if root == null:
+		root = _resolve_player_node()
+	if root == null or not is_instance_valid(root):
+		return ""
+	var body_view: Node = root.get_node_or_null("Visual/Body3DView")
+	if body_view == null or not is_instance_valid(body_view):
+		return ""
+	if body_view.has_method("get_current_anim"):
+		return String(body_view.call("get_current_anim"))
+	return ""
+
+func _get_reflection_anim_debug(reflection_node: Node2D) -> String:
+	if reflection_node == null or not is_instance_valid(reflection_node):
+		return "none"
+	if reflection_node.has_method("get_debug_snapshot"):
+		var snap_v: Variant = reflection_node.call("get_debug_snapshot")
+		if snap_v is Dictionary:
+			var snap: Dictionary = snap_v as Dictionary
+			return String(snap.get("anim", ""))
+	var snapshot_sprite: Sprite2D = reflection_node.get_node_or_null("SnapshotSprite") as Sprite2D
+	if snapshot_sprite != null:
+		var captured_anim: String = String(reflection_node.get_meta("spawn_player_anim", ""))
+		if captured_anim == "":
+			captured_anim = "unknown"
+		return "snapshot_static(captured=%s)" % captured_anim
+	var animation_player: AnimationPlayer = reflection_node.get_node_or_null("AnimationPlayer") as AnimationPlayer
+	if animation_player != null:
+		return "anim_player(%s)" % String(animation_player.current_animation)
+	return "unknown"
+
+func _log_reflection_anim_debug(stage: String, reflection_node: Node2D, target_node: Node = null) -> void:
+	if not debug_logs:
+		return
+	var player_root: Node = _resolve_player_node()
+	var player_anim: String = _get_player_body_view_anim(player_root)
+	var reflection_anim: String = _get_reflection_anim_debug(reflection_node)
+	var target_anim: String = ""
+	var target_name: String = "none"
+	if target_node != null and is_instance_valid(target_node):
+		target_name = String(target_node.name)
+		var target_view: Node = target_node.get_node_or_null("Visual/Body3DView")
+		if target_view != null and target_view.has_method("get_current_anim"):
+			target_anim = String(target_view.call("get_current_anim"))
+	_log_debug(
+		"11G anim[%s] player_anim=%s player_pos=%s reflection_anim=%s reflection_id=%d reflection_pos=%s target=%s target_anim=%s target_pos=%s" % [
+			stage,
+			player_anim,
+			str(_node_global_pos_or_zero(player_root)),
+			reflection_anim,
+			reflection_node.get_instance_id() if reflection_node != null and is_instance_valid(reflection_node) else 0,
+			str(_node_global_pos_or_zero(reflection_node)),
+			target_name,
+			target_anim,
+			str(_node_global_pos_or_zero(target_node))
+		]
+	)
 
 func _apply_reflection_lunge(copy: Node2D, target_pos: Vector2, player_root: Node) -> void:
 	if copy == null or not is_instance_valid(copy):
@@ -2216,7 +2339,6 @@ func _clear_enemy_regen_effects() -> void:
 func _tick_reflection_combo_effects(delta: float) -> void:
 	if _active_reflection_combo_effects.is_empty():
 		return
-	_cleanup_stray_reflection_visuals()
 	_enforce_single_player_anchor_reflection()
 	_reflection_visual_debug_tick_left = maxf(_reflection_visual_debug_tick_left - delta, 0.0)
 	if debug_logs:
@@ -2226,15 +2348,70 @@ func _tick_reflection_combo_effects(delta: float) -> void:
 	for i: int in range(_active_reflection_combo_effects.size() - 1, -1, -1):
 		var e: Dictionary = _active_reflection_combo_effects[i]
 		var time_left: float = float(e.get("time_left", 0.0)) - delta
+		var strike_left: float = float(e.get("strike_left", 0.0)) - delta
+		var strike_done: bool = bool(e.get("strike_done", false))
+		var target_obj: Object = instance_from_id(int(e.get("target_id", 0)))
+		var cached_target_pos: Vector2 = e.get("target_pos", Vector2.ZERO) as Vector2
 		var reflection_obj: Object = instance_from_id(int(e.get("reflection_id", 0)))
 		var reflection_node: Node2D = reflection_obj as Node2D
+		if not strike_done and strike_left <= 0.0:
+			var strike_pos: Vector2 = cached_target_pos
+			if target_obj != null and is_instance_valid(target_obj) and target_obj is Node:
+				strike_pos = _node_global_pos_or_zero(target_obj as Node)
+			if debug_logs and reflection_node != null and is_instance_valid(reflection_node):
+				_log_reflection_anim_debug("strike", reflection_node, target_obj as Node if target_obj is Node else null)
+			if reflection_node != null and is_instance_valid(reflection_node):
+				var facing: int = 1 if strike_pos.x >= reflection_node.global_position.x else -1
+				if reflection_node.has_method("set_facing_toward"):
+					reflection_node.call("set_facing_toward", strike_pos)
+				if reflection_node.has_method("play_heavy"):
+					reflection_node.call("play_heavy")
+				_play_reflection_heavy_vfx(reflection_node.global_position, facing)
+				if reflection_node.get_node_or_null("SnapshotSprite") != null:
+					_animate_snapshot_reflection_strike(reflection_node, strike_pos)
+			if target_obj != null and is_instance_valid(target_obj) and target_obj is Node:
+				var target_node: Node = target_obj as Node
+				_apply_player_like_heavy_to_target(target_node, e.get("params", {}))
+				if reflection_node != null and is_instance_valid(reflection_node):
+					_apply_reflection_lunge(reflection_node, strike_pos, _resolve_player_node())
+			strike_done = true
 		if time_left <= 0.0:
 			if reflection_node != null and is_instance_valid(reflection_node):
 				reflection_node.queue_free()
 			_active_reflection_combo_effects.remove_at(i)
 			continue
 		e["time_left"] = time_left
+		e["strike_left"] = strike_left
+		e["strike_done"] = strike_done
 		_active_reflection_combo_effects[i] = e
+
+func _animate_snapshot_reflection_strike(reflection_node: Node2D, target_pos: Vector2) -> void:
+	if reflection_node == null or not is_instance_valid(reflection_node):
+		return
+	var toward: Vector2 = target_pos - reflection_node.global_position
+	if toward.length() < 8.0:
+		return
+	var dir: Vector2 = toward.normalized()
+	var start_pos: Vector2 = reflection_node.global_position
+	var windup_end: Vector2 = start_pos - (dir * 16.0)
+	var dash_dist: float = minf(96.0, toward.length() * 0.72)
+	var dash_end: Vector2 = start_pos + (dir * dash_dist)
+	var recover_end: Vector2 = start_pos + (dir * minf(42.0, toward.length() * 0.30))
+	var sprite: Sprite2D = reflection_node.get_node_or_null("SnapshotSprite") as Sprite2D
+	var t: Tween = create_tween()
+	t.set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+	t.tween_property(reflection_node, "global_position", windup_end, 0.06)
+	t.tween_property(reflection_node, "global_position", dash_end, 0.11)
+	t.tween_property(reflection_node, "global_position", recover_end, 0.10)
+	if sprite != null and is_instance_valid(sprite):
+		var base_modulate: Color = sprite.modulate
+		var flash_modulate: Color = Color(1.0, 1.0, 1.0, minf(base_modulate.a + 0.18, 1.0))
+		var base_scale: Vector2 = sprite.scale
+		var strike_scale: Vector2 = base_scale * Vector2(1.08, 0.94)
+		t.parallel().tween_property(sprite, "modulate", flash_modulate, 0.07)
+		t.parallel().tween_property(sprite, "scale", strike_scale, 0.07)
+		t.tween_property(sprite, "modulate", base_modulate, 0.10)
+		t.parallel().tween_property(sprite, "scale", base_scale, 0.10)
 
 func _log_reflection_visual_link_debug(stage: String) -> void:
 	var tree: SceneTree = get_tree()
@@ -2362,18 +2539,17 @@ func _enforce_single_player_anchor_reflection() -> void:
 	var tree: SceneTree = get_tree()
 	if tree == null:
 		return
-	var keep_id: int = 0
+	var keep_ids: Dictionary = {}
 	for e: Dictionary in _active_reflection_combo_effects:
 		var rid: int = int(e.get("reflection_id", 0))
 		if rid != 0:
-			keep_id = rid
-			break
+			keep_ids[rid] = true
 	for n: Node in tree.get_nodes_in_group(&"dice_meter_reflection_actor"):
 		if n == null or not is_instance_valid(n):
 			continue
 		if String(n.get_meta("reflection_source", "")) != "11g_player_anchor":
 			continue
-		if n.get_instance_id() == keep_id:
+		if keep_ids.has(n.get_instance_id()):
 			continue
 		n.queue_free()
 
@@ -2899,7 +3075,7 @@ func _apply_temp_mult_to_runstate(field_name: String, factor: float, duration: f
 	_log_debug("Applied temp effect: %s x%.3f for %.2fs" % [field_name, factor, duration])
 
 func _tick_temp_effects(delta: float) -> void:
-	if active_effect_time_left > 0.0 and not active_effect_hide_timer:
+	if active_effect_time_left > 0.0:
 		active_effect_time_left = maxf(active_effect_time_left - delta, 0.0)
 		if active_effect_time_left <= 0.0:
 			active_effect_name = ""

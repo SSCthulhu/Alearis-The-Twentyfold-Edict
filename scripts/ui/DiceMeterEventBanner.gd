@@ -151,7 +151,7 @@ func _refresh_banner_text() -> void:
 			lines.append(timer_text)
 		_event_label.text = "\n".join(lines)
 		_update_text_layout()
-	if time_left <= 0.0 and not hide_timer:
+	if time_left <= 0.0:
 		_tracking_effect = false
 		_fade_and_hide()
 
