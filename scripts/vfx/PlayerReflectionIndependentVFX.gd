@@ -18,6 +18,8 @@ var _anim_player: AnimationPlayer = null
 var _character_name: String = ""
 var _mapped_idle_anim: String = ""
 var _mapped_heavy_anim: String = ""
+var _mapped_run_anim: String = ""
+var _light_combo_anims: Array[String] = []
 var _last_heavy_debug: Dictionary = {}
 var _heavy_recover_tween: Tween = null
 @export var heavy_idle_settle_seconds: float = 0.12
@@ -43,6 +45,8 @@ func configure_character(character_name: String, alpha: float = 0.95, visual_sca
 	var model_path: String = String(profile.get("model_path", _resolve_model_path(character_name)))
 	_mapped_idle_anim = String(profile.get("idle_anim", ""))
 	_mapped_heavy_anim = String(profile.get("heavy_anim", ""))
+	_mapped_run_anim = String(profile.get("run_anim", ""))
+	_light_combo_anims = profile.get("light_combo_anims", []) as Array[String]
 	_load_character_model(model_path)
 	_apply_clone_visuals()
 	play_idle()
@@ -65,6 +69,33 @@ func play_idle() -> void:
 		return
 	_anim_player.speed_scale = 1.0
 	_anim_player.play(anim_name, 0.08, 1.0, false)
+
+func play_run() -> void:
+	if _anim_player == null:
+		return
+	var anim_name: String = _resolve_run_anim_name()
+	if anim_name == "":
+		return
+	_anim_player.speed_scale = 1.0
+	_anim_player.play(anim_name, 0.08, 1.0, false)
+
+func play_jump_idle() -> void:
+	if _anim_player == null:
+		return
+	var anim_name: String = _resolve_jump_idle_anim_name()
+	if anim_name == "":
+		return
+	_anim_player.speed_scale = 1.0
+	_anim_player.play(anim_name, 0.06, 1.0, false)
+
+func play_light_combo_step(step: int) -> void:
+	if _anim_player == null:
+		return
+	var anim_name: String = _resolve_light_combo_anim(step)
+	if anim_name == "":
+		return
+	_anim_player.speed_scale = 1.0
+	_anim_player.play(anim_name, 0.0, 1.0, false)
 
 func play_heavy() -> void:
 	var anim_name: String = _resolve_heavy_anim_name()
@@ -209,7 +240,9 @@ func _resolve_character_profile(character_name: String) -> Dictionary:
 	var out: Dictionary = {
 		"model_path": _resolve_model_path(character_name),
 		"idle_anim": "",
-		"heavy_anim": ""
+		"heavy_anim": "",
+		"run_anim": "",
+		"light_combo_anims": []
 	}
 	if CharacterDatabase == null or not CharacterDatabase.has_method("get_character_data"):
 		return out
@@ -228,6 +261,16 @@ func _resolve_character_profile(character_name: String) -> Dictionary:
 				out["idle_anim"] = String(mappings.get("idle", ""))
 			if mappings.has("heavy_attack"):
 				out["heavy_anim"] = String(mappings.get("heavy_attack", ""))
+			if mappings.has("run"):
+				out["run_anim"] = String(mappings.get("run", ""))
+	var combo: Array[String] = []
+	for anim_name: String in [
+		"QAnim/Sword_Regular_A",
+		"QAnim/Sword_Regular_B",
+		"QAnim/Sword_Regular_C"
+	]:
+		combo.append(anim_name)
+	out["light_combo_anims"] = combo
 	return out
 
 func _resolve_idle_anim_name() -> String:
@@ -254,6 +297,37 @@ func _resolve_heavy_anim_name() -> String:
 		return ""
 	if _mapped_heavy_anim != "" and _anim_player.has_animation(_mapped_heavy_anim):
 		return _mapped_heavy_anim
+	return ""
+
+func _resolve_run_anim_name() -> String:
+	if _anim_player == null:
+		return ""
+	if _mapped_run_anim != "" and _anim_player.has_animation(_mapped_run_anim):
+		return _mapped_run_anim
+	for a: String in ["QAnim/Jog_Fwd", "QAnim/Walk", "QAnim/Sprint", "run"]:
+		if _anim_player.has_animation(a):
+			return a
+	return ""
+
+func _resolve_jump_idle_anim_name() -> String:
+	if _anim_player == null:
+		return ""
+	for a: String in ["QAnim/NinjaJump_Idle", "QAnim/Jump", "Player/Jump_Idle", "jump"]:
+		if _anim_player.has_animation(a):
+			return a
+	return ""
+
+func _resolve_light_combo_anim(step: int) -> String:
+	if _anim_player == null:
+		return ""
+	if not _light_combo_anims.is_empty():
+		var idx: int = clampi(step - 1, 0, _light_combo_anims.size() - 1)
+		var mapped: String = _light_combo_anims[idx]
+		if _anim_player.has_animation(mapped):
+			return mapped
+	for a: String in ["QAnim/Sword_Regular_A", "QAnim/Sword_Attack", "QAnim/Sword_Regular_B"]:
+		if _anim_player.has_animation(a):
+			return a
 	return ""
 
 func _resolve_anim_length_seconds(anim_name: String) -> float:

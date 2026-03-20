@@ -4,8 +4,8 @@
 script = ExtResource("1")
 id = &"dm2_roll19_judgment_divine"
 display_name = "Guiding Spirit"
-brief_text = "A divine spirit aids your offense."
-description = "A celestial helper pressures enemies while empowering your strikes."
+brief_text = "A player reflection is summoned to taunt and fight."
+description = "A summoned reflection taunts all enemies, chains light attacks, and persists until defeated."
 effect_id = &"spawn_divine_spirit_support"
 duration_seconds = 9.0
-effect_params = {"player_damage_mult": 1.18, "cooldown_mult": 0.85, "pulse_count": 0, "pulse_interval": 0.8, "pulse_percent": 0.012, "pulse_flat": 3}
+effect_params = {"spawn_offset_x": 120.0, "spawn_offset_y": 0.0, "move_speed": 340.0, "attack_range": 110.0, "attack_vertical_range": 120.0, "retarget_interval": 0.16, "combo_interval": 0.33, "hit_delay_seconds": 0.08, "damage_scale": 0.75, "clone_alpha": 0.95, "clone_scale": 1.0, "fade_out_seconds": 0.22, "ui_display_seconds": 3.0}

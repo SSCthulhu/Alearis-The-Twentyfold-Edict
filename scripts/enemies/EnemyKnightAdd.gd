@@ -1110,13 +1110,20 @@ func _update_target() -> void:
 		_target = player
 
 func _get_player() -> Node2D:
+	var tree: SceneTree = get_tree()
+	if tree != null and tree.root != null:
+		var dice_meter: Node = tree.root.get_node_or_null("DiceMeterSingleton")
+		if dice_meter != null and dice_meter.has_method("get_enemy_taunt_target"):
+			var taunt_target: Variant = dice_meter.call("get_enemy_taunt_target")
+			if taunt_target is Node2D and is_instance_valid(taunt_target as Node2D):
+				return taunt_target as Node2D
 	# ⚡ OPTIMIZATION: Use cached player reference (avoids expensive tree walk every frame)
 	# Validate cache and refresh if invalid
 	if _player_cached != null and is_instance_valid(_player_cached):
 		return _player_cached
 	
 	# Refresh cache if invalid
-	_player_cached = get_tree().get_first_node_in_group("player")
+	_player_cached = tree.get_first_node_in_group("player") if tree != null else null
 	return _player_cached
 
 func _floor_hit_under(node: Node2D) -> Dictionary:

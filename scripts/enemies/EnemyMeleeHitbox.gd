@@ -45,6 +45,8 @@ func _scaled_enemy_damage(base: int) -> int:
 func _is_valid_target(node: Node) -> bool:
 	if node == null:
 		return false
+	if node.is_in_group(&"reflection_taunt_target"):
+		return true
 	if target_group == &"":
 		return true
 	return node.is_in_group(target_group)

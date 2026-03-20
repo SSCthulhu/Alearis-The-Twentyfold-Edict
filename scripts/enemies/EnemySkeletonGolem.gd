@@ -138,8 +138,8 @@ func _execute_slam_async() -> void:
 func _deal_slam_damage() -> void:
 	_spawn_slam_ground_vfx()
 
-	# Find the player
-	var player: Node = get_tree().get_first_node_in_group("player")
+	# Find prioritized taunt target (falls back to player).
+	var player: Node = _get_player()
 	if player == null or not is_instance_valid(player):
 		if debug_golem: print("[Golem] Slam: No player found!")
 		return

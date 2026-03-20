@@ -5,6 +5,7 @@ const DiceCouncilRegistryScript = preload("res://scripts/systems/dice/DiceCounci
 const ROGUE_HEAVY_VFX_SCENE: PackedScene = preload("res://scenes/vfx/HeavyAttackVFX.tscn")
 const KNIGHT_HEAVY_VFX_SCENE: PackedScene = preload("res://scenes/vfx/KnightHeavyAttackVFX.tscn")
 const PLAYER_REFLECTION_INDEPENDENT_SCENE: PackedScene = preload("res://scenes/vfx/PlayerReflectionIndependentVFX.tscn")
+const PLAYER_REFLECTION_SUMMON_SCENE: PackedScene = preload("res://scenes/vfx/PlayerReflectionSummonActor.tscn")
 const PLAYER_CONTROLLER_SCRIPT_PATH: String = "res://scripts/player/PlayerControllerV3.gd"
 const PLAYER_3D_VIEW_SCRIPT_PATH: String = "res://scripts/player/Player3DView.gd"
 const PLAYER_REFLECTION_CLONE_SCRIPT_PATH: String = "res://scripts/vfx/PlayerReflectionCloneVFX.gd"
@@ -32,6 +33,7 @@ const RELIC_TWIN_FATE: StringName = &"e3_twin_fate"
 @export var trigger_action: StringName = &"dice_meter_trigger"
 @export var input_buffer_seconds: float = 0.15
 @export var debug_logs: bool = false
+@export var debug_11g_logs: bool = false
 @export_group("Debug Test Mode")
 @export var debug_test_mode_enabled: bool = false
 @export var debug_lock_meter_full: bool = false
@@ -70,6 +72,7 @@ var _active_enemy_regen_effects: Array[Dictionary] = []
 var _active_wind_effects: Array[Dictionary] = []
 var _active_cooldown_pause_effects: Array[Dictionary] = []
 var _active_reflection_combo_effects: Array[Dictionary] = []
+var _active_reflection_summon_19g_id: int = 0
 var _active_phantom_minion_watchers: Array[Dictionary] = []
 var _player_motion_lock_count: int = 0
 var _player_input_lock_count: int = 0
@@ -129,6 +132,7 @@ func reset_meter() -> void:
 	_clear_lifesteal_effects()
 	_clear_enemy_regen_effects()
 	_clear_reflection_combo_effects()
+	_clear_reflection_summon_19g()
 	_clear_phantom_minion_watchers()
 	_clear_wind_effects()
 	_clear_target_execution_effects()
@@ -264,6 +268,10 @@ func trigger_roll(forced_roll: int = -1) -> Dictionary:
 		active_effect_hide_timer = true
 	elif effect_id == &"apply_reflection_combo":
 		# 11G is a burst/spawn effect; hide countdown timer text in UI.
+		active_effect_time_left = maxf(float(effect_params.get("ui_display_seconds", 3.0)), 0.1)
+		active_effect_hide_timer = true
+	elif effect_id == &"spawn_divine_spirit_support":
+		# 19G summon is persistent until defeated; show brief banner only.
 		active_effect_time_left = maxf(float(effect_params.get("ui_display_seconds", 3.0)), 0.1)
 		active_effect_hide_timer = true
 	var result_to_apply: Dictionary = last_result.duplicate(true)
@@ -593,7 +601,7 @@ func _apply_event_result(result: Dictionary) -> void:
 		&"spawn_council_avatar":
 			_apply_council_avatar(duration, params)
 		&"spawn_divine_spirit_support":
-			_apply_divine_spirit_support(duration, params)
+			_apply_reflection_summon_19g(duration, params)
 		&"spawn_illusion_phantoms":
 			_apply_illusion_phantoms(duration, params)
 		&"apply_player_chain":
@@ -881,14 +889,85 @@ func _apply_council_avatar(duration: float, params: Dictionary) -> void:
 	_spawn_temporary_enemy_wave(params, duration, true)
 
 func _apply_divine_spirit_support(duration: float, params: Dictionary) -> void:
-	_apply_temp_mult_to_runstate("player_damage_mult", float(params.get("player_damage_mult", 1.12)), duration)
-	_apply_temp_mult_to_runstate("cooldown_mult", float(params.get("cooldown_mult", 0.90)), duration)
-	_start_echo_pulses(duration, {
-		"pulse_count": maxi(1, int(params.get("pulse_count", 4))),
-		"pulse_interval": maxf(0.1, float(params.get("pulse_interval", 0.8))),
-		"pulse_percent": maxf(0.0, float(params.get("pulse_percent", 0.03))),
-		"pulse_flat": maxi(0, int(params.get("pulse_flat", 6)))
-	})
+	# 19G was repurposed to persistent reflection summon behavior.
+	_apply_reflection_summon_19g(duration, params)
+
+func _apply_reflection_summon_19g(_duration: float, params: Dictionary) -> void:
+	_clear_reflection_summon_19g()
+	var tree: SceneTree = get_tree()
+	if tree == null or tree.current_scene == null:
+		return
+	var player_root: Node2D = _resolve_player_node() as Node2D
+	if player_root == null:
+		return
+	if PLAYER_REFLECTION_SUMMON_SCENE == null:
+		return
+	var actor: Node2D = PLAYER_REFLECTION_SUMMON_SCENE.instantiate() as Node2D
+	if actor == null:
+		return
+	var offset_x: float = float(params.get("spawn_offset_x", 120.0))
+	var offset_y: float = float(params.get("spawn_offset_y", 0.0))
+	var spawn_pos: Vector2 = player_root.global_position + Vector2(offset_x, offset_y)
+	actor.name = "ReflectionSummon19G"
+	actor.top_level = true
+	actor.process_mode = Node.PROCESS_MODE_PAUSABLE
+	actor.add_to_group(&"dice_meter_reflection_actor")
+	actor.add_to_group(&"dice_meter_reflection_summon")
+	actor.add_to_group(&"reflection_taunt_target")
+	actor.set_meta("dice_meter_reflection", true)
+	actor.set_meta("reflection_source", "19g_summon")
+	tree.current_scene.add_child(actor)
+	actor.global_position = spawn_pos
+	_apply_reflection_actor_player_z(actor)
+	var max_hp_value: int = _resolve_player_max_hp()
+	var char_name: String = _resolve_player_character_name_only(player_root)
+	var summon_params: Dictionary = params.duplicate(true)
+	var player_visual_scale: float = _resolve_player_visual_scale_once(player_root)
+	var clone_scale_mult: float = float(params.get("clone_scale", 1.0))
+	summon_params["clone_scale"] = player_visual_scale * maxf(clone_scale_mult, 0.1)
+	if actor.has_method("configure_from_player"):
+		actor.call("configure_from_player", self, player_root, char_name, max_hp_value, summon_params)
+	if actor.has_signal("summon_finished") and not actor.summon_finished.is_connected(_on_reflection_summon_19g_finished):
+		actor.summon_finished.connect(_on_reflection_summon_19g_finished)
+	_active_reflection_summon_19g_id = actor.get_instance_id()
+
+func _on_reflection_summon_19g_finished() -> void:
+	_active_reflection_summon_19g_id = 0
+
+func _clear_reflection_summon_19g() -> void:
+	if _active_reflection_summon_19g_id != 0:
+		var obj: Object = instance_from_id(_active_reflection_summon_19g_id)
+		if obj != null and is_instance_valid(obj) and obj is Node:
+			(obj as Node).queue_free()
+	_active_reflection_summon_19g_id = 0
+	var tree: SceneTree = get_tree()
+	if tree == null:
+		return
+	for n: Node in tree.get_nodes_in_group(&"dice_meter_reflection_summon"):
+		if n != null and is_instance_valid(n):
+			n.queue_free()
+
+func get_enemy_taunt_target() -> Node2D:
+	if _active_reflection_summon_19g_id == 0:
+		return null
+	var obj: Object = instance_from_id(_active_reflection_summon_19g_id)
+	if obj == null or not is_instance_valid(obj) or not (obj is Node2D):
+		_active_reflection_summon_19g_id = 0
+		return null
+	return obj as Node2D
+
+func _resolve_player_max_hp() -> int:
+	var player_root: Node = _resolve_player_node()
+	if player_root == null:
+		return 120
+	var health: Node = player_root.get_node_or_null("Health")
+	if health == null:
+		return 120
+	if "max_hp" in health:
+		return maxi(int(health.get("max_hp")), 1)
+	if "max_health" in health:
+		return maxi(int(health.get("max_health")), 1)
+	return 120
 
 func _apply_illusion_phantoms(duration: float, params: Dictionary) -> void:
 	_apply_temp_mult_to_runstate("enemy_damage_mult", float(params.get("enemy_damage_mult", 1.12)), duration)
@@ -944,7 +1023,7 @@ func _apply_reflection_combo(duration: float, params: Dictionary) -> void:
 	_apply_temp_mult_to_runstate("player_damage_mult", float(params.get("player_damage_mult", 1.10)), duration)
 	_clear_all_reflection_combo_actors()
 	_active_reflection_combo_effects.clear()
-	if debug_logs:
+	if debug_logs and debug_11g_logs:
 		_log_reflection_debug_state("pre_spawn")
 	var player_root: Node = _resolve_player_node()
 	if player_root == null or not (player_root is Node2D):
@@ -972,7 +1051,7 @@ func _apply_reflection_combo(duration: float, params: Dictionary) -> void:
 			continue
 		if reflection.has_method("set_facing_toward"):
 			reflection.call("set_facing_toward", target_pos)
-		if debug_logs:
+		if debug_logs and debug_11g_logs:
 			_log_reflection_anim_debug("spawn", reflection, enemy)
 		_active_reflection_combo_effects.append({
 			"time_left": life,
@@ -983,7 +1062,7 @@ func _apply_reflection_combo(duration: float, params: Dictionary) -> void:
 			"reflection_id": reflection.get_instance_id(),
 			"params": params.duplicate(true)
 		})
-	if debug_logs:
+	if debug_logs and debug_11g_logs:
 		_log_reflection_debug_state("post_spawn")
 		_log_reflection_forensic_scan("post_spawn")
 
@@ -1031,7 +1110,7 @@ func _spawn_player_reflection_copy(player_root: Node, params: Dictionary = {}, s
 		tree.current_scene.add_child(marker_root)
 		marker_root.global_position = final_spawn
 		_apply_reflection_actor_player_z(marker_root)
-		if debug_logs:
+		if debug_logs and debug_11g_logs:
 			_log_debug("11G reflection marker spawn player=%s target=%d spawn=%s" % [str(player_pos), target_id, str(final_spawn)])
 		return marker_root
 	if PLAYER_REFLECTION_INDEPENDENT_SCENE != null:
@@ -1061,7 +1140,7 @@ func _spawn_player_reflection_copy(player_root: Node, params: Dictionary = {}, s
 				)
 			if reflection_root.has_method("play_idle"):
 				reflection_root.call("play_idle")
-			if debug_logs:
+			if debug_logs and debug_11g_logs:
 				_log_debug("11G reflection independent spawn character=%s target=%d spawn=%s" % [character_name, target_id, str(final_spawn)])
 			return reflection_root
 	return null
@@ -1265,6 +1344,8 @@ func _clear_all_reflection_combo_actors() -> void:
 	for n: Node in tree.get_nodes_in_group(&"dice_meter_reflection_actor"):
 		if n == null or not is_instance_valid(n):
 			continue
+		if String(n.get_meta("reflection_source", "")) != "11g_player_anchor":
+			continue
 		n.free()
 
 func _clear_reflection_actor_for_target(target_id: int) -> void:
@@ -1275,6 +1356,8 @@ func _clear_reflection_actor_for_target(target_id: int) -> void:
 		return
 	for n: Node in tree.get_nodes_in_group(&"dice_meter_reflection_actor"):
 		if n == null or not is_instance_valid(n):
+			continue
+		if String(n.get_meta("reflection_source", "")) != "11g_player_anchor":
 			continue
 		if int(n.get_meta("reflection_target_id", 0)) != target_id:
 			continue
@@ -1507,6 +1590,45 @@ func _apply_player_like_heavy_to_target(target: Node, params: Dictionary) -> voi
 	elif target.has_method("take_damage"):
 		target.call("take_damage", dmg, player_root)
 	_apply_bleed_to_target_like_player_heavy(target, params)
+
+func _apply_player_like_light_to_target(target: Node, damage_scale: float = 1.0) -> void:
+	if target == null or not is_instance_valid(target):
+		return
+	var player_root: Node = _resolve_player_node()
+	var combat: Node = null
+	if player_root != null:
+		combat = player_root.get_node_or_null("Combat")
+	var dmg: int = 8
+	if combat != null:
+		if "light_damage" in combat:
+			dmg = maxi(int(combat.get("light_damage")), 1)
+		elif "attack_damage" in combat:
+			dmg = maxi(int(combat.get("attack_damage")), 1)
+		if combat.has_method("_apply_run_damage_multiplier"):
+			dmg = int(combat.call("_apply_run_damage_multiplier", dmg))
+		if combat.has_method("_apply_buffs_outgoing_multiplier"):
+			dmg = int(combat.call("_apply_buffs_outgoing_multiplier", dmg))
+		var was_crit: bool = false
+		if combat.has_method("_roll_crit"):
+			was_crit = bool(combat.call("_roll_crit"))
+		if combat.has_method("_apply_crit_if_any"):
+			dmg = int(combat.call("_apply_crit_if_any", dmg, was_crit))
+	dmg = maxi(int(round(float(dmg) * clampf(damage_scale, 0.0, 10.0))), 1)
+	var hp_node: Node = target.get_node_or_null("Health")
+	if hp_node == null:
+		hp_node = target.get_node_or_null("BossHealth")
+	if hp_node != null and hp_node.has_method("take_damage"):
+		var argc: int = hp_node.get_method_argument_count("take_damage")
+		if argc >= 4:
+			hp_node.call("take_damage", dmg, player_root, &"", false)
+		elif argc >= 3:
+			hp_node.call("take_damage", dmg, player_root, &"")
+		elif argc >= 2:
+			hp_node.call("take_damage", dmg, player_root)
+		else:
+			hp_node.call("take_damage", dmg)
+	elif target.has_method("take_damage"):
+		target.call("take_damage", dmg, player_root)
 
 func _apply_bleed_to_target_like_player_heavy(target: Node, params: Dictionary) -> void:
 	if target == null or not is_instance_valid(target):
@@ -1784,7 +1906,7 @@ func _get_reflection_anim_debug(reflection_node: Node2D) -> String:
 	return "unknown"
 
 func _log_reflection_anim_debug(stage: String, reflection_node: Node2D, target_node: Node = null) -> void:
-	if not debug_logs:
+	if not debug_logs or not debug_11g_logs:
 		return
 	var player_root: Node = _resolve_player_node()
 	var player_anim: String = _get_player_body_view_anim(player_root)
@@ -2356,7 +2478,7 @@ func _tick_reflection_combo_effects(delta: float) -> void:
 		return
 	_enforce_single_player_anchor_reflection()
 	_reflection_visual_debug_tick_left = maxf(_reflection_visual_debug_tick_left - delta, 0.0)
-	if debug_logs:
+	if debug_logs and debug_11g_logs:
 		if _reflection_visual_debug_tick_left <= 0.0:
 			_log_reflection_visual_link_debug("tick")
 			_reflection_visual_debug_tick_left = 0.35
@@ -2374,7 +2496,7 @@ func _tick_reflection_combo_effects(delta: float) -> void:
 			var post_strike_hold: float = 0.0
 			if target_obj != null and is_instance_valid(target_obj) and target_obj is Node:
 				strike_pos = _node_global_pos_or_zero(target_obj as Node)
-			if debug_logs and reflection_node != null and is_instance_valid(reflection_node):
+			if debug_logs and debug_11g_logs and reflection_node != null and is_instance_valid(reflection_node):
 				_log_reflection_anim_debug("strike", reflection_node, target_obj as Node if target_obj is Node else null)
 			if reflection_node != null and is_instance_valid(reflection_node):
 				var facing: int = 1 if strike_pos.x >= reflection_node.global_position.x else -1
@@ -2384,7 +2506,7 @@ func _tick_reflection_combo_effects(delta: float) -> void:
 					reflection_node.call("play_heavy")
 				if reflection_node.has_method("get_post_strike_lifetime"):
 					post_strike_hold = maxf(float(reflection_node.call("get_post_strike_lifetime")), 0.0)
-				if debug_logs and reflection_node.has_method("get_heavy_debug_snapshot"):
+				if debug_logs and debug_11g_logs and reflection_node.has_method("get_heavy_debug_snapshot"):
 					var hv: Variant = reflection_node.call("get_heavy_debug_snapshot")
 					if hv is Dictionary:
 						var hd: Dictionary = hv as Dictionary

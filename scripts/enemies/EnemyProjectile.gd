@@ -43,14 +43,14 @@ func _physics_process(delta: float) -> void:
 	for area in overlapping:
 		if area != null and area.get_parent() != null:
 			var parent = area.get_parent()
-			if parent.is_in_group("player"):
+			if parent.is_in_group("player") or parent.is_in_group("reflection_taunt_target"):
 				_try_hit(parent)
 				return  # Stop processing after hit
 	
 	# Check for overlapping bodies BEFORE moving
 	var overlapping_bodies = get_overlapping_bodies()
 	for body in overlapping_bodies:
-		if body != null and body.is_in_group("player"):
+		if body != null and (body.is_in_group("player") or body.is_in_group("reflection_taunt_target")):
 			_try_hit(body)
 			return  # Stop processing after hit
 	
@@ -68,7 +68,7 @@ func _on_area_entered(area: Area2D) -> void:
 func _try_hit(target: Node) -> void:
 	if target == null:
 		return
-	if not target.is_in_group("player"):
+	if not target.is_in_group("player") and not target.is_in_group("reflection_taunt_target"):
 		return
 	
 	# Prevent multi-hit
