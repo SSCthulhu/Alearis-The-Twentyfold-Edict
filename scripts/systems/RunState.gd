@@ -11,6 +11,7 @@ var meta_next_start_value: int = 10
 # Persistent starting dice range (saved between game sessions)
 var starting_dice_min: int = 10
 var starting_dice_max: int = 10
+var tutorial_completed: bool = false
 
 var run_seed: int = 0
 var world_index: int = 1
@@ -1402,6 +1403,7 @@ func save_meta() -> void:
 		"meta_next_start_value": meta_next_start_value,
 		"starting_dice_min": starting_dice_min,
 		"starting_dice_max": starting_dice_max,
+		"tutorial_completed": tutorial_completed,
 		"last_run_seed": run_seed
 	}
 	var json_text: String = JSON.stringify(data)
@@ -1432,6 +1434,8 @@ func load_meta() -> void:
 		starting_dice_min = int(d["starting_dice_min"])
 	if d.has("starting_dice_max"):
 		starting_dice_max = int(d["starting_dice_max"])
+	if d.has("tutorial_completed"):
+		tutorial_completed = bool(d["tutorial_completed"])
 	if d.has("last_run_seed"):
 		run_seed = int(d["last_run_seed"])
 	pass
@@ -1442,3 +1446,16 @@ func update_starting_dice_range(new_value: int) -> void:
 	starting_dice_max = new_value
 	save_meta()
 	pass
+
+func is_tutorial_required() -> bool:
+	return not tutorial_completed
+
+func mark_tutorial_completed() -> void:
+	if tutorial_completed:
+		return
+	tutorial_completed = true
+	save_meta()
+
+func reset_tutorial_progress_for_debug() -> void:
+	tutorial_completed = false
+	save_meta()

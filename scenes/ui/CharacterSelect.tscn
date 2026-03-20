@@ -287,9 +287,9 @@ anchors_preset = 1
 anchor_left = 1.0
 anchor_right = 1.0
 offset_left = -460.0
-offset_top = 240.0
+offset_top = 420.0
 offset_right = -60.0
-offset_bottom = 390.0
+offset_bottom = 570.0
 grow_horizontal = 0
 theme_override_fonts/font = ExtResource("2_2todw")
 theme_override_font_sizes/font_size = 40
@@ -300,6 +300,24 @@ theme_override_styles/disabled = SubResource("StyleBoxEmpty_focus")
 theme_override_styles/focus = SubResource("StyleBoxEmpty_focus")
 text = "Reset Dice Range
 (10-10)"
+
+[node name="TutorialButton" type="Button" parent="."]
+visible = false
+custom_minimum_size = Vector2(400, 150)
+layout_mode = 1
+anchors_preset = 1
+anchor_left = 1.0
+anchor_right = 1.0
+offset_left = -460.0
+offset_top = 240.0
+offset_right = -60.0
+offset_bottom = 390.0
+grow_horizontal = 0
+theme_override_fonts/font = ExtResource("2_2todw")
+theme_override_font_sizes/font_size = 56
+theme_override_styles/normal = SubResource("StyleBoxFlat_r0o0e")
+theme_override_styles/hover = SubResource("StyleBoxFlat_hjnfi")
+text = "Tutorial"
 
 [connection signal="mouse_entered" from="CenterContainer/HBoxContainer/Knight" to="." method="_on_knight_hover"]
 [connection signal="mouse_exited" from="CenterContainer/HBoxContainer/Knight" to="." method="_on_button_mouse_exited"]
@@ -322,5 +340,6 @@ This will change your starting dice range for all future runs."
 
 [connection signal="pressed" from="BackButton" to="." method="_on_back_button_pressed"]
 [connection signal="pressed" from="PlayButton" to="." method="_on_play_button_pressed"]
+[connection signal="pressed" from="TutorialButton" to="." method="_on_tutorial_button_pressed"]
 [connection signal="pressed" from="ResetDiceButton" to="." method="_on_reset_dice_button_pressed"]
 [connection signal="confirmed" from="ResetConfirmDialog" to="." method="_on_reset_confirmed"]

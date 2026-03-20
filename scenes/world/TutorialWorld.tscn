@@ -1,0 +1,76 @@
+[gd_scene load_steps=8 format=3 uid="uid://7tu6pmn58ka6"]
+
+[ext_resource type="Script" uid="uid://4lxy63pjw8ft" path="res://scripts/systems/TutorialWorldController.gd" id="1"]
+[ext_resource type="PackedScene" uid="uid://ccimea8670188" path="res://scenes/arena/TutorialArena.tscn" id="2"]
+[ext_resource type="PackedScene" uid="uid://c72m65e63bs0o" path="res://scenes/player/player.tscn" id="3"]
+[ext_resource type="PackedScene" uid="uid://da2fr6n8vi4x7" path="res://scenes/ui/UI.tscn" id="4"]
+[ext_resource type="PackedScene" uid="uid://cxsb0sxvfl0t" path="res://scenes/ui/DiceModifierChoice.tscn" id="5"]
+[ext_resource type="Script" uid="uid://bytniehkh1mqt" path="res://scripts/systems/TutorialFloorStatusStub.gd" id="6"]
+[ext_resource type="PackedScene" uid="uid://bl6dx2oo8k24w" path="res://scenes/arena/TutorialExitPortal.tscn" id="7"]
+
+[node name="TutorialWorld" type="Node2D"]
+script = ExtResource("1")
+
+[node name="FloorProgressionController" type="Node" parent="."]
+script = ExtResource("6")
+
+[node name="Arena" parent="." instance=ExtResource("2")]
+
+[node name="Player" parent="." instance=ExtResource("3")]
+position = Vector2(-1478, -68)
+
+[node name="Camera2D" parent="Player" index="10"]
+limit_top = -1080
+limit_right = 65360
+limit_bottom = 14535
+
+[node name="Boss" type="Node2D" parent="."]
+visible = false
+
+[node name="UI" parent="." instance=ExtResource("4")]
+
+[node name="PlayerHUDCluster" parent="UI/ScreenRoot/HUDRoot/BottomRight" index="0"]
+offset_left = -684.5333
+offset_top = -289.41666
+offset_right = -27.683332
+offset_bottom = -27.683332
+
+[node name="PlayerHUDWiring" parent="UI/ScreenRoot/HUDRoot" index="6"]
+player_path = NodePath("../../../../Player")
+combat_path = NodePath("../../../../Player/Combat")
+
+[node name="EncounterHUDWiring" parent="UI/ScreenRoot/HUDRoot" index="7"]
+floor_controller_path = NodePath("../../../../FloorProgressionController")
+boss_path = NodePath("../../../../Boss")
+
+[node name="LowHealthPostFX" parent="UI/ScreenRoot/HUDRoot/PlayerDamageFeedback" index="0"]
+layout_mode = 3
+
+[node name="LowHealthBorder" parent="UI/ScreenRoot/HUDRoot/PlayerDamageFeedback" index="1"]
+layout_mode = 3
+
+[node name="HitFlash" parent="UI/ScreenRoot/HUDRoot/PlayerDamageFeedback" index="2"]
+layout_mode = 3
+
+[node name="DiceModifierChoice" parent="." instance=ExtResource("5")]
+
+[node name="TutorialExitPortal" parent="." instance=ExtResource("7")]
+position = Vector2(1524, -114)
+
+[editable path="Arena"]
+[editable path="Player"]
+[editable path="Player/Visual/Body3DView"]
+[editable path="UI"]
+[editable path="UI/DeathOverlay/RunSummaryPanel"]
+[editable path="UI/VictoryUI/Root/CardA"]
+[editable path="UI/VictoryUI/Root/CardB"]
+[editable path="UI/VictoryUI/Root/CardC"]
+[editable path="UI/VictoryUI/Root/CardD"]
+[editable path="UI/VictoryUI/Root/CardE"]
+[editable path="DiceModifierChoice"]
+[editable path="DiceModifierChoice/Root/CardA"]
+[editable path="DiceModifierChoice/Root/CardB"]
+[editable path="DiceModifierChoice/Root/CardC"]
+[editable path="DiceModifierChoice/Root/CardD"]
+[editable path="DiceModifierChoice/Root/CardE"]
+[editable path="TutorialExitPortal"]

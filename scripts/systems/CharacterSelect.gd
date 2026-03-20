@@ -6,6 +6,7 @@ extends Control
 @onready var wizard_button: Button = $CenterContainer/HBoxContainer/Wizard
 @onready var back_button: Button = $BackButton
 @onready var play_button: Button = $PlayButton
+@onready var tutorial_button: Button = $TutorialButton
 @onready var reset_dice_button: Button = $ResetDiceButton
 @onready var dice_range_label: Label = $DiceRangeLabel
 @onready var reset_confirm_dialog: ConfirmationDialog = $ResetConfirmDialog
@@ -19,6 +20,7 @@ func _ready():
 	
 	# Update dice range display
 	_update_dice_range_display()
+	_update_tutorial_button_visibility()
 	
 	# ✨ Set pivot offsets and connect hover effects (matches MainMenu style)
 	_setup_button_hover_effects()
@@ -70,8 +72,11 @@ func load_world():
 	if RunStateSingleton != null:
 		RunStateSingleton.start_new_run()
 		pass
-	
-	TransitionLayer.fade_to_scene("res://scenes/world/World1.tscn")
+	var next_scene: String = "res://scenes/world/World1.tscn"
+	if RunStateSingleton != null and RunStateSingleton.has_method("is_tutorial_required"):
+		if bool(RunStateSingleton.call("is_tutorial_required")):
+			next_scene = "res://scenes/world/TutorialWorld.tscn"
+	TransitionLayer.fade_to_scene(next_scene)
 
 
 # --- BACK BUTTON LOGIC ---
@@ -101,11 +106,27 @@ func _update_dice_range_display():
 		var dice_max = RunStateSingleton.starting_dice_max
 		dice_range_label.text = "Current Dice Range: %d-%d" % [dice_min, dice_max]
 
+func _update_tutorial_button_visibility() -> void:
+	if tutorial_button == null:
+		return
+	var show_tutorial_button: bool = false
+	if RunStateSingleton != null and "tutorial_completed" in RunStateSingleton:
+		show_tutorial_button = bool(RunStateSingleton.tutorial_completed)
+	tutorial_button.visible = show_tutorial_button
+	tutorial_button.disabled = not show_tutorial_button
+
+func _on_tutorial_button_pressed() -> void:
+	if selected_character == "":
+		return
+	if RunStateSingleton != null:
+		RunStateSingleton.start_new_run()
+	TransitionLayer.fade_to_scene("res://scenes/world/TutorialWorld.tscn")
+
 
 # ✨ Button hover effects (matches MainMenu style)
 func _setup_button_hover_effects() -> void:
 	"""Set up button scaling on hover"""
-	var buttons: Array[Button] = [knight_button, rogue_button, wizard_button, back_button, play_button, reset_dice_button]
+	var buttons: Array[Button] = [knight_button, rogue_button, wizard_button, back_button, play_button, tutorial_button, reset_dice_button]
 	
 	for btn in buttons:
 		if btn != null:
