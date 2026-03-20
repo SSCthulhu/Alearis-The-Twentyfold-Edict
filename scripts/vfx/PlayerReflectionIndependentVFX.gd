@@ -15,6 +15,10 @@ var _screen_sprite: Sprite2D = null
 var _stage_root: Node3D = null
 var _facing_pivot: Node3D = null
 var _anim_player: AnimationPlayer = null
+var _character_name: String = ""
+var _mapped_idle_anim: String = ""
+var _mapped_heavy_anim: String = ""
+var _last_heavy_debug: Dictionary = {}
 
 func _ready() -> void:
 	top_level = true
@@ -32,7 +36,11 @@ func configure_character(character_name: String, alpha: float = 0.95, visual_sca
 	clone_alpha = clampf(alpha, 0.05, 1.0)
 	var clamped_scale: float = clampf(visual_scale, 0.35, 3.0)
 	clone_scale = Vector2(clamped_scale, clamped_scale)
-	var model_path: String = _resolve_model_path(character_name)
+	_character_name = character_name
+	var profile: Dictionary = _resolve_character_profile(character_name)
+	var model_path: String = String(profile.get("model_path", _resolve_model_path(character_name)))
+	_mapped_idle_anim = String(profile.get("idle_anim", ""))
+	_mapped_heavy_anim = String(profile.get("heavy_anim", ""))
 	_load_character_model(model_path)
 	_apply_clone_visuals()
 	play_idle()
@@ -58,10 +66,30 @@ func play_idle() -> void:
 
 func play_heavy() -> void:
 	var anim_name: String = _resolve_heavy_anim_name()
-	if anim_name == "" or _anim_player == null:
+	_last_heavy_debug = {
+		"character": _character_name,
+		"requested": anim_name,
+		"has_requested": false,
+		"before": "",
+		"after": "",
+		"played": false
+	}
+	if _anim_player == null:
+		return
+	_last_heavy_debug["before"] = String(_anim_player.current_animation)
+	if anim_name == "":
+		return
+	var has_requested: bool = _anim_player.has_animation(anim_name)
+	_last_heavy_debug["has_requested"] = has_requested
+	if not has_requested:
 		return
 	_anim_player.speed_scale = 1.0
 	_anim_player.play(anim_name, 0.0, 1.0, false)
+	_last_heavy_debug["after"] = String(_anim_player.current_animation)
+	_last_heavy_debug["played"] = true
+
+func get_heavy_debug_snapshot() -> Dictionary:
+	return _last_heavy_debug.duplicate(true)
 
 func get_debug_snapshot() -> Dictionary:
 	var out: Dictionary = {
@@ -155,9 +183,36 @@ func _resolve_model_path(character_name: String) -> String:
 		return KNIGHT_MODEL_PATH
 	return ROGUE_MODEL_PATH
 
+func _resolve_character_profile(character_name: String) -> Dictionary:
+	var out: Dictionary = {
+		"model_path": _resolve_model_path(character_name),
+		"idle_anim": "",
+		"heavy_anim": ""
+	}
+	if CharacterDatabase == null or not CharacterDatabase.has_method("get_character_data"):
+		return out
+	var cdata: Object = CharacterDatabase.call("get_character_data", character_name) as Object
+	if cdata == null:
+		return out
+	if "model_scene_path" in cdata:
+		var path: String = String(cdata.get("model_scene_path"))
+		if path != "":
+			out["model_path"] = path
+	if "animation_mappings" in cdata:
+		var mappings_v: Variant = cdata.get("animation_mappings")
+		if mappings_v is Dictionary:
+			var mappings: Dictionary = mappings_v as Dictionary
+			if mappings.has("idle"):
+				out["idle_anim"] = String(mappings.get("idle", ""))
+			if mappings.has("heavy_attack"):
+				out["heavy_anim"] = String(mappings.get("heavy_attack", ""))
+	return out
+
 func _resolve_idle_anim_name() -> String:
 	if _anim_player == null:
 		return ""
+	if _mapped_idle_anim != "" and _anim_player.has_animation(_mapped_idle_anim):
+		return _mapped_idle_anim
 	var candidates: Array[String] = [
 		"QAnim/Idle_Shield",
 		"QAnim/Sword_Idle",
@@ -175,20 +230,9 @@ func _resolve_idle_anim_name() -> String:
 func _resolve_heavy_anim_name() -> String:
 	if _anim_player == null:
 		return ""
-	var candidates: Array[String] = [
-		"QAnim/Sword_Heavy",
-		"QAnim/Heavy_Attack",
-		"QAnim/Heavy",
-		"heavy_attack"
-	]
-	for a: String in candidates:
-		if _anim_player.has_animation(a):
-			return a
-	for a: String in _anim_player.get_animation_list():
-		var low: String = a.to_lower()
-		if low.contains("heavy"):
-			return a
-	return _resolve_idle_anim_name()
+	if _mapped_heavy_anim != "" and _anim_player.has_animation(_mapped_heavy_anim):
+		return _mapped_heavy_anim
+	return ""
 
 func _find_animation_player(node: Node) -> AnimationPlayer:
 	if node is AnimationPlayer:

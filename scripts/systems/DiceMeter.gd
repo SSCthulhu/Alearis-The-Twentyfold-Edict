@@ -2366,6 +2366,21 @@ func _tick_reflection_combo_effects(delta: float) -> void:
 					reflection_node.call("set_facing_toward", strike_pos)
 				if reflection_node.has_method("play_heavy"):
 					reflection_node.call("play_heavy")
+				if debug_logs and reflection_node.has_method("get_heavy_debug_snapshot"):
+					var hv: Variant = reflection_node.call("get_heavy_debug_snapshot")
+					if hv is Dictionary:
+						var hd: Dictionary = hv as Dictionary
+						_log_debug(
+							"11G heavy[strike] refl=%d char=%s requested=%s has=%s before=%s after=%s played=%s" % [
+								reflection_node.get_instance_id(),
+								String(hd.get("character", "")),
+								String(hd.get("requested", "")),
+								str(hd.get("has_requested", false)),
+								String(hd.get("before", "")),
+								String(hd.get("after", "")),
+								str(hd.get("played", false))
+							]
+						)
 				_play_reflection_heavy_vfx(reflection_node.global_position, facing)
 				if reflection_node.get_node_or_null("SnapshotSprite") != null:
 					_animate_snapshot_reflection_strike(reflection_node, strike_pos)
