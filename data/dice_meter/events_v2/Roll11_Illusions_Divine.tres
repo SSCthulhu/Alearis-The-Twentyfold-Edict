@@ -8,4 +8,4 @@ brief_text = "A reflection appears behind each enemy and heavy-strikes."
 description = "Faithful reflections appear behind each enemy, execute a heavy strike, and apply player-like heavy damage with bleed."
 effect_id = &"apply_reflection_combo"
 duration_seconds = 7.0
-effect_params = {"player_damage_mult": 1.12, "copy_lifetime": 1.0, "strike_delay": 0.16, "strike_stagger": 0.06, "spawn_distance": 110.0, "debug_marker_mode": false, "clone_alpha": 0.95, "bleed_tick_damage": 2, "bleed_duration": 4.0, "bleed_tick_interval": 0.5}
+effect_params = {"player_damage_mult": 1.12, "copy_lifetime": 1.0, "strike_delay": 0.16, "strike_stagger": 0.06, "spawn_distance": 110.0, "debug_marker_mode": false, "clone_alpha": 0.95, "bleed_tick_damage": 2, "bleed_duration": 4.0, "bleed_tick_interval": 0.5, "reflection_damage_scale": 0.5, "bleed_damage_scale": 0.5}

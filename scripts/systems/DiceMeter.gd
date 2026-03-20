@@ -970,6 +970,8 @@ func _apply_reflection_combo(duration: float, params: Dictionary) -> void:
 		var reflection: Node2D = _spawn_player_reflection_copy(player_root, params, spawn_pos, target_id)
 		if reflection == null:
 			continue
+		if reflection.has_method("set_facing_toward"):
+			reflection.call("set_facing_toward", target_pos)
 		if debug_logs:
 			_log_reflection_anim_debug("spawn", reflection, enemy)
 		_active_reflection_combo_effects.append({
@@ -1488,6 +1490,8 @@ func _apply_player_like_heavy_to_target(target: Node, params: Dictionary) -> voi
 			was_crit = bool(combat.call("_roll_crit"))
 		if combat.has_method("_apply_crit_if_any"):
 			dmg = int(combat.call("_apply_crit_if_any", dmg, was_crit))
+	var reflection_damage_scale: float = clampf(float(params.get("reflection_damage_scale", 1.0)), 0.0, 10.0)
+	dmg = int(round(float(dmg) * reflection_damage_scale))
 	dmg = maxi(dmg, 1)
 	var hp_node: Node = target.get_node_or_null("Health")
 	if hp_node != null and hp_node.has_method("take_damage"):
@@ -1517,9 +1521,12 @@ func _apply_bleed_to_target_like_player_heavy(target: Node, params: Dictionary) 
 		target.add_child(status_effects)
 	if status_effects is EnemyStatusEffects:
 		var se: EnemyStatusEffects = status_effects as EnemyStatusEffects
+		var bleed_damage_scale: float = clampf(float(params.get("bleed_damage_scale", 1.0)), 0.0, 10.0)
+		var base_bleed_tick: int = maxi(int(params.get("bleed_tick_damage", 2)), 1)
+		var final_bleed_tick: int = maxi(int(round(float(base_bleed_tick) * bleed_damage_scale)), 1)
 		se.set_receiver(receiver)
 		se.apply_bleed_refresh(
-			maxi(int(params.get("bleed_tick_damage", 2)), 1),
+			final_bleed_tick,
 			maxf(float(params.get("bleed_duration", 4.0)), 0.1),
 			maxf(float(params.get("bleed_tick_interval", 0.5)), 0.05)
 		)
@@ -1812,8 +1819,11 @@ func _apply_reflection_lunge(copy: Node2D, target_pos: Vector2, player_root: Nod
 		return
 	var attack_distance: float = 86.0
 	var attack_duration: float = 0.14
+	var character_name: String = ""
 	if player_root != null and ("character_data" in player_root):
 		var cdata: Object = player_root.get("character_data") as Object
+		if cdata != null and ("character_name" in cdata):
+			character_name = String(cdata.get("character_name"))
 		if cdata != null and ("attack_movement" in cdata):
 			var atk_mv: Dictionary = cdata.get("attack_movement") as Dictionary
 			if atk_mv.has("heavy"):
@@ -1821,7 +1831,12 @@ func _apply_reflection_lunge(copy: Node2D, target_pos: Vector2, player_root: Nod
 				attack_distance = float(cfg.get("distance", attack_distance))
 				attack_duration = float(cfg.get("duration", attack_duration))
 	attack_duration = clampf(attack_duration, 0.06, 0.5)
-	var end_pos: Vector2 = copy.global_position + toward.normalized() * minf(attack_distance, travel - 6.0)
+	var is_rogue: bool = character_name.to_lower() == "rogue"
+	var lunge_distance: float = minf(attack_distance, travel - 6.0)
+	if is_rogue:
+		# Rogue heavy should travel through/around target like player heavy.
+		lunge_distance = maxf(attack_distance, travel - 6.0) * 0.50
+	var end_pos: Vector2 = copy.global_position + toward.normalized() * lunge_distance
 	var t: Tween = create_tween()
 	t.set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
 	t.tween_property(copy, "global_position", end_pos, attack_duration)
@@ -2356,6 +2371,7 @@ func _tick_reflection_combo_effects(delta: float) -> void:
 		var reflection_node: Node2D = reflection_obj as Node2D
 		if not strike_done and strike_left <= 0.0:
 			var strike_pos: Vector2 = cached_target_pos
+			var post_strike_hold: float = 0.0
 			if target_obj != null and is_instance_valid(target_obj) and target_obj is Node:
 				strike_pos = _node_global_pos_or_zero(target_obj as Node)
 			if debug_logs and reflection_node != null and is_instance_valid(reflection_node):
@@ -2366,6 +2382,8 @@ func _tick_reflection_combo_effects(delta: float) -> void:
 					reflection_node.call("set_facing_toward", strike_pos)
 				if reflection_node.has_method("play_heavy"):
 					reflection_node.call("play_heavy")
+				if reflection_node.has_method("get_post_strike_lifetime"):
+					post_strike_hold = maxf(float(reflection_node.call("get_post_strike_lifetime")), 0.0)
 				if debug_logs and reflection_node.has_method("get_heavy_debug_snapshot"):
 					var hv: Variant = reflection_node.call("get_heavy_debug_snapshot")
 					if hv is Dictionary:
@@ -2389,6 +2407,8 @@ func _tick_reflection_combo_effects(delta: float) -> void:
 				_apply_player_like_heavy_to_target(target_node, e.get("params", {}))
 				if reflection_node != null and is_instance_valid(reflection_node):
 					_apply_reflection_lunge(reflection_node, strike_pos, _resolve_player_node())
+			if post_strike_hold > 0.0:
+				time_left = maxf(time_left, post_strike_hold)
 			strike_done = true
 		if time_left <= 0.0:
 			if reflection_node != null and is_instance_valid(reflection_node):

@@ -19,6 +19,8 @@ var _character_name: String = ""
 var _mapped_idle_anim: String = ""
 var _mapped_heavy_anim: String = ""
 var _last_heavy_debug: Dictionary = {}
+var _heavy_recover_tween: Tween = null
+@export var heavy_idle_settle_seconds: float = 0.12
 
 func _ready() -> void:
 	top_level = true
@@ -83,13 +85,33 @@ func play_heavy() -> void:
 	_last_heavy_debug["has_requested"] = has_requested
 	if not has_requested:
 		return
-	_anim_player.speed_scale = 1.0
+	var is_knight: bool = _character_name.to_lower() == "knight"
+	_anim_player.speed_scale = 1.25 if is_knight else 1.0
 	_anim_player.play(anim_name, 0.0, 1.0, false)
+	if _heavy_recover_tween != null:
+		_heavy_recover_tween.kill()
+		_heavy_recover_tween = null
+	var anim_len: float = _resolve_anim_length_seconds(anim_name)
+	if _anim_player.speed_scale > 0.001:
+		anim_len /= _anim_player.speed_scale
+	var recover_delay: float = maxf(anim_len, 0.06) + maxf(heavy_idle_settle_seconds, 0.0)
+	_heavy_recover_tween = create_tween()
+	_heavy_recover_tween.tween_interval(recover_delay)
+	_heavy_recover_tween.finished.connect(func() -> void:
+		play_idle()
+		_heavy_recover_tween = null
+	)
 	_last_heavy_debug["after"] = String(_anim_player.current_animation)
 	_last_heavy_debug["played"] = true
 
 func get_heavy_debug_snapshot() -> Dictionary:
 	return _last_heavy_debug.duplicate(true)
+
+func get_post_strike_lifetime() -> float:
+	var heavy_name: String = _resolve_heavy_anim_name()
+	var heavy_len: float = _resolve_anim_length_seconds(heavy_name)
+	var hold: float = heavy_len + maxf(heavy_idle_settle_seconds, 0.0) + 0.06
+	return maxf(hold, 0.22)
 
 func get_debug_snapshot() -> Dictionary:
 	var out: Dictionary = {
@@ -233,6 +255,14 @@ func _resolve_heavy_anim_name() -> String:
 	if _mapped_heavy_anim != "" and _anim_player.has_animation(_mapped_heavy_anim):
 		return _mapped_heavy_anim
 	return ""
+
+func _resolve_anim_length_seconds(anim_name: String) -> float:
+	if _anim_player == null or anim_name == "":
+		return 0.0
+	var anim: Animation = _anim_player.get_animation(anim_name)
+	if anim == null:
+		return 0.0
+	return maxf(anim.length, 0.0)
 
 func _find_animation_player(node: Node) -> AnimationPlayer:
 	if node is AnimationPlayer:
