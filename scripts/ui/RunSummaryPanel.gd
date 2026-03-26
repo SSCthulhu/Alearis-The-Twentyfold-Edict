@@ -167,6 +167,15 @@ func _refresh_text() -> void:
 		if "floor_index" in RunStateSingleton: floor_i = int(RunStateSingleton.floor_index)
 		if "dice_min" in RunStateSingleton: dmin = int(RunStateSingleton.dice_min)
 		if "dice_max" in RunStateSingleton: dmax = int(RunStateSingleton.dice_max)
+	var world_text: String = str(world_i)
+	var show_floor_line: bool = true
+	var tree: SceneTree = get_tree()
+	var scene_name: String = ""
+	if tree != null and tree.current_scene != null:
+		scene_name = String(tree.current_scene.name)
+	if scene_name == "TutorialWorld":
+		world_text = "Tutorial"
+		show_floor_line = false
 
 	# Modifiers (prevent wrapping inside names)
 	var mod_ids: Array[StringName] = _get_active_modifier_ids()
@@ -208,8 +217,9 @@ func _refresh_text() -> void:
 	bb += "[table=%d]\n" % table_cols
 
 	bb += "[cell]\n"
-	bb += "[color=%s][b]World:[/b][/color] %d\n" % [_to_bb(dim), world_i]
-	bb += "[color=%s][b]Floor:[/b][/color] %d\n" % [_to_bb(dim), floor_i]
+	bb += "[color=%s][b]World:[/b][/color] %s\n" % [_to_bb(dim), world_text]
+	if show_floor_line:
+		bb += "[color=%s][b]Floor:[/b][/color] %d\n" % [_to_bb(dim), floor_i]
 	bb += "[color=%s][b]Dice Range:[/b][/color] %d–%d\n" % [_to_bb(dim), dmin, dmax]
 	bb += "[/cell]\n"
 

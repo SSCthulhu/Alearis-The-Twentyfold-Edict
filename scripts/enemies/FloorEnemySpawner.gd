@@ -30,6 +30,7 @@ const ENEMY_GOLEM_SCENE: PackedScene = preload("res://scenes/enemies/EnemySkelet
 ]
 
 @export var spawn_all_on_ready: bool = false  # ✅ CHANGED: Must be false for elite spawning to work
+@export var auto_spawn_floor1_on_ready: bool = true
 @export var debug_spawning: bool = false  # ✅ NEW: Enable debug logs for spawning
 
 # Optional: parent node to hold spawned enemies (keeps tree tidy)
@@ -65,8 +66,9 @@ func _ready() -> void:
 	if spawn_all_on_ready:
 		call_deferred("_spawn_all_floors_deferred")
 	else:
-		# Spawn only Floor 1 initially
-		call_deferred("_spawn_floor_deferred", 0)
+		# Spawn only Floor 1 initially (unless explicitly disabled).
+		if auto_spawn_floor1_on_ready:
+			call_deferred("_spawn_floor_deferred", 0)
 
 func _spawn_all_floors_deferred() -> void:
 	spawn_all_floors()

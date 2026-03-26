@@ -1,39 +1,172 @@
-[gd_scene load_steps=8 format=3 uid="uid://7tu6pmn58ka6"]
+[gd_scene load_steps=18 format=3 uid="uid://7tu6pmn58ka6"]
 
 [ext_resource type="Script" uid="uid://4lxy63pjw8ft" path="res://scripts/systems/TutorialWorldController.gd" id="1"]
 [ext_resource type="PackedScene" uid="uid://ccimea8670188" path="res://scenes/arena/TutorialArena.tscn" id="2"]
+[ext_resource type="Texture2D" uid="uid://bqvrh1cy85ubc" path="res://art/Worlds/Village/Mountain/SKY.png" id="2_q5aha"]
 [ext_resource type="PackedScene" uid="uid://c72m65e63bs0o" path="res://scenes/player/player.tscn" id="3"]
+[ext_resource type="Texture2D" uid="uid://qnqwlh1fxnul" path="res://art/Worlds/Village/Mountain/1 1.png" id="3_s1fuf"]
 [ext_resource type="PackedScene" uid="uid://da2fr6n8vi4x7" path="res://scenes/ui/UI.tscn" id="4"]
+[ext_resource type="Texture2D" uid="uid://bpcvwd5q3ajgo" path="res://art/Worlds2/Jungle/Background/Cartoon Jungle Game Tileset_Background - Layer 00.png" id="4_asuhl"]
+[ext_resource type="Texture2D" uid="uid://c7e4kps678v7i" path="res://art/Worlds/Village/Mountain/4.png" id="4_irkis"]
 [ext_resource type="PackedScene" uid="uid://cxsb0sxvfl0t" path="res://scenes/ui/DiceModifierChoice.tscn" id="5"]
 [ext_resource type="Script" uid="uid://bytniehkh1mqt" path="res://scripts/systems/TutorialFloorStatusStub.gd" id="6"]
 [ext_resource type="PackedScene" uid="uid://bl6dx2oo8k24w" path="res://scenes/arena/TutorialExitPortal.tscn" id="7"]
+[ext_resource type="Script" uid="uid://c34rst6nb4hnx" path="res://scripts/enemies/FloorEnemySpawner.gd" id="8"]
+[ext_resource type="PackedScene" uid="uid://ccrejlifa6gwm" path="res://scenes/enemies/EnemyKnightAdd.tscn" id="9"]
+[ext_resource type="PackedScene" uid="uid://b66v4cxi2rvhb" path="res://scenes/boss/TutorialBoss_D20.tscn" id="10"]
+[ext_resource type="Script" uid="uid://cc5fnsfqbdpkr" path="res://scripts/systems/TutorialBossEncounterController.gd" id="11"]
+[ext_resource type="PackedScene" uid="uid://cai81qjmmgokj" path="res://scenes/arena/AscensionCharge.tscn" id="12"]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_7nbnf"]
+size = Vector2(1000, 700)
 
 [node name="TutorialWorld" type="Node2D"]
 script = ExtResource("1")
 
+[node name="ParallaxRoot" type="Node2D" parent="."]
+z_index = -2
+
+[node name="Far" type="Parallax2D" parent="ParallaxRoot"]
+scale = Vector2(2, 2)
+scroll_scale = Vector2(0.2, 0.1)
+scroll_offset = Vector2(-147, 27)
+repeat_size = Vector2(1920, 0)
+repeat_times = 2
+ignore_camera_scroll = true
+
+[node name="Sky" type="Sprite2D" parent="ParallaxRoot/Far"]
+position = Vector2(1605, -311)
+texture = ExtResource("2_q5aha")
+
+[node name="Mid" type="Parallax2D" parent="ParallaxRoot"]
+scroll_scale = Vector2(0.18, 0.08)
+repeat_size = Vector2(1343, 0)
+repeat_times = 8
+ignore_camera_scroll = true
+
+[node name="11" type="Sprite2D" parent="ParallaxRoot/Mid"]
+position = Vector2(3738, 145)
+texture = ExtResource("3_s1fuf")
+
+[node name="BossMid" type="Parallax2D" parent="ParallaxRoot"]
+scroll_scale = Vector2(0.18, 0.08)
+repeat_size = Vector2(4002, 0)
+repeat_times = 2
+ignore_camera_scroll = true
+
+[node name="CartoonJungleGameTilesetBackgroundLayer00" type="Sprite2D" parent="ParallaxRoot/BossMid"]
+position = Vector2(13301.001, -684)
+scale = Vector2(3, 3)
+texture = ExtResource("4_asuhl")
+
+[node name="Near" type="Parallax2D" parent="ParallaxRoot"]
+scroll_scale = Vector2(0.16, 0.06)
+repeat_size = Vector2(2230.79, 0)
+repeat_times = 4
+ignore_camera_scroll = true
+
+[node name="4" type="Sprite2D" parent="ParallaxRoot/Near"]
+position = Vector2(2814, -133)
+texture = ExtResource("4_irkis")
+
 [node name="FloorProgressionController" type="Node" parent="."]
 script = ExtResource("6")
 
+[node name="FloorEnemySpawner" type="Node" parent="."]
+script = ExtResource("8")
+enemy_scenes = Array[PackedScene]([ExtResource("9")])
+auto_spawn_floor1_on_ready = false
+enable_forced_enemy_scene = true
+forced_enemy_type = 1
+forced_enemy_count = 1
+
+[node name="EncounterController" type="Node" parent="."]
+script = ExtResource("11")
+charge_scene = ExtResource("12")
+add_scene = ExtResource("9")
+start_on_ready = false
+
 [node name="Arena" parent="." instance=ExtResource("2")]
 
+[node name="RightWall" parent="Arena/Geometry/Walls" index="1"]
+position = Vector2(6008, 603)
+
+[node name="ChestSpawn_Default" parent="Arena/Spawns/ChestSpawns" index="0"]
+position = Vector2(3390, 331)
+
 [node name="Player" parent="." instance=ExtResource("3")]
-position = Vector2(-1478, -68)
+position = Vector2(-1488, 183)
+enable_slope_ground_adhesion = null
+slope_floor_snap_length = null
+slope_floor_max_angle_deg = null
+slope_snap_requires_downward_motion = null
+body_3d_view_path = null
+combat_path = null
+health_path = null
+roll_max_charges = null
+roll_recharge_time = null
+roll_duration = null
+roll_chain_lockout = null
+roll_iframes = null
+roll_iframe_buffer = null
+perfect_dodge_window = null
+perfect_dodge_lockout = null
+input_move_left = null
+input_move_right = null
+input_move_down = null
+input_jump = null
+input_dash = null
+input_roll = null
+input_light_attack = null
+input_heavy_attack = null
+input_ultimate = null
+input_defend = null
+drop_through_double_tap_window = null
+drop_through_duration = null
+drop_through_downward_boost = null
+drop_through_downward_boost_air = null
+drop_through_world_collision_layer_bit = null
+auto_drop_when_airborne_holding_down = null
+drop_through_airborne_probe_feet_offset = null
+drop_through_airborne_probe_distance = null
+drop_through_roll_cue_lock_time = null
+elevator_floor_grace_seconds = null
+elevator_ground_probe_feet_offset = null
+elevator_ground_probe_distance = null
+enable_god_mode_input = null
+enable_bigd_input = null
+input_god_mode = null
+input_bigd = null
 
 [node name="Camera2D" parent="Player" index="10"]
+limit_left = -1535
 limit_top = -1080
-limit_right = 65360
-limit_bottom = 14535
+limit_right = 4430
+limit_bottom = 885
 
-[node name="Boss" type="Node2D" parent="."]
-visible = false
+[node name="BossArenaCenter" type="Marker2D" parent="."]
+position = Vector2(13465, -5)
+
+[node name="Boss" parent="." instance=ExtResource("10")]
+z_index = -1
+position = Vector2(13501, -428)
+
+[node name="DpsEngageZone" type="Area2D" parent="."]
+position = Vector2(13465, -5)
+collision_layer = 0
+monitorable = false
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="DpsEngageZone"]
+position = Vector2(32, -588)
+shape = SubResource("RectangleShape2D_7nbnf")
 
 [node name="UI" parent="." instance=ExtResource("4")]
 
 [node name="PlayerHUDCluster" parent="UI/ScreenRoot/HUDRoot/BottomRight" index="0"]
-offset_left = -684.5333
-offset_top = -289.41666
-offset_right = -27.683332
-offset_bottom = -27.683332
+offset_left = -414.8
+offset_top = -175.375
+offset_right = -16.775
+offset_bottom = -16.775
 
 [node name="PlayerHUDWiring" parent="UI/ScreenRoot/HUDRoot" index="6"]
 player_path = NodePath("../../../../Player")
@@ -55,11 +188,441 @@ layout_mode = 3
 [node name="DiceModifierChoice" parent="." instance=ExtResource("5")]
 
 [node name="TutorialExitPortal" parent="." instance=ExtResource("7")]
-position = Vector2(1524, -114)
+position = Vector2(3756, 305)
+anim_fps = 12.0
+tutorial_boss_camera_left = 11849.93
+tutorial_boss_camera_right = 15154.51
+tutorial_boss_camera_top = -1079.79
+tutorial_boss_camera_bottom = 900.0
+tutorial_boss_camera_live_tuning = true
+tutorial_boss_camera_center = Vector2(11836.325, 241)
+tutorial_boss_camera_min_zoom = 0.65
+
+[node name="TutorialIntroOverlay" type="CanvasLayer" parent="."]
+layer = 50
+
+[node name="Dim" type="ColorRect" parent="TutorialIntroOverlay"]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+color = Color(0, 0, 0, 0.72)
+
+[node name="IntroDialog" type="PanelContainer" parent="TutorialIntroOverlay"]
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -620.0
+offset_top = -190.0
+offset_right = 620.0
+offset_bottom = 190.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+
+[node name="Margin" type="MarginContainer" parent="TutorialIntroOverlay/IntroDialog"]
+layout_mode = 2
+theme_override_constants/margin_left = 28
+theme_override_constants/margin_top = 24
+theme_override_constants/margin_right = 28
+theme_override_constants/margin_bottom = 24
+
+[node name="VBox" type="VBoxContainer" parent="TutorialIntroOverlay/IntroDialog/Margin"]
+layout_mode = 2
+theme_override_constants/separation = 16
+
+[node name="LoreText" type="Label" parent="TutorialIntroOverlay/IntroDialog/Margin/VBox"]
+custom_minimum_size = Vector2(0, 220)
+layout_mode = 2
+size_flags_vertical = 3
+theme_override_font_sizes/font_size = 34
+vertical_alignment = 1
+autowrap_mode = 3
+clip_text = true
+
+[node name="HintText" type="Label" parent="TutorialIntroOverlay/IntroDialog/Margin/VBox"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 26
+text = "Press Enter to continue"
+horizontal_alignment = 2
+
+[node name="MoveDialog" type="PanelContainer" parent="TutorialIntroOverlay"]
+visible = false
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -620.0
+offset_top = -190.0
+offset_right = 620.0
+offset_bottom = 190.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+
+[node name="Margin" type="MarginContainer" parent="TutorialIntroOverlay/MoveDialog"]
+layout_mode = 2
+theme_override_constants/margin_left = 28
+theme_override_constants/margin_top = 24
+theme_override_constants/margin_right = 28
+theme_override_constants/margin_bottom = 24
+
+[node name="VBox" type="VBoxContainer" parent="TutorialIntroOverlay/MoveDialog/Margin"]
+layout_mode = 2
+theme_override_constants/separation = 16
+
+[node name="MoveText" type="Label" parent="TutorialIntroOverlay/MoveDialog/Margin/VBox"]
+custom_minimum_size = Vector2(0, 220)
+layout_mode = 2
+size_flags_vertical = 3
+theme_override_font_sizes/font_size = 34
+vertical_alignment = 1
+autowrap_mode = 3
+clip_text = true
+
+[node name="MoveHint" type="Label" parent="TutorialIntroOverlay/MoveDialog/Margin/VBox"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 26
+text = "Move Left: Pending    Move Right: Pending"
+horizontal_alignment = 1
+
+[node name="JumpDialog" type="PanelContainer" parent="TutorialIntroOverlay"]
+visible = false
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -620.0
+offset_top = -190.0
+offset_right = 620.0
+offset_bottom = 190.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+
+[node name="Margin" type="MarginContainer" parent="TutorialIntroOverlay/JumpDialog"]
+layout_mode = 2
+theme_override_constants/margin_left = 28
+theme_override_constants/margin_top = 24
+theme_override_constants/margin_right = 28
+theme_override_constants/margin_bottom = 24
+
+[node name="VBox" type="VBoxContainer" parent="TutorialIntroOverlay/JumpDialog/Margin"]
+layout_mode = 2
+theme_override_constants/separation = 16
+
+[node name="JumpText" type="Label" parent="TutorialIntroOverlay/JumpDialog/Margin/VBox"]
+custom_minimum_size = Vector2(0, 220)
+layout_mode = 2
+size_flags_vertical = 3
+theme_override_font_sizes/font_size = 34
+vertical_alignment = 1
+autowrap_mode = 3
+clip_text = true
+
+[node name="JumpHint" type="Label" parent="TutorialIntroOverlay/JumpDialog/Margin/VBox"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 26
+text = "Tip: Hold jump a little longer while in the air for extra height."
+horizontal_alignment = 1
+
+[node name="DashDialog" type="PanelContainer" parent="TutorialIntroOverlay"]
+visible = false
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -620.0
+offset_top = -230.0
+offset_right = 620.0
+offset_bottom = 230.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+
+[node name="Margin" type="MarginContainer" parent="TutorialIntroOverlay/DashDialog"]
+layout_mode = 2
+theme_override_constants/margin_left = 28
+theme_override_constants/margin_top = 24
+theme_override_constants/margin_right = 28
+theme_override_constants/margin_bottom = 24
+
+[node name="VBox" type="VBoxContainer" parent="TutorialIntroOverlay/DashDialog/Margin"]
+layout_mode = 2
+theme_override_constants/separation = 16
+
+[node name="DashText" type="Label" parent="TutorialIntroOverlay/DashDialog/Margin/VBox"]
+custom_minimum_size = Vector2(0, 260)
+layout_mode = 2
+size_flags_vertical = 3
+theme_override_font_sizes/font_size = 34
+vertical_alignment = 1
+autowrap_mode = 3
+clip_text = true
+
+[node name="DashHint" type="Label" parent="TutorialIntroOverlay/DashDialog/Margin/VBox"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 26
+text = "Ground Dash: Pending    Air Dash: Pending    Sprint: Pending"
+horizontal_alignment = 1
+
+[node name="AttackDialog" type="PanelContainer" parent="TutorialIntroOverlay"]
+visible = false
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -620.0
+offset_top = -190.0
+offset_right = 620.0
+offset_bottom = 190.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+
+[node name="Margin" type="MarginContainer" parent="TutorialIntroOverlay/AttackDialog"]
+layout_mode = 2
+theme_override_constants/margin_left = 28
+theme_override_constants/margin_top = 24
+theme_override_constants/margin_right = 28
+theme_override_constants/margin_bottom = 24
+
+[node name="VBox" type="VBoxContainer" parent="TutorialIntroOverlay/AttackDialog/Margin"]
+layout_mode = 2
+theme_override_constants/separation = 16
+
+[node name="AttackText" type="Label" parent="TutorialIntroOverlay/AttackDialog/Margin/VBox"]
+custom_minimum_size = Vector2(0, 220)
+layout_mode = 2
+size_flags_vertical = 3
+theme_override_font_sizes/font_size = 34
+vertical_alignment = 1
+autowrap_mode = 3
+clip_text = true
+
+[node name="AttackHint" type="Label" parent="TutorialIntroOverlay/AttackDialog/Margin/VBox"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 26
+text = "Combo 1: Pending    Combo 2: Pending    Combo 3: Pending"
+horizontal_alignment = 1
+
+[node name="HeavyDialog" type="PanelContainer" parent="TutorialIntroOverlay"]
+visible = false
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -620.0
+offset_top = -190.0
+offset_right = 620.0
+offset_bottom = 190.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+
+[node name="Margin" type="MarginContainer" parent="TutorialIntroOverlay/HeavyDialog"]
+layout_mode = 2
+theme_override_constants/margin_left = 28
+theme_override_constants/margin_top = 24
+theme_override_constants/margin_right = 28
+theme_override_constants/margin_bottom = 24
+
+[node name="VBox" type="VBoxContainer" parent="TutorialIntroOverlay/HeavyDialog/Margin"]
+layout_mode = 2
+theme_override_constants/separation = 16
+
+[node name="HeavyText" type="Label" parent="TutorialIntroOverlay/HeavyDialog/Margin/VBox"]
+custom_minimum_size = Vector2(0, 220)
+layout_mode = 2
+size_flags_vertical = 3
+theme_override_font_sizes/font_size = 34
+vertical_alignment = 1
+autowrap_mode = 3
+clip_text = true
+
+[node name="HeavyHint" type="Label" parent="TutorialIntroOverlay/HeavyDialog/Margin/VBox"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 26
+text = "Heavy Hit: Pending"
+horizontal_alignment = 1
+
+[node name="UltimateDialog" type="PanelContainer" parent="TutorialIntroOverlay"]
+visible = false
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -620.0
+offset_top = -190.0
+offset_right = 620.0
+offset_bottom = 190.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+
+[node name="Margin" type="MarginContainer" parent="TutorialIntroOverlay/UltimateDialog"]
+layout_mode = 2
+theme_override_constants/margin_left = 28
+theme_override_constants/margin_top = 24
+theme_override_constants/margin_right = 28
+theme_override_constants/margin_bottom = 24
+
+[node name="VBox" type="VBoxContainer" parent="TutorialIntroOverlay/UltimateDialog/Margin"]
+layout_mode = 2
+theme_override_constants/separation = 16
+
+[node name="UltimateText" type="Label" parent="TutorialIntroOverlay/UltimateDialog/Margin/VBox"]
+custom_minimum_size = Vector2(0, 220)
+layout_mode = 2
+size_flags_vertical = 3
+theme_override_font_sizes/font_size = 34
+vertical_alignment = 1
+autowrap_mode = 3
+clip_text = true
+
+[node name="UltimateHint" type="Label" parent="TutorialIntroOverlay/UltimateDialog/Margin/VBox"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 26
+text = "Ultimate Hit: Pending"
+horizontal_alignment = 1
+
+[node name="DiceDialog" type="PanelContainer" parent="TutorialIntroOverlay"]
+visible = false
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -620.0
+offset_top = -225.0
+offset_right = 620.0
+offset_bottom = 225.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+
+[node name="Margin" type="MarginContainer" parent="TutorialIntroOverlay/DiceDialog"]
+layout_mode = 2
+theme_override_constants/margin_left = 28
+theme_override_constants/margin_top = 24
+theme_override_constants/margin_right = 28
+theme_override_constants/margin_bottom = 24
+
+[node name="VBox" type="VBoxContainer" parent="TutorialIntroOverlay/DiceDialog/Margin"]
+layout_mode = 2
+theme_override_constants/separation = 16
+
+[node name="DiceText" type="Label" parent="TutorialIntroOverlay/DiceDialog/Margin/VBox"]
+custom_minimum_size = Vector2(0, 280)
+layout_mode = 2
+size_flags_vertical = 3
+theme_override_font_sizes/font_size = 30
+vertical_alignment = 1
+autowrap_mode = 3
+clip_text = true
+
+[node name="DiceHint" type="Label" parent="TutorialIntroOverlay/DiceDialog/Margin/VBox"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 26
+text = "Press Enter to continue."
+horizontal_alignment = 1
+
+[node name="PerfectDodgeDialog" type="PanelContainer" parent="TutorialIntroOverlay"]
+visible = false
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -620.0
+offset_top = -210.0
+offset_right = 620.0
+offset_bottom = 210.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+
+[node name="Margin" type="MarginContainer" parent="TutorialIntroOverlay/PerfectDodgeDialog"]
+layout_mode = 2
+theme_override_constants/margin_left = 28
+theme_override_constants/margin_top = 24
+theme_override_constants/margin_right = 28
+theme_override_constants/margin_bottom = 24
+
+[node name="VBox" type="VBoxContainer" parent="TutorialIntroOverlay/PerfectDodgeDialog/Margin"]
+layout_mode = 2
+theme_override_constants/separation = 16
+
+[node name="PerfectDodgeText" type="Label" parent="TutorialIntroOverlay/PerfectDodgeDialog/Margin/VBox"]
+custom_minimum_size = Vector2(0, 240)
+layout_mode = 2
+size_flags_vertical = 3
+theme_override_font_sizes/font_size = 34
+vertical_alignment = 1
+autowrap_mode = 3
+clip_text = true
+
+[node name="PerfectDodgeHint" type="Label" parent="TutorialIntroOverlay/PerfectDodgeDialog/Margin/VBox"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 26
+text = "Objective: Complete 1 Perfect Dodge (Pending)"
+horizontal_alignment = 1
+
+[node name="FinalChallengeDialog" type="PanelContainer" parent="TutorialIntroOverlay"]
+visible = false
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -620.0
+offset_top = -200.0
+offset_right = 620.0
+offset_bottom = 200.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+
+[node name="Margin" type="MarginContainer" parent="TutorialIntroOverlay/FinalChallengeDialog"]
+layout_mode = 2
+theme_override_constants/margin_left = 28
+theme_override_constants/margin_top = 24
+theme_override_constants/margin_right = 28
+theme_override_constants/margin_bottom = 24
+
+[node name="VBox" type="VBoxContainer" parent="TutorialIntroOverlay/FinalChallengeDialog/Margin"]
+layout_mode = 2
+theme_override_constants/separation = 16
+
+[node name="FinalChallengeText" type="Label" parent="TutorialIntroOverlay/FinalChallengeDialog/Margin/VBox"]
+custom_minimum_size = Vector2(0, 230)
+layout_mode = 2
+size_flags_vertical = 3
+theme_override_font_sizes/font_size = 34
+vertical_alignment = 1
+autowrap_mode = 3
+clip_text = true
+
+[node name="FinalChallengeHint" type="Label" parent="TutorialIntroOverlay/FinalChallengeDialog/Margin/VBox"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 26
+text = "Press Enter to begin."
+horizontal_alignment = 1
 
 [editable path="Arena"]
 [editable path="Player"]
 [editable path="Player/Visual/Body3DView"]
+[editable path="Boss"]
 [editable path="UI"]
 [editable path="UI/DeathOverlay/RunSummaryPanel"]
 [editable path="UI/VictoryUI/Root/CardA"]

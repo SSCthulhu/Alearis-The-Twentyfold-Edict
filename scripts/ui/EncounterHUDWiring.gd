@@ -36,7 +36,7 @@ func _ready() -> void:
 		var scene_name: String = ""
 		if get_tree().current_scene:
 			scene_name = String(get_tree().current_scene.name)
-		if not ("SubArena" in scene_name or "FinalWorld" in scene_name):
+		if not ("SubArena" in scene_name or "FinalWorld" in scene_name or "TutorialWorld" in scene_name):
 			push_warning("[UI] FloorProgressionController not found (floor UI will not update).")
 
 	_floor_status_hud = get_node_or_null(floor_status_hud_path)

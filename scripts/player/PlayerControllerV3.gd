@@ -732,9 +732,9 @@ func _on_state_enter(state: STATE) -> void:
 		STATE.FALL:
 			# Check if this is a coyote buffer fall (walked off edge) or real fall (jumped)
 			var is_coyote_fall: bool = (previous_state == STATE.IDLE or 
-			                             previous_state == STATE.WALK or 
-			                             previous_state == STATE.SPRINT or 
-			                             previous_state == STATE.TURNING)
+										 previous_state == STATE.WALK or 
+										 previous_state == STATE.SPRINT or 
+										 previous_state == STATE.TURNING)
 			
 			if is_coyote_fall:
 				# Coyote buffer fall - DON'T change animation (prevents slope stutter)
@@ -916,17 +916,17 @@ func process_state(delta: float) -> void:
 				# Only play landing animation/VFX if we entered FALL from a jump (not walking off edge)
 				# Check previous state: if we came from IDLE/WALK/SPRINT, it's a slope/coyote situation
 				var came_from_ground_state: bool = (previous_state == STATE.IDLE or 
-				                                      previous_state == STATE.WALK or 
-				                                      previous_state == STATE.SPRINT or 
-				                                      previous_state == STATE.TURNING)
+													  previous_state == STATE.WALK or 
+													  previous_state == STATE.SPRINT or 
+													  previous_state == STATE.TURNING)
 				
 				# Also check if we actually fell (coyote timer expired = real fall)
 				var coyote_expired: bool = _coyote_timer.is_stopped() or _coyote_timer.time_left <= 0.0
 				
 				# Only play landing if we came from JUMP/DOUBLE_JUMP or coyote time expired (real fall)
 				var was_real_fall: bool = (previous_state == STATE.JUMP or 
-				                           previous_state == STATE.DOUBLE_JUMP or 
-				                           coyote_expired)
+										   previous_state == STATE.DOUBLE_JUMP or 
+										   coyote_expired)
 				
 				if was_real_fall and not came_from_ground_state:
 					# Play appropriate landing animation
@@ -1749,19 +1749,35 @@ func _get_enemies_on_current_floor() -> Array[Node]:
 	
 	# Get floor enemy group name
 	var group_name: StringName = &""
-	var groups: Array = floor_controller.get("floor_enemy_groups")
+	var groups_v: Variant = floor_controller.get("floor_enemy_groups")
+	var groups: Array = []
+	if groups_v is Array:
+		groups = groups_v as Array
 	var idx: int = current_floor - 1  # Convert to 0-based index
 	
-	if groups != null and not groups.is_empty() and idx >= 0 and idx < groups.size():
-		group_name = groups[idx]
+	if not groups.is_empty() and idx >= 0 and idx < groups.size():
+		var group_v: Variant = groups[idx]
+		if group_v is StringName:
+			group_name = group_v as StringName
+		elif group_v is String:
+			group_name = StringName(group_v)
 		pass
 	else:
-		# Fallback for boss floors
-		if current_floor == 5:
-			group_name = &"floor5_enemies"
-		else:
-			push_warning("[PlayerV3] Floor %d out of bounds" % current_floor)
-			return result
+		# Fallback for floor groups if controller data is missing.
+		match current_floor:
+			1:
+				group_name = &"floor1_enemies"
+			2:
+				group_name = &"floor2_enemies"
+			3:
+				group_name = &"floor3_enemies"
+			4:
+				group_name = &"floor4_enemies"
+			5:
+				group_name = &"floor5_enemies"
+			_:
+				push_warning("[PlayerV3] Floor %d out of bounds" % current_floor)
+				return result
 	
 	# Get enemies from the group
 	var enemies: Array[Node] = get_tree().get_nodes_in_group(group_name)

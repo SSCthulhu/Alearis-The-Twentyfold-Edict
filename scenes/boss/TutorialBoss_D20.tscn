@@ -1,0 +1,74 @@
+[gd_scene load_steps=16 format=3 uid="uid://b66v4cxi2rvhb"]
+
+[ext_resource type="Script" uid="uid://cdidei78kcag4" path="res://scripts/boss/BossController.gd" id="1"]
+[ext_resource type="Script" uid="uid://b0nfn5rqrixak" path="res://scripts/boss/Hurtbox.gd" id="2"]
+[ext_resource type="PackedScene" uid="uid://bvgni0b2cndxi" path="res://scenes/ui/DamageNumber.tscn" id="3"]
+[ext_resource type="PackedScene" uid="uid://cvlobx6k68egu" path="res://scenes/vfx/EnemyHitVFX.tscn" id="4"]
+[ext_resource type="Script" uid="uid://bh1vf0remp5r4" path="res://scripts/boss/BossHealth.gd" id="5"]
+[ext_resource type="PackedScene" uid="uid://d186dmo00kqu5" path="res://scenes/vfx/EnemyCritVFX.tscn" id="6"]
+[ext_resource type="Script" uid="uid://bxkstno4wqyqf" path="res://scripts/ui/DamageNumberEmitter.gd" id="7"]
+[ext_resource type="Script" uid="uid://ck6ywaqc1jaq2" path="res://scripts/boss/BossProjectileAttack.gd" id="8"]
+[ext_resource type="PackedScene" uid="uid://c7h4vkqn8p0k6" path="res://scenes/boss/BossProjectile.tscn" id="9"]
+[ext_resource type="Script" uid="uid://jo1e152jjcof" path="res://scripts/boss/BossProjectilePattern.gd" id="10"]
+[ext_resource type="Resource" uid="uid://cns5cnyssf610" path="res://resources/boss/world1_horizontal_wave.tres" id="11"]
+[ext_resource type="Resource" uid="uid://djoc8kk86rww4" path="res://resources/boss/world1_radial_burst.tres" id="12"]
+[ext_resource type="Script" uid="uid://cauaqliijyq31" path="res://scripts/boss/Boss2DVisualShim.gd" id="13"]
+[ext_resource type="Texture2D" uid="uid://wfchdbamjw6" path="res://art/dice/D20_Gold.png" id="14"]
+
+[sub_resource type="CircleShape2D" id="CircleShape2D_254fl"]
+radius = 317.76
+
+[node name="Boss" type="StaticBody2D" groups=["boss"]]
+script = ExtResource("1")
+max_hp = 1000
+visual_path = NodePath("D20Visual/Sprite2D")
+boss_name = "Alearis, the Twentyfold Die"
+boss_3d_visual_path = NodePath("D20Visual")
+idle_animation = "D20/Idle"
+hit_animation = "D20/Hit"
+death_animation = "D20/Death"
+melee_smash_animation = "D20/Smash"
+
+[node name="Hurtbox" type="Area2D" parent="."]
+script = ExtResource("2")
+receiver_path = NodePath("../BossHealth")
+require_group = &""
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Hurtbox"]
+position = Vector2(0, -143)
+shape = SubResource("CircleShape2D_254fl")
+
+[node name="BossHealth" type="Node" parent="."]
+script = ExtResource("5")
+max_hp = 2500
+hit_vfx_scene = ExtResource("4")
+crit_vfx_scene = ExtResource("6")
+
+[node name="DamageNumberEmitter" type="Node" parent="."]
+script = ExtResource("7")
+damage_number_scene = ExtResource("3")
+health_path = NodePath("../BossHealth")
+
+[node name="DamageNumberEmitter2" type="Node" parent="."]
+script = ExtResource("7")
+damage_number_scene = ExtResource("3")
+health_path = NodePath("../BossHealth")
+
+[node name="ProjectileSpawnPoint" type="Node2D" parent="."]
+z_index = 20
+position = Vector2(0, -100)
+
+[node name="BossProjectileAttack" type="Node" parent="."]
+script = ExtResource("8")
+projectile_scene = ExtResource("9")
+attack_patterns = Array[ExtResource("10")]([ExtResource("11"), ExtResource("12")])
+boss_visual_path = NodePath("../D20Visual")
+play_animation_on_attack = false
+
+[node name="D20Visual" type="Node2D" parent="."]
+script = ExtResource("13")
+
+[node name="Sprite2D" type="Sprite2D" parent="D20Visual"]
+position = Vector2(0, -128)
+scale = Vector2(1.8, 1.8)
+texture = ExtResource("14")

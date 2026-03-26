@@ -64,6 +64,7 @@ var _flash_timer: float = 0.0
 
 var _combat_paused: bool = false
 var _dead: bool = false
+var _min_hp_floor: int = 0
 
 func _get_dice_meter_singleton() -> Node:
 	var tree: SceneTree = get_tree()
@@ -161,6 +162,15 @@ func set_combat_paused(p: bool) -> void:
 	else:
 		_arm_projectile_scheduler()
 
+func set_min_hp_floor(value: int) -> void:
+	_min_hp_floor = maxi(value, 0)
+	if hp > 0 and _min_hp_floor > 0 and hp < _min_hp_floor:
+		hp = _min_hp_floor
+		health_changed.emit(hp, max_hp)
+
+func clear_min_hp_floor() -> void:
+	_min_hp_floor = 0
+
 
 func set_vulnerable(v: bool) -> void:
 	_vulnerable = v
@@ -246,6 +256,8 @@ func take_damage(amount: int, _source: Node = null, tag: StringName = &"", is_cr
 	hp = maxi(hp - amount, 0)
 	if hp <= 0 and _is_debug_enemy_death_locked():
 		hp = 1
+	if _min_hp_floor > 0 and hp <= _min_hp_floor:
+		hp = _min_hp_floor
 	#print("[Boss] took ", amount, " dmg. HP now=", hp)
 	var dice_meter: Node = _get_dice_meter_singleton()
 	if dice_meter != null and dice_meter.has_method("on_boss_damage") and _is_player_outgoing_source(_source):
