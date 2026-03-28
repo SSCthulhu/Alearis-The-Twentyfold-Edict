@@ -29,6 +29,7 @@ signal quit_confirmed()
 @onready var _settings_button: Button = $Root/ButtonsContainer/SettingsButton
 @onready var _quit_button: Button = $Root/ButtonsContainer/QuitButton
 @onready var _quit_to_desktop_button: Button = $Root/ButtonsContainer/QuitToDesktopButton
+var _vfx_toggle_button: Button = null
 @onready var _debug_reset_run_button: Button = get_node_or_null("Root/DebugToolsContainer/VBoxContainer/DebugResetRunButton") as Button
 @onready var _confirm_dialog: Control = $Root/ConfirmDialog
 @onready var _confirm_label: Label = $Root/ConfirmDialog/ConfirmPanel/VBox/ConfirmLabel
@@ -82,6 +83,7 @@ func _ready() -> void:
 		_resume_button.pressed.connect(_on_resume_pressed)
 	if _settings_button != null:
 		_settings_button.pressed.connect(_on_settings_pressed)
+	_create_vfx_toggle_button()
 	if _quit_button != null:
 		_quit_button.pressed.connect(_on_quit_pressed)
 	if _quit_to_desktop_button != null:
@@ -151,6 +153,7 @@ func open() -> void:
 	Engine.time_scale = 0.0
 	
 	# IMPORTANT: Layout buttons first, then run summary (so summary can position relative to buttons)
+	_refresh_vfx_toggle_button_label()
 	_layout_buttons()
 	_layout_run_summary()
 	
@@ -207,6 +210,44 @@ func _on_settings_pressed() -> void:
 	_settings_menu_instance.open()
 	
 	settings_pressed.emit()
+
+func _on_vfx_toggle_pressed() -> void:
+	var vfx_ctrl: Node = get_tree().root.get_node_or_null("VFXVisibilityController")
+	if vfx_ctrl == null or not vfx_ctrl.has_method("toggle_vfx"):
+		return
+	vfx_ctrl.call("toggle_vfx")
+	_refresh_vfx_toggle_button_label()
+
+func _refresh_vfx_toggle_button_label() -> void:
+	if _vfx_toggle_button == null:
+		return
+	var label: String = "VFX: ON"
+	var vfx_ctrl: Node = get_tree().root.get_node_or_null("VFXVisibilityController")
+	if vfx_ctrl != null and ("vfx_enabled" in vfx_ctrl):
+		label = "VFX: ON" if bool(vfx_ctrl.get("vfx_enabled")) else "VFX: OFF"
+	_vfx_toggle_button.text = label
+
+func _create_vfx_toggle_button() -> void:
+	if _buttons_container == null:
+		return
+	if _vfx_toggle_button != null:
+		return
+	_vfx_toggle_button = Button.new()
+	_vfx_toggle_button.name = "VFXToggleButton"
+	_vfx_toggle_button.custom_minimum_size = Vector2(button_width, 0.0)
+	_vfx_toggle_button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_vfx_toggle_button.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	_vfx_toggle_button.focus_mode = Control.FOCUS_ALL
+	_vfx_toggle_button.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
+	_vfx_toggle_button.theme_type_variation = "MainMenuButton"
+	_vfx_toggle_button.add_theme_font_size_override("font_size", button_font_size)
+	_vfx_toggle_button.pressed.connect(_on_vfx_toggle_pressed)
+	_vfx_toggle_button.mouse_entered.connect(_on_button_hover.bind(_vfx_toggle_button))
+	_vfx_toggle_button.mouse_exited.connect(_on_button_unhover.bind(_vfx_toggle_button))
+	_buttons_container.add_child(_vfx_toggle_button)
+	_buttons_container.move_child(_vfx_toggle_button, 2)
+	_vfx_toggle_button.pivot_offset = _vfx_toggle_button.size / 2.0
+	_refresh_vfx_toggle_button_label()
 
 
 func _on_settings_back() -> void:

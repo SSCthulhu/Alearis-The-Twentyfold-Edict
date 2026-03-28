@@ -25,6 +25,7 @@ PortalTransitionData="*res://scripts/globals/PortalTransitionData.gd"
 FinalBossTransitionData="*res://scripts/globals/FinalBossTransitionData.gd"
 CharacterDatabase="*res://scripts/systems/CharacterDatabase.gd"
 TransitionLayer="*res://scenes/ui/TransitionLayer.tscn"
+VFXVisibilityController="*res://scripts/systems/VFXVisibilityController.gd"
 
 [display]
 
