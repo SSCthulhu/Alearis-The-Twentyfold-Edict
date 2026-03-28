@@ -55,6 +55,7 @@ const TUTORIAL_REWARD_CHEST_POS: Vector2 = Vector2(3000.0, 350.0)
 const DUMMY_FLOOR_RAY_UP: float = 180.0
 const DUMMY_FLOOR_RAY_DOWN: float = 2200.0
 const TUTORIAL_DUMMY_LOCKED_MAX_HP: int = 999999
+const TUTORIAL_FIXED_DICE_VALUE: int = 10
 
 var _intro_active: bool = false
 var _move_prompt_active: bool = false
@@ -117,6 +118,11 @@ var _attack_dummy_base_aggro_range: float = 1200.0
 var _attack_dummy_base_lose_aggro_range: float = 1440.0
 var _attack_dummy_base_patrol_enabled: bool = true
 var _attack_dummy_base_strikezone_scene: Variant = null
+var _tutorial_saved_dice_min: int = TUTORIAL_FIXED_DICE_VALUE
+var _tutorial_saved_dice_max: int = TUTORIAL_FIXED_DICE_VALUE
+var _tutorial_saved_last_roll: int = TUTORIAL_FIXED_DICE_VALUE
+var _tutorial_saved_meta_next_start: int = TUTORIAL_FIXED_DICE_VALUE
+var _tutorial_saved_dice_captured: bool = false
 
 @export var tutorial_chest_spawn_path: NodePath = ^"Arena/Spawns/ChestSpawns/ChestSpawn_Default"
 
@@ -172,6 +178,7 @@ func _ready() -> void:
 	process_mode = Node.PROCESS_MODE_ALWAYS
 	set_process(true)
 	set_process_unhandled_input(true)
+	_capture_and_apply_tutorial_dice_range()
 	tutorial_chest_spawn_marker = get_node_or_null(tutorial_chest_spawn_path) as Node2D
 	_capture_input_gate_snapshot()
 	_prepare_intro_ui()
@@ -185,12 +192,58 @@ func _exit_tree() -> void:
 	var tree: SceneTree = get_tree()
 	if tree != null and tree.paused:
 		tree.paused = false
+	_restore_saved_dice_range_after_tutorial()
 	_set_player_intro_lock(false)
 	_end_dice_tutorial_overrides()
 	_disconnect_dice_meter_signals()
 	_disconnect_modifier_choice_signal()
 	_clear_tutorial_reward_chest()
 	_restore_all_tutorial_inputs()
+
+func _capture_and_apply_tutorial_dice_range() -> void:
+	if RunStateSingleton == null:
+		return
+	if not _tutorial_saved_dice_captured:
+		if "dice_min" in RunStateSingleton:
+			_tutorial_saved_dice_min = int(RunStateSingleton.dice_min)
+		if "dice_max" in RunStateSingleton:
+			_tutorial_saved_dice_max = int(RunStateSingleton.dice_max)
+		if "last_roll" in RunStateSingleton:
+			_tutorial_saved_last_roll = int(RunStateSingleton.last_roll)
+		if "meta_next_start_value" in RunStateSingleton:
+			_tutorial_saved_meta_next_start = int(RunStateSingleton.meta_next_start_value)
+		_tutorial_saved_dice_captured = true
+	if RunStateSingleton.has_method("set_dice_range_debug_override"):
+		RunStateSingleton.call("set_dice_range_debug_override", TUTORIAL_FIXED_DICE_VALUE, TUTORIAL_FIXED_DICE_VALUE)
+	else:
+		if "dice_min" in RunStateSingleton:
+			RunStateSingleton.dice_min = TUTORIAL_FIXED_DICE_VALUE
+		if "dice_max" in RunStateSingleton:
+			RunStateSingleton.dice_max = TUTORIAL_FIXED_DICE_VALUE
+		if "last_roll" in RunStateSingleton:
+			RunStateSingleton.last_roll = TUTORIAL_FIXED_DICE_VALUE
+		if RunStateSingleton.has_method("_emit"):
+			RunStateSingleton.call("_emit")
+
+func _restore_saved_dice_range_after_tutorial() -> void:
+	if RunStateSingleton == null:
+		return
+	if not _tutorial_saved_dice_captured:
+		return
+	if RunStateSingleton.has_method("set_dice_range_debug_override"):
+		RunStateSingleton.call("set_dice_range_debug_override", _tutorial_saved_dice_min, _tutorial_saved_dice_max)
+	else:
+		if "dice_min" in RunStateSingleton:
+			RunStateSingleton.dice_min = _tutorial_saved_dice_min
+		if "dice_max" in RunStateSingleton:
+			RunStateSingleton.dice_max = _tutorial_saved_dice_max
+	if "last_roll" in RunStateSingleton:
+		RunStateSingleton.last_roll = clampi(_tutorial_saved_last_roll, _tutorial_saved_dice_min, _tutorial_saved_dice_max)
+	# Undo any tutorial-induced meta_next_start_value changes so tutorial never contaminates the run.
+	if "meta_next_start_value" in RunStateSingleton:
+		RunStateSingleton.meta_next_start_value = _tutorial_saved_meta_next_start
+	if RunStateSingleton.has_method("save_meta"):
+		RunStateSingleton.call("save_meta")
 
 func _prepare_intro_ui() -> void:
 	if intro_overlay != null:

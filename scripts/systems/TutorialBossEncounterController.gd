@@ -1225,8 +1225,27 @@ func _on_victory_proceed() -> void:
 		# Tutorial rewards are instructional only; do not carry relic inventory into real runs.
 		if RunStateSingleton.has_method("clear_relics"):
 			RunStateSingleton.call("clear_relics")
+		# Tutorial modifier choices are instructional only; clear all world modifiers.
+		if RunStateSingleton.has_method("clear_world_modifiers"):
+			RunStateSingleton.call("clear_world_modifiers")
 		RunStateSingleton.world_index = 1
 		RunStateSingleton.floor_index = 1
+	# Tutorial should never carry Dice Meter runtime state into World 1.
+	var dice_meter: Node = tree.root.get_node_or_null("DiceMeterSingleton")
+	if dice_meter != null and dice_meter.has_method("reset_meter"):
+		dice_meter.call("reset_meter")
+	# Ensure no ability cooldowns or input locks carry into World 1.
+	var player_node: Node = tree.get_first_node_in_group(&"player")
+	if player_node == null and tree.current_scene != null:
+		player_node = tree.current_scene.get_node_or_null("Player")
+	if player_node != null:
+		if player_node.has_method("set_input_locked"):
+			player_node.call("set_input_locked", false)
+		if player_node.has_method("set_cutscene_motion_lock"):
+			player_node.call("set_cutscene_motion_lock", false)
+		var combat_node: Node = player_node.get_node_or_null("Combat")
+		if combat_node != null and combat_node.has_method("reset_all_cooldowns_and_combat_state"):
+			combat_node.call("reset_all_cooldowns_and_combat_state")
 	var next_path: String = force_world1_scene_path
 	if not ResourceLoader.exists(next_path):
 		push_warning("[TutorialBossEncounter] Missing next world scene: %s" % next_path)

@@ -180,6 +180,7 @@ var _roll_speed: float = 0.0
 @export var input_heavy_attack: StringName = &"attack_heavy"
 @export var input_ultimate: StringName = &"ultimate"
 @export var input_defend: StringName = &"defend"
+@export var defend_input_enabled: bool = false
 
 @export_group("Drop Through Platforms")
 @export var drop_through_double_tap_window: float = 0.22
@@ -2162,6 +2163,8 @@ func get_roll_recharge_time() -> float:
 
 func _can_use_defend() -> bool:
 	"""Check if defensive ability is off cooldown"""
+	if not defend_input_enabled:
+		return false
 	if _combat == null:
 		return false
 	if not _combat.has_method("is_ability_ready"):

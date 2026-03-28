@@ -156,6 +156,7 @@ theme_override_styles/hover = SubResource("StyleBoxFlat_fily5")
 text = "Wizard"
 
 [node name="HowToPlayPanel" type="PanelContainer" parent="."]
+visible = false
 layout_mode = 1
 offset_left = 60.0
 offset_top = 300.0

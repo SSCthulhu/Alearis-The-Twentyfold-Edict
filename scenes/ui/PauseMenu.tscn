@@ -102,6 +102,7 @@ visible = false
 layout_mode = 0
 
 [node name="HowToPlayPanel" type="PanelContainer" parent="Root"]
+visible = false
 layout_mode = 1
 offset_left = 60.0
 offset_top = 200.0

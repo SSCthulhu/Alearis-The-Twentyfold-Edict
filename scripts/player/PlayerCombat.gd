@@ -299,6 +299,17 @@ func get_cooldown_left(ability_id: StringName) -> float:
 func is_ability_ready(ability_id: StringName) -> bool:
 	return get_cooldown_left(ability_id) <= 0.0
 
+func reset_all_cooldowns_and_combat_state() -> void:
+	# Tutorial/world handoff helper: make all abilities immediately available.
+	cancel_all_attacks(&"scene_transition_reset")
+	var now: float = _now()
+	_light_ready_time = now
+	_heavy_ready_time = now
+	_ultimate_ready_time = now
+	_BIGD_ready_time = now
+	_defend_ready_time = now
+	_external_cooldown_pause_sec = 0.0
+
 func _get_defend_duration_seconds() -> float:
 	var dur: float = defend_buff_duration
 	if RunStateSingleton != null and ("relic_defend_duration_bonus" in RunStateSingleton):
