@@ -2,7 +2,6 @@
 
 [ext_resource type="Script" uid="uid://cqylh2xtfqtm5" path="res://scripts/systems/World1EncounterController.gd" id="1_qvqnh"]
 [ext_resource type="Texture2D" uid="uid://bktohjhiu4ph0" path="res://art/Worlds/Frozen/Mountain/2.png" id="2_imtto"]
-[ext_resource type="PackedScene" uid="uid://cai81qjmmgokj" path="res://scenes/arena/AscensionCharge.tscn" id="2_n8wkn"]
 [ext_resource type="PackedScene" uid="uid://ccrejlifa6gwm" path="res://scenes/enemies/EnemyKnightAdd.tscn" id="3_61woi"]
 [ext_resource type="Texture2D" uid="uid://63ivall1yxf2" path="res://art/Worlds/Frozen/Mountain/1.png" id="3_ej262"]
 [ext_resource type="PackedScene" uid="uid://deotiruix5irf" path="res://scenes/enemies/EnemySkeletonGolem.tscn" id="3_golem"]
@@ -24,7 +23,6 @@
 [ext_resource type="Texture2D" uid="uid://bdxnoandgpfjy" path="res://art/Worlds/winter/Background/Ice.png" id="11_alxcq"]
 [ext_resource type="PackedScene" uid="uid://c72m65e63bs0o" path="res://scenes/player/player.tscn" id="12_gp4b6"]
 [ext_resource type="PackedScene" uid="uid://b6qbnom4vba8g" path="res://scenes/boss/Boss_World1.tscn" id="13_1srhu"]
-[ext_resource type="PackedScene" uid="uid://ojpp3p46grti" path="res://scenes/arena/AscensionSocket.tscn" id="14_usd6y"]
 [ext_resource type="PackedScene" uid="uid://da2fr6n8vi4x7" path="res://scenes/ui/UI.tscn" id="16_thmre"]
 [ext_resource type="Resource" uid="uid://dtfg2ntfkn5oa" path="res://styles/HUDStyle.tres" id="17_80gak"]
 [ext_resource type="PackedScene" uid="uid://cxsb0sxvfl0t" path="res://scenes/ui/DiceModifierChoice.tscn" id="18_alxcq"]
@@ -173,10 +171,8 @@ phase2_hide_entire_tilemap_platform_layer = true
 phase2_tilemap_destroy_regions = Array[Rect2i]([Rect2i(0, 0, 0, 0)])
 phase3_safe_zone_size = Vector2(500, 1200)
 phase3_safe_zone_floor_y_offset = 12435.0
-charge_scene = ExtResource("2_n8wkn")
-respawn_charge_on_ascent = false
+use_ascension_charge_loop = false
 world_scene_paths = Array[String](["res://scenes/world/World1.tscn", "res://scenes/world/World2.tscn", "res://scenes/world/World3.tscn"])
-ascension_sockets_root_path = NodePath("../AscensionSocket")
 add_scene = ExtResource("3_61woi")
 add_enemy_pool = Array[PackedScene]([ExtResource("3_61woi"), ExtResource("3_necro"), ExtResource("3_rogue"), ExtResource("3_mage")])
 golem_scene = ExtResource("3_golem")
@@ -238,9 +234,6 @@ enable_strict_ledge_guard = true
 [node name="ArenaCenter" parent="Arena" index="3"]
 position = Vector2(0, -3200)
 
-[node name="ChargeStations" parent="Arena" index="6"]
-visible = false
-
 [node name="Player" parent="." instance=ExtResource("12_gp4b6")]
 position = Vector2(-1346, 1545)
 
@@ -272,23 +265,6 @@ collision_mask = 3
 
 [node name="CollisionShape2D" parent="Boss/Hurtbox" index="0"]
 position = Vector2(0, 26.492188)
-
-[node name="AcensionCharge" parent="." instance=ExtResource("2_n8wkn")]
-visible = false
-position = Vector2(51397, 12593)
-
-[node name="AscensionSocket" type="Node2D" parent="."]
-visible = false
-z_index = 2
-position = Vector2(50749, 16927)
-
-[node name="AscensionSocketA" parent="AscensionSocket" instance=ExtResource("14_usd6y")]
-position = Vector2(-562, -3995)
-scale = Vector2(1, 1)
-
-[node name="AscensionSocketB" parent="AscensionSocket" instance=ExtResource("14_usd6y")]
-position = Vector2(625, -4001)
-scale = Vector2(1, 1)
 
 [node name="UI" parent="." instance=ExtResource("16_thmre")]
 
@@ -386,9 +362,6 @@ color = Color(1, 1, 1, 0.56)
 [editable path="Player"]
 [editable path="Player/Visual/Body3DView"]
 [editable path="Boss"]
-[editable path="AcensionCharge"]
-[editable path="AscensionSocket/AscensionSocketA"]
-[editable path="AscensionSocket/AscensionSocketB"]
 [editable path="UI"]
 [editable path="UI/DeathOverlay/RunSummaryPanel"]
 [editable path="UI/VictoryUI/Root/CardA"]

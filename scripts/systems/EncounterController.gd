@@ -21,6 +21,7 @@ var _pending_victory_reward_roll: int = -1
 
 @export var charge_scene: PackedScene
 @export var respawn_charge_on_ascent: bool = true
+@export var use_ascension_charge_loop: bool = true
 
 @export var world_scene_paths: Array[String] = [
 	"res://scenes/World1.tscn",
@@ -141,7 +142,7 @@ func _ready() -> void:
 		else:
 			push_warning("[Encounter] Boss has no 'died' signal.")
 
-	if charge_scene == null:
+	if use_ascension_charge_loop and charge_scene == null:
 		push_warning("[Encounter] charge_scene not assigned. Assign AscensionCharge.tscn in Inspector.")
 	if add_scene == null:
 		push_warning("[Encounter] add_scene not assigned. Assign an add enemy scene (e.g., EnemyKnightAdd.tscn).")
@@ -329,6 +330,8 @@ func extend_dps_window(extra_seconds: float, reason: String = "") -> bool:
 
 
 func _on_charge_socketed(consumed_charge: AscensionCharge) -> void:
+	if not use_ascension_charge_loop:
+		return
 	if phase == Phase.DPS:
 		return
 
@@ -384,18 +387,21 @@ func _set_phase(new_phase: int) -> void:
 	match phase:
 		Phase.ASCENT:
 			#print("[Encounter] Phase: ASCENT")
-			_apply_boss_rules(false, true)
+			if use_ascension_charge_loop:
+				_apply_boss_rules(false, true)
+			else:
+				# World flows that retired ascension should remain in direct boss combat.
+				_apply_boss_rules(true, true)
 
 			# ✅ Leaving DPS -> allow extension next time
 			_dps_extended_this_window = false
 
-			_pick_active_spawn()
-			_pick_active_socket()
-
-			_begin_ascent_cycle()
-
-			if respawn_charge_on_ascent:
-				_queue_spawn_charge()
+			if use_ascension_charge_loop:
+				_pick_active_spawn()
+				_pick_active_socket()
+				_begin_ascent_cycle()
+				if respawn_charge_on_ascent:
+					_queue_spawn_charge()
 
 		Phase.DPS:
 			#print("[Encounter] Phase: DPS")
@@ -585,6 +591,8 @@ func _set_all_stations_visible(v: bool) -> void:
 
 
 func _hide_encounter_elements() -> void:
+	if not use_ascension_charge_loop:
+		return
 	# Hide all charge stations
 	_set_all_stations_visible(false)
 	
@@ -601,6 +609,8 @@ func _hide_encounter_elements() -> void:
 
 
 func _show_encounter_elements() -> void:
+	if not use_ascension_charge_loop:
+		return
 	# Show charge orb if it exists
 	if _active_charge != null and is_instance_valid(_active_charge):
 		_active_charge.visible = true
@@ -630,6 +640,8 @@ func _charge_exists() -> bool:
 		and _active_charge.is_inside_tree()
 
 func _queue_spawn_charge() -> void:
+	if not use_ascension_charge_loop:
+		return
 	if _spawn_queued:
 		return
 
@@ -644,6 +656,8 @@ func _queue_spawn_charge() -> void:
 	call_deferred("_spawn_charge_if_needed")
 
 func _spawn_charge_if_needed() -> void:
+	if not use_ascension_charge_loop:
+		return
 	_spawn_queued = false
 
 	if not _charge_exists():
@@ -670,6 +684,8 @@ func _spawn_charge_if_needed() -> void:
 	_hook_charge(_active_charge)
 
 func _adopt_existing_charge() -> void:
+	if not use_ascension_charge_loop:
+		return
 	var found: Array[AscensionCharge] = []
 	_find_charges(get_tree().current_scene, found)
 	if found.is_empty():
@@ -746,6 +762,8 @@ func _clamp_add_spawn_position(pos: Vector2) -> Vector2:
 func _load_spawns_from_root() -> void:
 	_spawns.clear()
 	_active_spawn = null
+	if not use_ascension_charge_loop:
+		return
 	var root: Node = get_node_or_null(charge_spawns_root_path)
 	if root == null:
 		# Only warn in main world scenes (sub-arenas and FinalWorld don't have charge spawns)
@@ -801,6 +819,8 @@ func _pick_active_spawn() -> void:
 func _load_sockets_from_root_and_connect() -> void:
 	_sockets.clear()
 	_active_socket = null
+	if not use_ascension_charge_loop:
+		return
 	var root: Node = get_node_or_null(ascension_sockets_root_path)
 	if root == null:
 		push_warning("[Encounter] AscensionSocket root not found.")
@@ -845,6 +865,8 @@ func _set_only_socket_enabled(active: AscensionSocket) -> void:
 func _load_charge_stations() -> void:
 	_stations.clear()
 	_active_station = null
+	if not use_ascension_charge_loop:
+		return
 	var root: Node = get_node_or_null(charge_stations_root_path)
 	if root == null:
 		# Only warn in main world scenes (sub-arenas and FinalWorld don't have charge stations)

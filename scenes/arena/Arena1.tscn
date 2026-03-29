@@ -5,7 +5,6 @@
 [ext_resource type="Texture2D" uid="uid://dyldrm4booy4y" path="res://art/Worlds2/Winter/Platformer/Bridge_01.png" id="3_iqwfw"]
 [ext_resource type="Texture2D" uid="uid://7rygw0i8x71d" path="res://art/Worlds2/Winter/Platformer/Bridge_02.png" id="4_31ele"]
 [ext_resource type="Texture2D" uid="uid://bf8yuh2hsuu6x" path="res://art/Worlds2/Winter/Platformer/Ground-Additional_01.png" id="5_2dov8"]
-[ext_resource type="Script" uid="uid://b7t57ut585hvy" path="res://scripts/arena/ChargeStation.gd" id="6_4ehx8"]
 [ext_resource type="Texture2D" uid="uid://drjrxf6uvnb4o" path="res://art/Worlds2/Winter/Platformer/Ground-Additional_02.png" id="6_um43q"]
 [ext_resource type="Texture2D" uid="uid://caw64g8ww0jgc" path="res://art/Worlds2/Winter/Platformer/Ground-Additional_03.png" id="7_frqk3"]
 [ext_resource type="Texture2D" uid="uid://bx5x7uxg82v05" path="res://art/Worlds2/Winter/Platformer/Ground-Additional_04.png" id="8_4wdqm"]
@@ -618,17 +617,6 @@ z_index = -2
 position = Vector2(45930, 12950)
 texture = ExtResource("33_um43q")
 
-[node name="ChargeSpawn" type="Node2D" parent="."]
-position = Vector2(50930, 11801)
-
-[node name="ChargeSpawnA" type="Marker2D" parent="ChargeSpawn"]
-position = Vector2(-825, 773)
-scale = Vector2(2, 2)
-
-[node name="ChargeSpawnB" type="Marker2D" parent="ChargeSpawn"]
-position = Vector2(800, 900)
-scale = Vector2(2, 2)
-
 [node name="ArenaCenter" type="Node2D" parent="."]
 
 [node name="Spawns" type="Node2D" parent="."]
@@ -759,41 +747,6 @@ position = Vector2(45174, 12943)
 
 [node name="ChestSpawn_F4" type="Marker2D" parent="ChestSpawns"]
 position = Vector2(49150, 12946)
-
-[node name="ChargeStations" type="Node2D" parent="."]
-position = Vector2(50737, 15762)
-
-[node name="ChargeStation_A" type="Area2D" parent="ChargeStations"]
-position = Vector2(-1069, -3621)
-script = ExtResource("6_4ehx8")
-charge_rate = 2.0
-
-[node name="CollisionShape2D" type="CollisionShape2D" parent="ChargeStations/ChargeStation_A"]
-position = Vector2(0, 136.53)
-shape = SubResource("RectangleShape2D_1bk0o")
-
-[node name="AnimatedSprite2D" type="AnimatedSprite2D" parent="ChargeStations/ChargeStation_A"]
-modulate = Color(1, 1, 1, 0.78431374)
-z_index = 6
-position = Vector2(0, 128)
-sprite_frames = SubResource("SpriteFrames_7646p")
-autoplay = "default"
-
-[node name="ChargeStation_B" type="Area2D" parent="ChargeStations"]
-position = Vector2(1092, -3746)
-script = ExtResource("6_4ehx8")
-charge_rate = 2.0
-
-[node name="CollisionShape2D" type="CollisionShape2D" parent="ChargeStations/ChargeStation_B"]
-position = Vector2(4.5, 136.53003)
-shape = SubResource("RectangleShape2D_1bk0o")
-
-[node name="AnimatedSprite2D" type="AnimatedSprite2D" parent="ChargeStations/ChargeStation_B"]
-modulate = Color(1, 1, 1, 0.78431374)
-z_index = 6
-position = Vector2(0, 128)
-sprite_frames = SubResource("SpriteFrames_7646p")
-autoplay = "default"
 
 [node name="Traps" type="Node2D" parent="."]
 

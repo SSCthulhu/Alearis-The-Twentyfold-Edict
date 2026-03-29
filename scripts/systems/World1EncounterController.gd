@@ -127,7 +127,12 @@ const _PHASE1_ATTACK_ICE_COMETS: int = 2
 
 
 func begin_boss_encounter() -> void:
-	super.begin_boss_encounter()
+	# World 1 no longer uses AscensionCharge/Socket gating.
+	# Start encounter runtime directly and let World1 phase logic drive vulnerability/timing.
+	_cleanup_cycle_adds()
+	_activate_encounter()
+	_boss_mode = true
+	_apply_boss_rules(true, true)
 	_set_world1_ice_profile_enabled(true)
 	_arm_world1_phase_gates()
 	_phase2_initialized = false
