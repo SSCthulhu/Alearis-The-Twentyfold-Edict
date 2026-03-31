@@ -31,6 +31,13 @@ signal floor_fast_clear_timer_changed(floor_number: int, time_left: float, activ
 @export var derive_floor_ceiling_y_from_gates: bool = true
 @export var gate_ceiling_y_offset: float = 0.0 # tweak if your gate sprite isn't exactly the ceiling line
 @export var gate_wall_x_offset: float = 0.0 # For horizontal mode: offset from gate X position
+@export_group("World2 Special Floor Boundary")
+@export var enable_world2_floor3_to_floor4_x_boundary: bool = false
+@export var world2_floor3_to_floor4_gate_index: int = 2  # 0-based index, default CeilingGate_F3
+@export var world2_floor3_to_floor4_use_gate_x: bool = true
+@export var world2_floor3_to_floor4_x_threshold: float = 0.0
+@export var world2_floor3_to_floor4_x_offset: float = 0.0
+@export var world2_floor3_to_floor4_requires_floor3_clear: bool = true
 
 var _derived_floor_ceiling_y: PackedFloat32Array = PackedFloat32Array()
 var _derived_floor_wall_x: PackedFloat32Array = PackedFloat32Array()
@@ -68,8 +75,13 @@ var _derived_floor_wall_x: PackedFloat32Array = PackedFloat32Array()
 # These are AnimatedSprite2D nodes in your World2 tree:
 # Arena2/Doorways/Floor1Door
 # Arena2/Doorways/Floor2Door
+# Arena2/Doorways/Floor2Door2 (optional, Floor2 -> Floor3)
+# Arena2/Doorways/Floor3Door (optional destination for Floor2 -> Floor3)
 @export var floor1_door_path: NodePath = NodePath()
 @export var floor2_door_path: NodePath = NodePath()
+@export var floor2_door2_path: NodePath = NodePath()
+@export var floor3_door_path: NodePath = NodePath()
+@export var enable_world2_floor2_to_floor3_door_transition: bool = false
 
 # Input action used to interact with doors
 @export var input_interact: StringName = &"interact"
@@ -91,6 +103,7 @@ var _derived_floor_wall_x: PackedFloat32Array = PackedFloat32Array()
 
 # Where to spawn relative to Floor2Door when arriving
 @export var floor2_spawn_offset: Vector2 = Vector2(0.0, 10.0)
+@export var floor3_spawn_offset: Vector2 = Vector2(0.0, 10.0)
 @export_range(0.0, 0.5, 0.01) var world2_door_interact_buffer_seconds: float = 0.18
 @export_range(0.1, 3.0, 0.05) var world2_door_player_settle_timeout: float = 1.0
 
@@ -365,8 +378,11 @@ var _world3_boss_camera_ref: Camera2D = null
 # -----------------------------
 var _door1: AnimatedSprite2D = null
 var _door2: AnimatedSprite2D = null
+var _door2_to_3: AnimatedSprite2D = null
+var _door3: AnimatedSprite2D = null
 
 var _door1_unlocked: bool = false
+var _door2_to_3_unlocked: bool = false
 var _door_transition_active: bool = false
 var _door_interact_buffer_left: float = 0.0
 var _player_interact_area: Area2D = null
@@ -645,7 +661,10 @@ func _configure_orb_flight_controller(c: OrbFlightController) -> void:
 func _setup_world2_doors() -> void:
 	_door1 = null
 	_door2 = null
+	_door2_to_3 = null
+	_door3 = null
 	_door1_unlocked = false
+	_door2_to_3_unlocked = false
 	_door_transition_active = false
 	_door_interact_buffer_left = 0.0
 	_player_interact_area = null
@@ -657,11 +676,20 @@ func _setup_world2_doors() -> void:
 		_door1 = get_node_or_null(floor1_door_path) as AnimatedSprite2D
 	if floor2_door_path != NodePath():
 		_door2 = get_node_or_null(floor2_door_path) as AnimatedSprite2D
+	if floor2_door2_path != NodePath():
+		_door2_to_3 = get_node_or_null(floor2_door2_path) as AnimatedSprite2D
+	if floor3_door_path != NodePath():
+		_door3 = get_node_or_null(floor3_door_path) as AnimatedSprite2D
 
 	if _door1 == null:
 		push_warning("[Floors] World2 doors enabled but Floor1Door path invalid.")
 	if _door2 == null:
 		push_warning("[Floors] World2 doors enabled but Floor2Door path invalid.")
+	if enable_world2_floor2_to_floor3_door_transition:
+		if _door2_to_3 == null:
+			push_warning("[Floors] World2 floor2->floor3 door transition enabled but Floor2Door2 path invalid.")
+		if _door3 == null and orb_target_spawn_path == NodePath():
+			push_warning("[Floors] World2 floor2->floor3 door transition enabled but Floor3Door path invalid and orb_target_spawn_path fallback is empty.")
 
 	if _player != null and is_instance_valid(_player):
 		_player_interact_area = _player.get_node_or_null("InteractArea") as Area2D
@@ -669,10 +697,23 @@ func _setup_world2_doors() -> void:
 	# Force correct default visuals (prevents "starts open")
 	_force_door_state(_door1, door_anim_closed)
 	_force_door_state(_door2, door_anim_closed)
+	_force_door_state(_door2_to_3, door_anim_closed)
+	_force_door_state(_door3, door_anim_closed)
+	_set_door_interact_enabled(_door1, false)
+	_set_door_interact_enabled(_door2_to_3, false)
 
 	# Optional: hide door1 until unlocked
 	if _door1 != null and door1_hide_until_unlocked:
 		_door1.visible = false
+
+func _set_door_interact_enabled(door: AnimatedSprite2D, enabled: bool) -> void:
+	if door == null or not is_instance_valid(door):
+		return
+	var interact_area: Area2D = door.get_node_or_null("InteractArea") as Area2D
+	if interact_area == null:
+		return
+	interact_area.monitoring = enabled
+	interact_area.monitorable = enabled
 
 func _force_door_state(door: AnimatedSprite2D, anim_name: StringName) -> void:
 	if door == null:
@@ -786,12 +827,21 @@ func _update_current_floor_from_player() -> void:
 			if x >= float(thresholds[i]) - floor_band_padding:
 				floor_num = i + 2
 	else:  # Vertical (Y-axis) mode for World2
+		var x: float = _player.global_position.x
 		var y: float = _player.global_position.y
 		var thresholds: PackedFloat32Array = _get_floor_thresholds()
 		
 		for i in range(thresholds.size()):
-			if y <= float(thresholds[i]) - floor_band_padding:
-				floor_num = i + 2
+			if _is_world2_floor3_to_floor4_x_boundary_index(i):
+				# Require the previous floor boundary to have been reached first.
+				# This prevents accidental Floor 4 promotion from unrelated areas.
+				if floor_num >= 3 and _is_world2_floor3_to_floor4_unlock_ready():
+					var x_boundary: float = _get_world2_floor3_to_floor4_x_boundary()
+					if x >= x_boundary - floor_band_padding:
+						floor_num = i + 2
+			else:
+				if y <= float(thresholds[i]) - floor_band_padding:
+					floor_num = i + 2
 
 	var inferred_max: int = _get_floor_thresholds().size() + 1
 	var max_f: int = max_floor_number if max_floor_number > 0 else inferred_max
@@ -802,6 +852,26 @@ func _update_current_floor_from_player() -> void:
 		active_floor_changed.emit(_current_floor_number)
 		_start_fast_clear_timer_if_needed(_current_floor_number - 1)
 		_apply_per_floor_player_camera_limits(false)
+
+func _is_world2_floor3_to_floor4_x_boundary_index(index: int) -> bool:
+	if not enable_world2_floor3_to_floor4_x_boundary:
+		return false
+	if floor_progression_mode != 0:
+		return false
+	return index == world2_floor3_to_floor4_gate_index
+
+func _get_world2_floor3_to_floor4_x_boundary() -> float:
+	if world2_floor3_to_floor4_use_gate_x:
+		if world2_floor3_to_floor4_gate_index >= 0 and world2_floor3_to_floor4_gate_index < _gates.size():
+			var gate_node: Node2D = _gates[world2_floor3_to_floor4_gate_index] as Node2D
+			if gate_node != null:
+				return gate_node.global_position.x + world2_floor3_to_floor4_x_offset
+	return world2_floor3_to_floor4_x_threshold
+
+func _is_world2_floor3_to_floor4_unlock_ready() -> bool:
+	if not world2_floor3_to_floor4_requires_floor3_clear:
+		return true
+	return _unlocked.size() > 2 and _unlocked[2] == 1
 
 func _apply_per_floor_player_camera_limits(force: bool) -> void:
 	if not enable_per_floor_player_camera_limits:
@@ -989,33 +1059,38 @@ func _update_world2_door_interaction() -> void:
 		return
 	if _player == null:
 		return
-	if not _door1_unlocked:
-		return
-	if _door1 == null:
-		return
-
-	# Only interact from Floor 1 -> Floor 2
-	if _current_floor_number != 1:
-		return
-
 	if _door_interact_buffer_left <= 0.0:
 		return
 
+	# Floor 1 -> Floor 2
+	if _current_floor_number == 1 and _door1_unlocked and _is_player_in_range_for_door(_door1, door1_interact_offset):
+		_door_interact_buffer_left = 0.0
+		_start_floor1_to_floor2_transition()
+		return
+
+	# Floor 2 -> Floor 3 (new optional path replacing orb flight)
+	if (
+		enable_world2_floor2_to_floor3_door_transition
+		and _current_floor_number == 2
+		and _door2_to_3_unlocked
+		and _is_player_in_range_for_door(_door2_to_3, door2_interact_offset)
+	):
+		_door_interact_buffer_left = 0.0
+		_start_floor2_to_floor3_transition()
+		return
+
+func _is_player_in_range_for_door(door: AnimatedSprite2D, interact_offset: Vector2) -> bool:
+	if door == null or not is_instance_valid(door) or _player == null:
+		return false
 	var in_range: bool = false
-	var door_area: Area2D = _door1.get_node_or_null("InteractArea") as Area2D
+	var door_area: Area2D = door.get_node_or_null("InteractArea") as Area2D
 	if _player_interact_area != null and is_instance_valid(_player_interact_area) and door_area != null and is_instance_valid(door_area):
 		in_range = _player_interact_area.overlaps_area(door_area)
 	if not in_range:
-		var door_point: Vector2 = _door1.global_position + door1_interact_offset
+		var door_point: Vector2 = door.global_position + interact_offset
 		var d: float = _player.global_position.distance_to(door_point)
 		in_range = d <= door_interact_radius
-	if not in_range:
-		return
-
-	_door_interact_buffer_left = 0.0
-
-	# Trigger transition
-	_start_floor1_to_floor2_transition()
+	return in_range
 
 func _start_floor1_to_floor2_transition() -> void:
 	if _door_transition_active:
@@ -1030,9 +1105,28 @@ func _start_floor1_to_floor2_transition() -> void:
 	_set_player_cutscene_motion_lock(true)
 
 	# Use async flow via deferred call so we don't block frame
-	call_deferred("_door_transition_sequence")
+	call_deferred("_door_transition_sequence", _door1, _door2, floor2_spawn_offset, 2)
 
-func _door_transition_sequence() -> void:
+func _start_floor2_to_floor3_transition() -> void:
+	if _door_transition_active:
+		return
+	var destination_anchor: Node2D = _resolve_floor3_transition_destination()
+	if destination_anchor == null:
+		push_warning("[Floors] Floor2->Floor3 door transition has no destination. Set floor3_door_path or orb_target_spawn_path.")
+		return
+	_door_transition_active = true
+	_ensure_transition_fade_rect()
+	_set_player_cutscene_motion_lock(true)
+	call_deferred("_door_transition_sequence", _door2_to_3, destination_anchor, floor3_spawn_offset, 3)
+
+func _resolve_floor3_transition_destination() -> Node2D:
+	if _door3 != null and is_instance_valid(_door3):
+		return _door3
+	if orb_target_spawn_path == NodePath():
+		return null
+	return get_node_or_null(orb_target_spawn_path) as Node2D
+
+func _door_transition_sequence(source_door: AnimatedSprite2D, destination_anchor: Node2D, spawn_offset: Vector2, target_floor_number: int) -> void:
 	# Resolve fade target lazily at transition time (never during _ready()).
 	_ensure_transition_fade_rect()
 
@@ -1048,44 +1142,49 @@ func _door_transition_sequence() -> void:
 		await get_tree().create_timer(maxf(teleport_fade_out_time, 0.01)).timeout
 
 	# Step 2: While black, play both door animations.
-	var waiting_on_door1: bool = false
-	var waiting_on_door2: bool = false
-	if _door1 != null:
-		_force_door_state(_door1, door_anim_closed)
-		_play_door_anim(_door1, door_anim_opening)
-		waiting_on_door1 = true
+	var waiting_on_source: bool = false
+	var waiting_on_destination: bool = false
+	if source_door != null and is_instance_valid(source_door):
+		_force_door_state(source_door, door_anim_closed)
+		_play_door_anim(source_door, door_anim_opening)
+		waiting_on_source = true
 
-	if _door2 != null:
-		_force_door_state(_door2, door_anim_closed)
-		_play_door_anim(_door2, door_anim_opening)
-		waiting_on_door2 = true
+	if destination_anchor is AnimatedSprite2D:
+		var destination_door := destination_anchor as AnimatedSprite2D
+		if destination_door != null and is_instance_valid(destination_door):
+			_force_door_state(destination_door, door_anim_closed)
+			_play_door_anim(destination_door, door_anim_opening)
+			waiting_on_destination = true
 
-	while waiting_on_door1 or waiting_on_door2:
-		if waiting_on_door1 and (_door1 == null or not is_instance_valid(_door1) or not _door1.is_playing()):
-			waiting_on_door1 = false
-		if waiting_on_door2 and (_door2 == null or not is_instance_valid(_door2) or not _door2.is_playing()):
-			waiting_on_door2 = false
-		if waiting_on_door1 or waiting_on_door2:
+	while waiting_on_source or waiting_on_destination:
+		if waiting_on_source and (source_door == null or not is_instance_valid(source_door) or not source_door.is_playing()):
+			waiting_on_source = false
+		if destination_anchor is AnimatedSprite2D:
+			var destination_door_for_wait := destination_anchor as AnimatedSprite2D
+			if waiting_on_destination and (destination_door_for_wait == null or not is_instance_valid(destination_door_for_wait) or not destination_door_for_wait.is_playing()):
+				waiting_on_destination = false
+		if waiting_on_source or waiting_on_destination:
 			await get_tree().process_frame
 
-	if _door1 != null and is_instance_valid(_door1):
-		_force_door_state(_door1, door_anim_open)
-	if _door2 != null and is_instance_valid(_door2):
-		_force_door_state(_door2, door_anim_open)
+	if source_door != null and is_instance_valid(source_door):
+		_force_door_state(source_door, door_anim_open)
+	if destination_anchor is AnimatedSprite2D:
+		var destination_door_after := destination_anchor as AnimatedSprite2D
+		if destination_door_after != null and is_instance_valid(destination_door_after):
+			_force_door_state(destination_door_after, door_anim_open)
 
 	# Step 3: Move player/camera and allow settle while black.
-	if _player != null and _door2 != null:
-		_player.global_position = _door2.global_position + floor2_spawn_offset
+	if _player != null and destination_anchor != null and is_instance_valid(destination_anchor):
+		_player.global_position = destination_anchor.global_position + spawn_offset
 
 	await get_tree().physics_frame
 	_snap_player_camera_to_player()
 	await _wait_for_player_settle_hidden(world2_door_player_settle_timeout)
 
-	# CRITICAL: Force floor number to 2 after spawning at Floor2Door
-	# This ensures ultimates work immediately without waiting for _update_current_floor_from_player()
-	_current_floor_number = 2
-	_last_floor_number = 2
-	active_floor_changed.emit(2)
+	# Keep floor-dependent combat/UI state immediately consistent post-transition.
+	_current_floor_number = target_floor_number
+	_last_floor_number = target_floor_number
+	active_floor_changed.emit(target_floor_number)
 
 	# Step 4: Fade IN, then return control.
 	if _teleport_fade_rect != null:
@@ -1861,20 +1960,22 @@ func _on_modifier_chosen() -> void:
 				if door1_hide_until_unlocked:
 					_door1.visible = true
 				_force_door_state(_door1, door_anim_closed)
-				# Enable the InteractArea for the interaction prompt
-				var interact_area: Area2D = _door1.get_node_or_null("InteractArea")
-				if interact_area != null:
-					interact_area.monitoring = true
-					interact_area.monitorable = true
+				_set_door_interact_enabled(_door1, true)
 			pass
 
-		# ✅ World2: after Floor 2 modifier chosen, enable LightBeamStation
-		if enable_orb_flight and (idx == 1):
-			if _light_beam_station != null and is_instance_valid(_light_beam_station):
-				_light_beam_station.visible = true
-				if _light_beam_station.has_method("set_enabled"):
-					_light_beam_station.set_enabled(true)
-				pass
+		# ✅ World2: after Floor 2 modifier chosen, either unlock Door2->3 transition OR enable LightBeamStation
+		if idx == 1:
+			if enable_world2_floor2_to_floor3_door_transition:
+				_door2_to_3_unlocked = true
+				if _door2_to_3 != null and is_instance_valid(_door2_to_3):
+					_force_door_state(_door2_to_3, door_anim_closed)
+					_set_door_interact_enabled(_door2_to_3, true)
+			elif enable_orb_flight:
+				if _light_beam_station != null and is_instance_valid(_light_beam_station):
+					_light_beam_station.visible = true
+					if _light_beam_station.has_method("set_enabled"):
+						_light_beam_station.set_enabled(true)
+					pass
 		
 		# ✅ World3: after Floor 3 modifier chosen, enable cave teleport InteractArea
 		if enable_world3_teleport and (idx == 2):

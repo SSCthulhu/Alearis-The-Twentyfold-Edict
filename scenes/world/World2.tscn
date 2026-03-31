@@ -172,14 +172,22 @@ position = Vector2(-64, -306.00006)
 scale = Vector2(1, 0.6)
 texture = ExtResource("7_somlc")
 
-[node name="CastleBG4" type="Sprite2D" parent="ParallaxRoot/Mid"]
+[node name="Mid2" type="Parallax2D" parent="ParallaxRoot"]
+z_index = -6
+scroll_scale = Vector2(0.2, 0.1)
+scroll_offset = Vector2(0, -59)
+repeat_size = Vector2(2375.905, 0)
+repeat_times = 7
+ignore_camera_scroll = true
+
+[node name="CastleBG4" type="Sprite2D" parent="ParallaxRoot/Mid2"]
 z_index = -4
-position = Vector2(6435, -15534)
+position = Vector2(863, -15637)
 texture = ExtResource("9_hi1dp")
 
-[node name="CastleBG5" type="Sprite2D" parent="ParallaxRoot/Mid"]
+[node name="CastleBG5" type="Sprite2D" parent="ParallaxRoot/Mid2"]
 z_index = -4
-position = Vector2(-801, -21620)
+position = Vector2(-801, -21650)
 texture = ExtResource("9_hi1dp")
 
 [node name="BackgroundStatic" type="Node2D" parent="."]
@@ -200,6 +208,9 @@ position = Vector2(2375, 1970)
 texture = ExtResource("9_hi1dp")
 
 [node name="Arena" parent="." instance=ExtResource("14_l6nik")]
+
+[node name="CollisionShape2D2" parent="Arena/Geometry/RightWall" index="1"]
+position = Vector2(4308, -17648.004)
 
 [node name="HangingLight" parent="Arena/ArenaArt/Props" index="0"]
 z_index = -1
@@ -229,9 +240,6 @@ position = Vector2(248, -6215)
 [node name="P6" parent="Arena/Spawns/Floor5" index="5"]
 position = Vector2(18, -5833)
 
-[node name="ChestSpawn_F3" parent="Arena/ChestSpawns" index="2"]
-position = Vector2(-158, -15199)
-
 [node name="BossFloor5DeathZone" type="Area2D" parent="."]
 position = Vector2(0, -20720)
 script = ExtResource("34_bossdz")
@@ -258,6 +266,8 @@ charge_scene = ExtResource("2_rvhjv")
 [node name="FloorProgressionController" type="Node" parent="."]
 script = ExtResource("4_4onig")
 encounter_controller_path = NodePath("../BossEncounterWorld2")
+derive_floor_ceiling_y_from_gates = false
+enable_world2_floor3_to_floor4_x_boundary = true
 floor_ceiling_y = PackedFloat32Array(200, -14716, -16355, -18069)
 boss_start_y = -18069.0
 chest_scene = ExtResource("5_strcc")
@@ -266,6 +276,9 @@ chest_spawn_fallback_path = NodePath("")
 enable_world2_doors = true
 floor1_door_path = NodePath("../Arena/Doorways/Floor1Door")
 floor2_door_path = NodePath("../Arena/Doorways/Floor2Door")
+floor2_door2_path = NodePath("../Arena/Doorways/Floor2Door2")
+floor3_door_path = NodePath("../Arena/Doorways/Floor3Door")
+enable_world2_floor2_to_floor3_door_transition = true
 door1_interact_offset = Vector2(0, 100)
 door2_interact_offset = Vector2(0, 100)
 floor2_spawn_delay = 0.5
@@ -281,10 +294,29 @@ orb_finish_y_padding = 1200.0
 orb_autopilot_speed = 1200.0
 orb_autopilot_arc_height = 1200.0
 enable_world2_boss_arena_camera = true
+world2_boss_camera_top = -21700.0
 world2_boss_camera_bottom = -21000.0
 world2_boss_camera_live_tuning = true
 world2_boss_camera_use_manual_center = true
 world2_boss_camera_min_zoom = 0.73
+enable_per_floor_player_camera_limits = true
+floor_camera_limits_live_tuning = true
+floor1_camera_limit_left = -1524
+floor1_camera_limit_right = 1536
+floor1_camera_limit_top = 1800
+floor1_camera_limit_bottom = 3230
+floor2_camera_limit_left = -1524
+floor2_camera_limit_right = 1536
+floor2_camera_limit_top = -1500
+floor2_camera_limit_bottom = 3230
+floor3_camera_limit_left = -1524
+floor3_camera_limit_right = 4250
+floor3_camera_limit_top = -15900
+floor3_camera_limit_bottom = 3230
+floor4_camera_limit_left = -1524
+floor4_camera_limit_right = 4250
+floor4_camera_limit_top = -15900
+floor4_camera_limit_bottom = 3230
 unlock_floor_1_platforms = Array[NodePath]([NodePath(""), NodePath("")])
 unlock_floor_2_platforms = Array[NodePath]([NodePath("")])
 unlock_floor_3_platforms = Array[NodePath]([NodePath("")])
@@ -317,6 +349,9 @@ limit_top = -22570
 limit_right = 1536
 limit_bottom = 3230
 
+[node name="PlayerCameraController" parent="Player" index="30"]
+enable_progressive_limits = false
+
 [node name="BossArenaCamera" type="Camera2D" parent="."]
 position = Vector2(0, -20285)
 enabled = false
@@ -342,10 +377,10 @@ debug_socket = true
 [node name="UI" parent="." instance=ExtResource("16_devdu")]
 
 [node name="PlayerHUDCluster" parent="UI/ScreenRoot/HUDRoot/BottomRight" index="0"]
-offset_left = -684.5333
-offset_top = -289.41666
-offset_right = -27.683332
-offset_bottom = -27.683332
+offset_left = -414.8
+offset_top = -175.375
+offset_right = -16.775
+offset_bottom = -16.775
 style = ExtResource("17_o5lv8")
 
 [node name="PlayerHUDWiring" parent="UI/ScreenRoot/HUDRoot" index="6"]
