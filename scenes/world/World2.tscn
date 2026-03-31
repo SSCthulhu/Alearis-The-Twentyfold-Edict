@@ -1,4 +1,4 @@
-[gd_scene load_steps=41 format=3 uid="uid://cos5po5s14l56"]
+[gd_scene load_steps=34 format=3 uid="uid://cos5po5s14l56"]
 
 [ext_resource type="Script" uid="uid://bwo5386w06j5j" path="res://scripts/systems/BossEncounterWorld2.gd" id="1_bossenc2"]
 [ext_resource type="PackedScene" uid="uid://b5uuaa28c07e8" path="res://scenes/boss/PortalWorld2.tscn" id="1_portalw2"]
@@ -19,7 +19,6 @@
 [ext_resource type="Texture2D" uid="uid://c1q3i77fw7hoe" path="res://art/Worlds/Rolling Hills/Mountain/cloud4.png" id="6_saqrm"]
 [ext_resource type="Texture2D" uid="uid://crg5j0xxhh6r0" path="res://art/Worlds/Jungle/background/1.png" id="7_somlc"]
 [ext_resource type="Texture2D" uid="uid://btj8ejner44my" path="res://art/Worlds/Dungeon/bg/1.png" id="9_hi1dp"]
-[ext_resource type="Texture2D" uid="uid://blt6ipqohvu1p" path="res://art/Worlds/Jungle/background/clouds/cloud-7.png" id="10_8wr4c"]
 [ext_resource type="PackedScene" uid="uid://c72m65e63bs0o" path="res://scenes/player/player.tscn" id="12_2cxal"]
 [ext_resource type="PackedScene" uid="uid://c73g8ryxy8vv5" path="res://scenes/boss/Boss_World2.tscn" id="13_ys2ak"]
 [ext_resource type="PackedScene" uid="uid://bxmiuknanvwv6" path="res://scenes/arena/Arena2.tscn" id="14_l6nik"]
@@ -33,44 +32,6 @@
 [ext_resource type="PackedScene" uid="uid://8hysfqws2ayt" path="res://scenes/player/OrbFlightController.tscn" id="25_bytlt"]
 [ext_resource type="AudioStream" uid="uid://dn3jm8svfdr6j" path="res://music/level/(Disc 2) 14 - Catacecaumene.mp3" id="33_devdu"]
 [ext_resource type="Script" uid="uid://upy8ltjjj1n7" path="res://scripts/arena/DeathZone.gd" id="34_bossdz"]
-
-[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_8wr4c"]
-texture = ExtResource("5_4163r")
-texture_region_size = Vector2i(799, 367)
-0:0/0 = 0
-0:0/0/physics_layer_0/polygon_0/points = PackedVector2Array(-399.5, 50.045456, 399.49994, 50.045456, 399.49994, 150.13635, -399.5, 150.13635)
-0:0/0/physics_layer_0/polygon_0/one_way = true
-
-[sub_resource type="TileSet" id="TileSet_devdu"]
-tile_size = Vector2i(799, 367)
-physics_layer_0/collision_layer = 1
-sources/2 = SubResource("TileSetAtlasSource_8wr4c")
-
-[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_devdu"]
-texture = ExtResource("4_bytlt")
-texture_region_size = Vector2i(871, 389)
-0:0/0 = 0
-0:0/0/physics_layer_0/polygon_0/points = PackedVector2Array(-415.5, 25.54544, 415.5, 25.54544, 415.5, 127.727264, -415.5, 127.727264)
-0:0/0/physics_layer_0/polygon_0/one_way = true
-
-[sub_resource type="TileSet" id="TileSet_awieb"]
-tile_size = Vector2i(871, 389)
-physics_layer_0/collision_layer = 1
-sources/0 = SubResource("TileSetAtlasSource_devdu")
-
-[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_o5lv8"]
-texture = ExtResource("10_8wr4c")
-texture_region_size = Vector2i(1020, 565)
-0:0/0 = 0
-0:0/0/physics_layer_0/polygon_0/points = PackedVector2Array(-231.81818, 25.681824, 510, -25.681824, 417.2727, 128.40909, -231.81818, 128.40909)
-0:0/0/physics_layer_0/polygon_0/one_way = true
-0:0/0/physics_layer_0/polygon_1/points = PackedVector2Array(-510, 179.77274, -510, 282.5, 46.363647, 282.5, 46.363647, 231.13635)
-0:0/0/physics_layer_0/polygon_1/one_way = true
-
-[sub_resource type="TileSet" id="TileSet_hyqpu"]
-tile_size = Vector2i(1020, 565)
-physics_layer_0/collision_layer = 1
-sources/1 = SubResource("TileSetAtlasSource_o5lv8")
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_bossfloor5dz"]
 size = Vector2(4200, 240)
@@ -143,14 +104,6 @@ position = Vector2(3835, -1186)
 scale = Vector2(2, 2)
 texture = ExtResource("15_rvhjv")
 
-[node name="l1_sky4" type="Sprite2D" parent="ParallaxRoot/Background"]
-texture_repeat = 2
-position = Vector2(0, -16071.999)
-scale = Vector2(6, 350)
-texture = ExtResource("15_rvhjv")
-region_enabled = true
-region_rect = Rect2(0, 0, 1920, 79.69696)
-
 [node name="Furthest" type="Parallax2D" parent="ParallaxRoot"]
 z_index = -8
 scroll_scale = Vector2(0.1, 0.05)
@@ -209,7 +162,7 @@ z_index = -6
 scroll_scale = Vector2(0.2, 0.1)
 scroll_offset = Vector2(0, -59)
 repeat_size = Vector2(2375.905, 0)
-repeat_times = 3
+repeat_times = 7
 follow_viewport = false
 
 [node name="LakeMountain1" type="Sprite2D" parent="ParallaxRoot/Mid"]
@@ -218,6 +171,16 @@ texture_repeat = 2
 position = Vector2(-64, -306.00006)
 scale = Vector2(1, 0.6)
 texture = ExtResource("7_somlc")
+
+[node name="CastleBG4" type="Sprite2D" parent="ParallaxRoot/Mid"]
+z_index = -4
+position = Vector2(6435, -15534)
+texture = ExtResource("9_hi1dp")
+
+[node name="CastleBG5" type="Sprite2D" parent="ParallaxRoot/Mid"]
+z_index = -4
+position = Vector2(-801, -21620)
+texture = ExtResource("9_hi1dp")
 
 [node name="BackgroundStatic" type="Node2D" parent="."]
 
@@ -268,56 +231,6 @@ position = Vector2(18, -5833)
 
 [node name="ChestSpawn_F3" parent="Arena/ChestSpawns" index="2"]
 position = Vector2(-158, -15199)
-
-[node name="Cloud1" type="Node2D" parent="Arena"]
-modulate = Color(1, 1, 1, 0.7254902)
-position = Vector2(814, -21384)
-
-[node name="TileMapLayer" type="TileMapLayer" parent="Arena/Cloud1"]
-position = Vector2(394, 181)
-tile_map_data = PackedByteArray(0, 0, 255, 255, 255, 255, 2, 0, 0, 0, 0, 0, 0, 0)
-tile_set = SubResource("TileSet_devdu")
-
-[node name="Cloud4" type="Node2D" parent="Arena"]
-modulate = Color(1, 1, 1, 0.7254902)
-position = Vector2(-1157, -21720)
-scale = Vector2(-0.8, 0.8)
-
-[node name="TileMapLayer" type="TileMapLayer" parent="Arena/Cloud4"]
-position = Vector2(394, 181)
-tile_map_data = PackedByteArray(0, 0, 255, 255, 255, 255, 2, 0, 0, 0, 0, 0, 0, 0)
-tile_set = SubResource("TileSet_devdu")
-
-[node name="Cloud2" type="Node2D" parent="Arena"]
-modulate = Color(1, 1, 1, 0.7254902)
-position = Vector2(-607, -21451)
-scale = Vector2(0.7, 0.7)
-
-[node name="TileMapLayer2" type="TileMapLayer" parent="Arena/Cloud2"]
-position = Vector2(2187.143, 299.9997)
-tile_map_data = PackedByteArray(0, 0, 253, 255, 255, 255, 0, 0, 0, 0, 0, 0, 0, 0)
-tile_set = SubResource("TileSet_awieb")
-
-[node name="Cloud5" type="Node2D" parent="Arena"]
-modulate = Color(1, 1, 1, 0.7254902)
-position = Vector2(1172, -21924)
-scale = Vector2(-0.9, 0.9)
-
-[node name="TileMapLayer2" type="TileMapLayer" parent="Arena/Cloud5"]
-position = Vector2(2187.143, 299.9997)
-tile_map_data = PackedByteArray(0, 0, 253, 255, 255, 255, 0, 0, 0, 0, 0, 0, 0, 0)
-tile_set = SubResource("TileSet_awieb")
-
-[node name="Cloud3" type="Node2D" parent="Arena"]
-modulate = Color(1, 1, 1, 0.7254902)
-position = Vector2(-33, -21812)
-scale = Vector2(0.9, 0.7)
-
-[node name="TileMapLayer3" type="TileMapLayer" parent="Arena/Cloud3"]
-position = Vector2(2570, -88.57117)
-scale = Vector2(0.99999994, 0.99999994)
-tile_map_data = PackedByteArray(0, 0, 253, 255, 255, 255, 1, 0, 0, 0, 0, 0, 0, 0)
-tile_set = SubResource("TileSet_hyqpu")
 
 [node name="BossFloor5DeathZone" type="Area2D" parent="."]
 position = Vector2(0, -20720)
