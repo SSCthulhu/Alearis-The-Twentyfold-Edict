@@ -12,6 +12,9 @@ export interface DeathScreenOptions {
   root?: HTMLElement | string;
   stats?: DeathScreenStats;
   cause?: string;
+  title?: string;
+  kicker?: string;
+  variant?: 'death' | 'victory';
   onRetry?: () => void;
   onMainMenu?: () => void;
 }
@@ -35,6 +38,7 @@ export class DeathScreen {
     this.options = options;
     this.stats = options.stats ?? DEFAULT_STATS;
     this.element = createScreenRoot('alearis-death-screen');
+    if (options.variant === 'victory') this.element.classList.add('alearis-death-screen--victory');
     this.element.appendChild(this.buildPanel());
     this.installScreenStyle();
 
@@ -64,12 +68,12 @@ export class DeathScreen {
     glyph.width = 280;
     glyph.height = 220;
     glyph.className = 'alearis-death-screen__glyph';
-    drawDeathGlyph(glyph);
+    drawDeathGlyph(glyph, this.options.variant ?? 'death');
 
     const content = document.createElement('div');
     content.innerHTML = `
-      <div class="alearis-kicker">Run Ended</div>
-      <h2 class="alearis-title">The Edict Holds</h2>
+      <div class="alearis-kicker">${this.options.kicker ?? 'Run Ended'}</div>
+      <h2 class="alearis-title">${this.options.title ?? 'The Edict Holds'}</h2>
       <p class="alearis-copy">${this.options.cause ?? 'Your vessel fell before the ascent could be completed.'}</p>
       <dl class="alearis-death-screen__stats">
         <div><dt>Depth</dt><dd>World ${this.stats.world} / Floor ${this.stats.floor}</dd></div>
@@ -82,7 +86,7 @@ export class DeathScreen {
     const actions = document.createElement('div');
     actions.className = 'alearis-death-screen__actions';
     actions.append(
-      createButton({ label: 'Retry Run', variant: 'danger', onClick: this.options.onRetry }),
+      createButton({ label: this.options.variant === 'victory' ? 'New Run' : 'Retry Run', variant: this.options.variant === 'victory' ? 'primary' : 'danger', onClick: this.options.onRetry }),
       createButton({ label: 'Main Menu', variant: 'secondary', onClick: this.options.onMainMenu }),
     );
 
@@ -116,6 +120,20 @@ export class DeathScreen {
       .alearis-death-screen .alearis-title {
         color: ${UI_COLORS.red};
         font-size: clamp(50px, 5vw, 100px);
+      }
+
+      .alearis-death-screen--victory {
+        background:
+          radial-gradient(circle at 50% 20%, rgba(214, 174, 84, 0.2), transparent 38%),
+          linear-gradient(120deg, rgba(6, 5, 2, 0.84), rgba(0, 0, 0, 0.92));
+      }
+
+      .alearis-death-screen--victory .alearis-death-screen__panel {
+        border-color: rgba(214, 174, 84, 0.72);
+      }
+
+      .alearis-death-screen--victory .alearis-title {
+        color: ${UI_COLORS.goldBright};
       }
 
       .alearis-death-screen__glyph {
@@ -161,26 +179,39 @@ export class DeathScreen {
   }
 }
 
-function drawDeathGlyph(canvas: HTMLCanvasElement): void {
+function drawDeathGlyph(canvas: HTMLCanvasElement, variant: 'death' | 'victory'): void {
   const ctx = canvas.getContext('2d');
   if (ctx === null) return;
+  const primary = variant === 'victory' ? UI_COLORS.goldBright : UI_COLORS.red;
+  const fill = variant === 'victory' ? 'rgba(214, 174, 84, 0.13)' : 'rgba(214, 90, 84, 0.1)';
 
   ctx.clearRect(0, 0, canvas.width, canvas.height);
   ctx.save();
   ctx.translate(140, 110);
-  ctx.strokeStyle = UI_COLORS.red;
-  ctx.fillStyle = 'rgba(214, 90, 84, 0.1)';
+  ctx.strokeStyle = primary;
+  ctx.fillStyle = fill;
   ctx.lineWidth = 7;
   ctx.beginPath();
   ctx.arc(0, -12, 54, 0, Math.PI * 2);
   ctx.fill();
   ctx.stroke();
-  ctx.beginPath();
-  ctx.moveTo(-82, 74);
-  ctx.lineTo(82, -74);
-  ctx.moveTo(-82, -74);
-  ctx.lineTo(82, 74);
-  ctx.stroke();
+  if (variant === 'victory') {
+    ctx.beginPath();
+    ctx.moveTo(0, -92);
+    ctx.lineTo(78, -22);
+    ctx.lineTo(48, 80);
+    ctx.lineTo(-48, 80);
+    ctx.lineTo(-78, -22);
+    ctx.closePath();
+    ctx.stroke();
+  } else {
+    ctx.beginPath();
+    ctx.moveTo(-82, 74);
+    ctx.lineTo(82, -74);
+    ctx.moveTo(-82, -74);
+    ctx.lineTo(82, 74);
+    ctx.stroke();
+  }
   ctx.fillStyle = UI_COLORS.ivory;
   ctx.beginPath();
   ctx.arc(-18, -20, 7, 0, Math.PI * 2);

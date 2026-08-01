@@ -106,7 +106,6 @@ export class EncounterController {
 
     this.run.enemiesRemaining = this.aliveCount;
     frame.aliveCount = this.aliveCount;
-    this.run.kills += frame.deaths.length;
     this.checkForClear();
     return frame;
   }

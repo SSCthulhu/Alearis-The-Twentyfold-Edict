@@ -2,7 +2,7 @@ import * as THREE from 'three';
 
 /** Procedural 4-band toon ramp — NearestFilter, no interpolation. */
 export function createToonRampTexture(
-  bands: [string, string, string, string] = ['#2a2030', '#5a4a60', '#a09088', '#f0e8d8'],
+  bands: [string, string, string, string] = ['#66546b', '#887a84', '#b6aea0', '#fff4dc'],
 ): THREE.DataTexture {
   const data = new Uint8Array(4 * 4);
   for (let i = 0; i < 4; i++) {
@@ -31,8 +31,8 @@ export function createMatcapTexture(base = '#808890', hilite = '#ffffff'): THREE
   const g = ctx.createRadialGradient(size * 0.35, size * 0.35, 2, size * 0.5, size * 0.5, size * 0.55);
   g.addColorStop(0, hilite);
   g.addColorStop(0.35, base);
-  g.addColorStop(0.75, '#303840');
-  g.addColorStop(1, '#101418');
+  g.addColorStop(0.75, '#56636b');
+  g.addColorStop(1, '#2e3940');
   ctx.fillStyle = g;
   ctx.fillRect(0, 0, size, size);
   const tex = new THREE.CanvasTexture(canvas);
@@ -79,7 +79,7 @@ void main() {
 
   // Quantized diffuse — the heart of the Wind Waker–modern look
   float ndl = max(dot(N, L), 0.0);
-  float rampU = clamp(ndl * 0.75 + uAmbient * 0.25, 0.02, 0.98);
+  float rampU = clamp(ndl * 0.68 + uAmbient * 0.46, 0.18, 0.98);
   vec3 ramp = texture2D(uRamp, vec2(rampU, 0.5)).rgb;
 
   // Fake environment via matcap (view-space normal)
@@ -96,8 +96,8 @@ void main() {
   vec3 rim = uRimColor * fres * uRimStrength;
 
   vec3 base = uColor * ramp;
-  base = mix(base, base * matcap * 1.35, 0.22);
-  base += uFillColor * 0.12;
+  base = mix(base, base * matcap * 1.18, 0.16);
+  base += uFillColor * 0.16;
   base += vec3(bandSpec);
   base += rim;
 
@@ -133,7 +133,7 @@ export function getSharedMatcap(): THREE.Texture {
 }
 
 export function createCelMaterial(opts: CelMaterialOptions): THREE.ShaderMaterial {
-  const keyDir = opts.keyDir?.clone().normalize() ?? new THREE.Vector3(0.45, 0.85, 0.35).normalize();
+  const keyDir = opts.keyDir?.clone().normalize() ?? new THREE.Vector3(0.25, 0.65, 0.72).normalize();
   return new THREE.ShaderMaterial({
     uniforms: {
       uColor: { value: new THREE.Color(opts.color) },
@@ -146,7 +146,7 @@ export function createCelMaterial(opts: CelMaterialOptions): THREE.ShaderMateria
       uFillColor: { value: new THREE.Color(opts.fillColor ?? '#6a9cc0') },
       uSpecularBand: { value: opts.specularBand ?? 0.92 },
       uSpecularStrength: { value: opts.specularStrength ?? 0.35 },
-      uAmbient: { value: opts.ambient ?? 0.35 },
+      uAmbient: { value: opts.ambient ?? 0.5 },
     },
     vertexShader: CEL_VERT,
     fragmentShader: CEL_FRAG,

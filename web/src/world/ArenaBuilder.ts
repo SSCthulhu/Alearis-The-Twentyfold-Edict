@@ -156,14 +156,14 @@ function addIceCrestFoam(
     specularBand: 0.72,
     specularStrength: 0.25,
   });
-  const count = Math.max(3, Math.floor(aabb.w / 1.1));
+  const count = Math.max(4, Math.floor(aabb.w / 0.85));
   for (let i = 0; i < count; i++) {
     const t = count === 1 ? 0.5 : i / (count - 1);
-    const radius = 0.08 + (i % 2) * 0.025;
+    const radius = 0.12 + (i % 2) * 0.035;
     const crest = new THREE.Mesh(new THREE.SphereGeometry(radius, 8, 5), mat);
     crest.name = `ice_foam_crest_${i}`;
-    crest.position.set(aabb.x + 0.35 + t * Math.max(0.1, aabb.w - 0.7), aabb.y + aabb.h + radius * 0.35, 0.94);
-    crest.scale.y = 0.45;
+    crest.position.set(aabb.x + 0.28 + t * Math.max(0.1, aabb.w - 0.56), aabb.y + aabb.h + radius * 0.35, 0.96);
+    crest.scale.y = 0.52;
     group.add(crest);
     attachOutline(group, crest, ink, 0.01);
   }
@@ -368,6 +368,122 @@ function computeBounds(platforms: readonly ArenaPlatform[]): AABB {
   };
 }
 
+function addArenaDecor(root: THREE.Group, world: WorldId, floor: number, platforms: readonly ArenaPlatform[], bounds: AABB): void {
+  addParallaxBackdrop(root, world, floor, bounds);
+  addLedgeProps(root, world, platforms);
+  if (world === 1) addWorldOneIceDecor(root, floor, platforms, bounds);
+}
+
+function addParallaxBackdrop(root: THREE.Group, world: WorldId, floor: number, bounds: AABB): void {
+  const palette = getPalette(world);
+  const baseColor = palette.platform.clone().lerp(new THREE.Color('#05070d'), world === 1 ? 0.42 : 0.62);
+  const farColor = palette.platformEdge.clone().lerp(new THREE.Color('#03040a'), world === 1 ? 0.55 : 0.72);
+  const ink = toColor(palette.ink.clone().lerp(new THREE.Color('#000000'), 0.35));
+
+  for (let i = 0; i < 4; i++) {
+    const depth = -4 - i * 1.25;
+    const width = bounds.w * (0.42 + i * 0.08);
+    const height = 1.4 + ((i + floor) % 3) * 0.55;
+    const x = bounds.x + bounds.w * (0.18 + i * 0.22) + Math.sin((floor + i) * 1.7) * 0.35;
+    const y = bounds.y + 1.2 + i * 2.25;
+    const mat = createCelMaterial({
+      color: toColor(i % 2 === 0 ? baseColor : farColor),
+      rimColor: palette.rim,
+      fillColor: palette.fillLight,
+      ambient: 0.5,
+      specularStrength: 0.08,
+    });
+    createOutlinedBox(
+      root,
+      `w${world}_backdrop_slab_${i}`,
+      new THREE.Vector3(width, height, 0.22),
+      new THREE.Vector3(x, y, depth),
+      mat,
+      ink,
+      0.02,
+    );
+  }
+}
+
+function addLedgeProps(root: THREE.Group, world: WorldId, platforms: readonly ArenaPlatform[]): void {
+  const palette = getPalette(world);
+  const propMat = createCelMaterial({
+    color: palette.platformEdge,
+    rimColor: palette.rim,
+    fillColor: palette.accent,
+    ambient: 0.48,
+    specularBand: 0.8,
+    specularStrength: 0.22,
+  });
+
+  for (let i = 0; i < platforms.length; i++) {
+    const platform = platforms[i]!;
+    if (platform.aabb.w < 2.8 || i % 2 !== 0) continue;
+    const side = i % 4 === 0 ? -1 : 1;
+    createOutlinedBox(
+      root,
+      `${platform.id}_ledge_prop_${i}`,
+      new THREE.Vector3(0.38 + (i % 3) * 0.12, 0.16, 0.42),
+      new THREE.Vector3(
+        platform.aabb.x + platform.aabb.w * (side < 0 ? 0.18 : 0.82),
+        platform.topY + 0.1,
+        1.24,
+      ),
+      propMat,
+      palette.ink,
+      0.014,
+    );
+  }
+}
+
+function addWorldOneIceDecor(root: THREE.Group, floor: number, platforms: readonly ArenaPlatform[], bounds: AABB): void {
+  const palette = getPalette(1);
+  const iceMat = createCelMaterial({
+    color: '#dff7ff',
+    rimColor: palette.rim,
+    fillColor: palette.fillLight,
+    ambient: 0.56,
+    specularBand: 0.7,
+    specularStrength: 0.34,
+  });
+  const shadowMat = createCelMaterial({
+    color: '#6c91ac',
+    rimColor: '#dff7ff',
+    fillColor: palette.fillLight,
+    ambient: 0.46,
+    specularStrength: 0.12,
+  });
+
+  for (let i = 0; i < Math.min(4, platforms.length); i++) {
+    const platform = platforms[i]!;
+    const pillarHeight = 1.2 + ((floor + i) % 3) * 0.45;
+    const pillar = new THREE.Mesh(new THREE.CylinderGeometry(0.18, 0.28, pillarHeight, 6), iceMat);
+    pillar.name = `${platform.id}_ice_pillar_${i}`;
+    pillar.position.set(platform.aabb.x + platform.aabb.w * (0.22 + (i % 2) * 0.48), platform.topY + pillarHeight * 0.5, -0.95);
+    pillar.rotation.z = (i % 2 === 0 ? -1 : 1) * 0.08;
+    root.add(pillar);
+    attachOutline(root, pillar, palette.ink, 0.02);
+  }
+
+  for (let i = 0; i < 6; i++) {
+    const icicle = new THREE.Mesh(new THREE.ConeGeometry(0.14 + (i % 2) * 0.05, 0.9 + (i % 3) * 0.28, 5), iceMat);
+    icicle.name = `w1_hanging_icicle_${i}`;
+    icicle.rotation.z = Math.PI;
+    icicle.position.set(bounds.x + 1.4 + i * (bounds.w - 2.8) / 5, bounds.y + bounds.h - 0.7 - (i % 2) * 0.3, -1.4);
+    root.add(icicle);
+    attachOutline(root, icicle, palette.ink, 0.016);
+  }
+
+  for (let i = 0; i < 3; i++) {
+    const cliff = new THREE.Mesh(new THREE.BoxGeometry(bounds.w * (0.24 + i * 0.05), 2.6 + i * 0.7, 0.18), shadowMat);
+    cliff.name = `w1_silhouette_cliff_${i}`;
+    cliff.position.set(bounds.x + bounds.w * (0.18 + i * 0.28), bounds.y + 1.4 + i * 3.1, -6.8 - i * 0.55);
+    cliff.rotation.z = (i - 1) * 0.08;
+    root.add(cliff);
+    attachOutline(root, cliff, palette.ink, 0.018);
+  }
+}
+
 function addArenaMarkers(arena: Arena): void {
   arena.root.add(createMarker(arena.world, `w${arena.world}_f${arena.floor}_chest`, arena.chest));
   arena.root.add(arena.gate.mesh);
@@ -412,6 +528,7 @@ function makeArena(
     portals,
     lanes,
   };
+  addArenaDecor(root, world, floor, platforms, arena.bounds);
   addArenaMarkers(arena);
   return arena;
 }
@@ -437,12 +554,12 @@ function buildWorldOne(floor: number, rng: Rng): Arena {
 
 function buildWorldTwo(floor: number, rng: Rng): Arena {
   const platforms: ArenaPlatform[] = [];
-  platforms.push(createPlatform(2, 'w2_arrival_balcony', { x: -4.8, y: 0, w: 4.7, h: 0.55 }, 'void'));
-  platforms.push(createPlatform(2, 'w2_right_door_walk', { x: 1.1, y: 1.75, w: 4.2, h: 0.5 }, 'void'));
-  platforms.push(createPlatform(2, 'w2_left_door_walk', { x: -5.2, y: 3.65, w: 4.6, h: 0.5 }, 'void'));
-  platforms.push(createPlatform(2, 'w2_orb_lane_mid', { x: -1.75 + (rng() - 0.5) * 0.35, y: 5.55, w: 4.4, h: 0.48 }, 'void'));
-  platforms.push(createPlatform(2, 'w2_socket_gallery', { x: 1.1, y: 7.6, w: 4.9, h: 0.52 }, 'void'));
-  if (floor >= 4) platforms.push(createPlatform(2, 'w2_boss_antechamber', { x: -5.6, y: 9.5, w: 5.2, h: 0.5 }, 'void'));
+  platforms.push(createPlatform(2, 'w2_arrival_balcony', { x: -4.8, y: 0, w: 4.55 + rng() * 0.35, h: 0.55 }, 'void'));
+  platforms.push(createPlatform(2, 'w2_right_door_walk', { x: 1.1, y: 1.75, w: 4.05 + rng() * 0.4, h: 0.5 }, 'void'));
+  platforms.push(createPlatform(2, 'w2_left_door_walk', { x: -5.2, y: 3.65, w: 4.4 + rng() * 0.45, h: 0.5 }, 'void'));
+  platforms.push(createPlatform(2, 'w2_orb_lane_mid', { x: -1.75 + (rng() - 0.5) * 0.35, y: 5.55, w: 4.2 + rng() * 0.45, h: 0.48 }, 'void'));
+  platforms.push(createPlatform(2, 'w2_socket_gallery', { x: 1.1, y: 7.6, w: 4.7 + rng() * 0.45, h: 0.52 }, 'void'));
+  if (floor >= 4) platforms.push(createPlatform(2, 'w2_boss_antechamber', { x: -5.6, y: 9.5, w: 5.0 + rng() * 0.45, h: 0.5 }, 'void'));
 
   const chargeStations = [{ x: platforms[1]!.aabb.x + 0.75, y: platforms[1]!.topY }];
   const sockets = [{ x: platforms[4]!.aabb.x + platforms[4]!.aabb.w - 0.7, y: platforms[4]!.topY }];

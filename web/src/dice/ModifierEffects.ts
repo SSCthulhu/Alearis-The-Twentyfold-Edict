@@ -4,6 +4,7 @@ import { MODIFIER_BY_ID, type ModifierDef, type ModifierEffectId } from './Modif
 
 export interface CombatMods {
   enemyHpMult: number;
+  enemyDamageTakenMult: number;
   enemyProjectileSpeedMult: number;
   enemyDamageMult: number;
   enemySpawnRateMult: number;
@@ -34,6 +35,7 @@ export interface ModifierChosenPayload {
 export function baseCombatMods(): CombatMods {
   return {
     enemyHpMult: 1,
+    enemyDamageTakenMult: 1,
     enemyProjectileSpeedMult: 1,
     enemyDamageMult: 1,
     enemySpawnRateMult: 1,

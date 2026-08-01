@@ -96,6 +96,7 @@ export class PlayerCombat {
   private comboGrace = 0;
   private ultimateRemaining = 0;
   private defendRemaining = 0;
+  private critChanceBonus = 0;
   damageMult = 1;
   cooldownRecoveryMult = 1;
 
@@ -120,6 +121,10 @@ export class PlayerCombat {
 
   setRng(rng: () => number): void {
     this.rng = rng;
+  }
+
+  setCritChanceBonus(bonus: number): void {
+    this.critChanceBonus = THREE.MathUtils.clamp(bonus, 0, 0.85);
   }
 
   update(dt: number): void {
@@ -233,7 +238,7 @@ export class PlayerCombat {
     knockback: number,
     duration: number,
   ): PlayerCombatEvent {
-    const crit = this.rng() < this.stats.critChance;
+    const crit = this.rng() < THREE.MathUtils.clamp(this.stats.critChance + this.critChanceBonus, 0, 0.85);
     const damage = baseDamage * this.damageMult * (crit ? this.stats.critMult : 1);
     return this.createUtilityEvent(kind, position, facing, damage, range, height, knockback, duration, crit);
   }

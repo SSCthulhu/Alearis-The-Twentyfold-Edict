@@ -88,8 +88,8 @@ interface DefaultPose {
 
 const PLAYER_DEFAULTS: Record<PlayerFigureClassId, RigOptions> = {
   knight: {
-    scale: 1,
-    stocky: 1.08,
+    scale: 1.24,
+    stocky: 1.2,
     headScale: 1,
     weapon: 'sword',
     skeleton: false,
@@ -99,8 +99,8 @@ const PLAYER_DEFAULTS: Record<PlayerFigureClassId, RigOptions> = {
     shoulderPads: true,
   },
   rogue: {
-    scale: 0.95,
-    stocky: 0.92,
+    scale: 1.18,
+    stocky: 1.02,
     headScale: 0.95,
     weapon: 'daggers',
     skeleton: false,
@@ -110,8 +110,8 @@ const PLAYER_DEFAULTS: Record<PlayerFigureClassId, RigOptions> = {
     shoulderPads: false,
   },
   mage: {
-    scale: 0.98,
-    stocky: 0.96,
+    scale: 1.2,
+    stocky: 1.04,
     headScale: 1,
     weapon: 'staff',
     skeleton: false,
@@ -124,8 +124,8 @@ const PLAYER_DEFAULTS: Record<PlayerFigureClassId, RigOptions> = {
 
 const ENEMY_DEFAULTS: Record<EnemyFigureKind, RigOptions> = {
   meleeKnightAdd: {
-    scale: 1.02,
-    stocky: 1.08,
+    scale: 1.2,
+    stocky: 1.18,
     headScale: 0.95,
     weapon: 'sword',
     skeleton: false,
@@ -135,8 +135,8 @@ const ENEMY_DEFAULTS: Record<EnemyFigureKind, RigOptions> = {
     shoulderPads: true,
   },
   necromancer: {
-    scale: 1.02,
-    stocky: 0.9,
+    scale: 1.18,
+    stocky: 1,
     headScale: 1.05,
     weapon: 'boneStaff',
     skeleton: false,
@@ -146,8 +146,8 @@ const ENEMY_DEFAULTS: Record<EnemyFigureKind, RigOptions> = {
     shoulderPads: false,
   },
   skeletonMage: {
-    scale: 0.94,
-    stocky: 0.82,
+    scale: 1.12,
+    stocky: 0.94,
     headScale: 1,
     weapon: 'boneStaff',
     skeleton: true,
@@ -157,8 +157,8 @@ const ENEMY_DEFAULTS: Record<EnemyFigureKind, RigOptions> = {
     shoulderPads: false,
   },
   rogueSkeleton: {
-    scale: 0.92,
-    stocky: 0.78,
+    scale: 1.1,
+    stocky: 0.9,
     headScale: 0.95,
     weapon: 'bow',
     skeleton: true,
@@ -168,8 +168,8 @@ const ENEMY_DEFAULTS: Record<EnemyFigureKind, RigOptions> = {
     shoulderPads: false,
   },
   skeletonGolem: {
-    scale: 1.34,
-    stocky: 1.22,
+    scale: 1.5,
+    stocky: 1.32,
     headScale: 1.12,
     weapon: 'club',
     skeleton: true,
@@ -179,8 +179,8 @@ const ENEMY_DEFAULTS: Record<EnemyFigureKind, RigOptions> = {
     shoulderPads: true,
   },
   minionSkeleton: {
-    scale: 0.82,
-    stocky: 0.76,
+    scale: 1.0,
+    stocky: 0.9,
     headScale: 0.9,
     weapon: 'claws',
     skeleton: true,
@@ -192,15 +192,113 @@ const ENEMY_DEFAULTS: Record<EnemyFigureKind, RigOptions> = {
 };
 
 const BASE_COLORS: Required<FigureColors> = {
-  skin: '#d8a06a',
-  cloth: '#31405c',
-  armor: '#b7c0c8',
-  accent: '#f0c65a',
-  bone: '#d7ccb2',
-  weapon: '#d7dce0',
-  magic: '#70e0ff',
+  skin: '#f0b47a',
+  cloth: '#4a5f88',
+  armor: '#d8e0e6',
+  accent: '#ffd766',
+  bone: '#efe2c4',
+  weapon: '#f0f5f8',
+  magic: '#8ef2ff',
   ink: '#17131c',
-  rim: '#ffe9a8',
+  rim: '#fff0b8',
+};
+
+const PLAYER_COLORS: Record<PlayerFigureClassId, FigureColors> = {
+  knight: {
+    skin: '#f0b980',
+    cloth: '#efe7d4',
+    armor: '#f5e4a8',
+    accent: '#ffd45f',
+    weapon: '#f6fbff',
+    magic: '#fff0a8',
+    ink: '#241812',
+    rim: '#fff3ba',
+  },
+  rogue: {
+    skin: '#e0a06d',
+    cloth: '#20333a',
+    armor: '#2cc7b8',
+    accent: '#80f0df',
+    weapon: '#e8fbff',
+    magic: '#68ffe0',
+    ink: '#10191b',
+    rim: '#c8fff4',
+  },
+  mage: {
+    skin: '#efb884',
+    cloth: '#4f347c',
+    armor: '#d4c7ff',
+    accent: '#ffe080',
+    weapon: '#f1e8c8',
+    magic: '#88f4ff',
+    ink: '#181026',
+    rim: '#f5e8ff',
+  },
+};
+
+const ENEMY_COLORS: Record<EnemyFigureKind, FigureColors> = {
+  meleeKnightAdd: {
+    skin: '#efb783',
+    cloth: '#4b2130',
+    armor: '#e4d6ba',
+    accent: '#d94054',
+    bone: '#f0e4c8',
+    weapon: '#f3f0dc',
+    magic: '#ff5b72',
+    ink: '#1a1013',
+    rim: '#ffd0a8',
+  },
+  necromancer: {
+    skin: '#d88a96',
+    cloth: '#4c1534',
+    armor: '#8c3854',
+    accent: '#ff3f62',
+    bone: '#efe0bf',
+    weapon: '#f0dfba',
+    magic: '#ff5a7c',
+    ink: '#140812',
+    rim: '#ffd0d8',
+  },
+  skeletonMage: {
+    cloth: '#304d6f',
+    bone: '#efe3c7',
+    armor: '#f0e3c6',
+    accent: '#ff5f48',
+    weapon: '#f1ddb8',
+    magic: '#ff9b55',
+    ink: '#15141a',
+    rim: '#ffe0bc',
+  },
+  rogueSkeleton: {
+    cloth: '#263846',
+    bone: '#f0e6cf',
+    armor: '#dbe8e8',
+    accent: '#2fd0c8',
+    weapon: '#f0fbff',
+    magic: '#b8fff5',
+    ink: '#101820',
+    rim: '#d8fff5',
+  },
+  skeletonGolem: {
+    cloth: '#5a4a37',
+    bone: '#efe0bd',
+    armor: '#c1ab81',
+    accent: '#d63d3d',
+    weapon: '#c8b58c',
+    magic: '#ff6b58',
+    ink: '#17100b',
+    rim: '#ffe0a8',
+  },
+  minionSkeleton: {
+    cloth: '#40394a',
+    bone: '#f0e5cb',
+    armor: '#eee0c0',
+    accent: '#cf3547',
+    weapon: '#ecdfc2',
+    magic: '#ff6a78',
+    ink: '#15141a',
+    rim: '#ffe5c0',
+  },
 };
 
 function mergeColors(colors: FigureColors): Required<FigureColors> {
@@ -214,7 +312,7 @@ function makeMaterial(color: THREE.ColorRepresentation, rim: THREE.ColorRepresen
     fillColor: '#506ea0',
     specularBand: 0.86,
     specularStrength: 0.22,
-    ambient: 0.42,
+    ambient: 0.52,
   });
 }
 
@@ -315,17 +413,17 @@ function buildWeapon(
   const magicMat = makeMaterial(colors.magic, colors.rim);
 
   if (options.weapon === 'sword') {
-    const blade = makeBox(new THREE.Vector3(0.1 * scale, 0.78 * scale, 0.06 * scale), weaponMat);
+    const blade = makeBox(new THREE.Vector3(0.13 * scale, 0.88 * scale, 0.08 * scale), weaponMat);
     blade.name = 'sword_blade';
     blade.position.y = -0.46 * scale;
     addOutlinedMesh(weaponRoot, blade, colors.ink, 0.014 * scale, meshes);
-    const guard = makeBox(new THREE.Vector3(0.36 * scale, 0.08 * scale, 0.08 * scale), accentMat);
+    const guard = makeBox(new THREE.Vector3(0.46 * scale, 0.1 * scale, 0.1 * scale), accentMat);
     guard.name = 'sword_guard';
     guard.position.y = -0.08 * scale;
     addOutlinedMesh(weaponRoot, guard, colors.ink, 0.012 * scale, meshes);
   } else if (options.weapon === 'daggers') {
     for (const side of [-1, 1]) {
-      const dagger = makeBox(new THREE.Vector3(0.06 * scale, 0.38 * scale, 0.04 * scale), weaponMat);
+      const dagger = makeBox(new THREE.Vector3(0.08 * scale, 0.44 * scale, 0.06 * scale), weaponMat);
       dagger.name = side < 0 ? 'left_dagger' : 'right_dagger';
       dagger.position.set(side * 0.07 * scale, -0.28 * scale, side * 0.03 * scale);
       dagger.rotation.z = side * 0.3;
@@ -333,21 +431,21 @@ function buildWeapon(
     }
   } else if (options.weapon === 'staff' || options.weapon === 'boneStaff') {
     const staffMat = options.weapon === 'boneStaff' ? boneMat : weaponMat;
-    const shaft = makeCapsule(0.035 * scale, 1.25 * scale, staffMat, 8);
+    const shaft = makeCapsule(0.048 * scale, 1.34 * scale, staffMat, 8);
     shaft.name = 'staff_shaft';
     shaft.position.y = -0.52 * scale;
     addOutlinedMesh(weaponRoot, shaft, colors.ink, 0.012 * scale, meshes);
-    const orb = makeSphere(0.14 * scale, magicMat, 12);
+    const orb = makeSphere(0.18 * scale, magicMat, 12);
     orb.name = 'staff_focus';
     orb.position.y = 0.18 * scale;
     addOutlinedMesh(weaponRoot, orb, colors.ink, 0.014 * scale, meshes);
   } else if (options.weapon === 'bow') {
-    const bow = new THREE.Mesh(new THREE.TorusGeometry(0.32 * scale, 0.025 * scale, 6, 18, Math.PI * 1.35), weaponMat);
+    const bow = new THREE.Mesh(new THREE.TorusGeometry(0.38 * scale, 0.034 * scale, 6, 18, Math.PI * 1.35), weaponMat);
     bow.name = 'bow_arc';
     bow.rotation.z = Math.PI * 0.5;
     bow.position.y = -0.3 * scale;
     addOutlinedMesh(weaponRoot, bow, colors.ink, 0.012 * scale, meshes);
-    const string = makeBox(new THREE.Vector3(0.025 * scale, 0.62 * scale, 0.025 * scale), accentMat);
+    const string = makeBox(new THREE.Vector3(0.03 * scale, 0.72 * scale, 0.03 * scale), accentMat);
     string.name = 'bow_string_block';
     string.position.y = -0.3 * scale;
     addOutlinedMesh(weaponRoot, string, colors.ink, 0.008 * scale, meshes);
@@ -359,7 +457,7 @@ function buildWeapon(
     club.scale.z = 1.2;
     addOutlinedMesh(weaponRoot, club, colors.ink, 0.02 * scale, meshes);
   } else {
-    const claw = makeBox(new THREE.Vector3(0.08 * scale, 0.32 * scale, 0.05 * scale), weaponMat);
+    const claw = makeBox(new THREE.Vector3(0.1 * scale, 0.38 * scale, 0.07 * scale), weaponMat);
     claw.name = 'bone_claw';
     claw.position.y = -0.22 * scale;
     claw.rotation.z = -0.45;
@@ -481,7 +579,7 @@ function buildFigure(options: RigOptions, colorsInput: FigureColors, label: stri
   hips.position.y = 0.82 * scale;
   body.add(hips);
   const hipMesh = makeBox(
-    new THREE.Vector3(0.38 * options.stocky * scale, 0.24 * scale, 0.34 * scale),
+    new THREE.Vector3(0.46 * options.stocky * scale, 0.28 * scale, 0.42 * scale),
     options.skeleton ? armorMat : clothMat,
   );
   hipMesh.name = 'hips_block';
@@ -492,7 +590,7 @@ function buildFigure(options: RigOptions, colorsInput: FigureColors, label: stri
   torso.position.y = 1.22 * scale;
   body.add(torso);
   const torsoMesh = makeBox(
-    new THREE.Vector3(0.55 * options.stocky * scale, 0.68 * scale, 0.36 * scale),
+    new THREE.Vector3(0.66 * options.stocky * scale, 0.76 * scale, 0.46 * scale),
     armorMat,
   );
   torsoMesh.name = 'torso_block';
@@ -518,18 +616,18 @@ function buildFigure(options: RigOptions, colorsInput: FigureColors, label: stri
     addOutlinedMesh(head, hood, colors.ink, 0.018 * scale, partsMeshes);
   }
 
-  const leftArm = makeLimb(body, 'left_upper_arm', 0.075 * scale, 0.44 * scale, armorMat, colors.ink, partsMeshes);
-  const rightArm = makeLimb(body, 'right_upper_arm', 0.075 * scale, 0.44 * scale, armorMat, colors.ink, partsMeshes);
-  leftArm.position.set(0, 1.46 * scale, -0.27 * scale);
-  rightArm.position.set(0, 1.46 * scale, 0.27 * scale);
+  const leftArm = makeLimb(body, 'left_upper_arm', 0.1 * scale, 0.48 * scale, armorMat, colors.ink, partsMeshes);
+  const rightArm = makeLimb(body, 'right_upper_arm', 0.1 * scale, 0.48 * scale, armorMat, colors.ink, partsMeshes);
+  leftArm.position.set(0, 1.48 * scale, -0.34 * scale);
+  rightArm.position.set(0, 1.48 * scale, 0.34 * scale);
   leftArm.rotation.z = 0.32;
   rightArm.rotation.z = -0.44;
 
   const leftForearm = makeLimb(
     leftArm,
     'left_forearm',
-    0.065 * scale,
-    0.38 * scale,
+    0.086 * scale,
+    0.42 * scale,
     skinMat,
     colors.ink,
     partsMeshes,
@@ -537,14 +635,14 @@ function buildFigure(options: RigOptions, colorsInput: FigureColors, label: stri
   const rightForearm = makeLimb(
     rightArm,
     'right_forearm',
-    0.065 * scale,
-    0.38 * scale,
+    0.086 * scale,
+    0.42 * scale,
     skinMat,
     colors.ink,
     partsMeshes,
   );
-  leftForearm.position.y = -0.43 * scale;
-  rightForearm.position.y = -0.43 * scale;
+  leftForearm.position.y = -0.47 * scale;
+  rightForearm.position.y = -0.47 * scale;
   leftForearm.rotation.z = -0.28;
   rightForearm.rotation.z = -0.15;
 
@@ -553,25 +651,25 @@ function buildFigure(options: RigOptions, colorsInput: FigureColors, label: stri
     addShoulderPad(rightArm, 1, colors, scale, partsMeshes);
   }
 
-  const leftLeg = makeLimb(body, 'left_thigh', 0.09 * scale, 0.5 * scale, clothMat, colors.ink, partsMeshes);
-  const rightLeg = makeLimb(body, 'right_thigh', 0.09 * scale, 0.5 * scale, clothMat, colors.ink, partsMeshes);
-  leftLeg.position.set(0, 0.72 * scale, -0.13 * scale);
-  rightLeg.position.set(0, 0.72 * scale, 0.13 * scale);
+  const leftLeg = makeLimb(body, 'left_thigh', 0.12 * scale, 0.54 * scale, clothMat, colors.ink, partsMeshes);
+  const rightLeg = makeLimb(body, 'right_thigh', 0.12 * scale, 0.54 * scale, clothMat, colors.ink, partsMeshes);
+  leftLeg.position.set(0, 0.74 * scale, -0.17 * scale);
+  rightLeg.position.set(0, 0.74 * scale, 0.17 * scale);
   leftLeg.rotation.z = 0.08;
   rightLeg.rotation.z = -0.08;
 
-  const leftShin = makeLimb(leftLeg, 'left_shin', 0.075 * scale, 0.48 * scale, armorMat, colors.ink, partsMeshes);
-  const rightShin = makeLimb(rightLeg, 'right_shin', 0.075 * scale, 0.48 * scale, armorMat, colors.ink, partsMeshes);
-  leftShin.position.y = -0.48 * scale;
-  rightShin.position.y = -0.48 * scale;
+  const leftShin = makeLimb(leftLeg, 'left_shin', 0.098 * scale, 0.5 * scale, armorMat, colors.ink, partsMeshes);
+  const rightShin = makeLimb(rightLeg, 'right_shin', 0.098 * scale, 0.5 * scale, armorMat, colors.ink, partsMeshes);
+  leftShin.position.y = -0.52 * scale;
+  rightShin.position.y = -0.52 * scale;
   leftShin.rotation.z = -0.12;
   rightShin.rotation.z = 0.12;
 
   const bootMat = options.skeleton ? skinMat : accentMat;
   for (const shin of [leftShin, rightShin]) {
-    const boot = makeBox(new THREE.Vector3(0.26 * scale, 0.12 * scale, 0.13 * scale), bootMat);
+    const boot = makeBox(new THREE.Vector3(0.34 * scale, 0.15 * scale, 0.18 * scale), bootMat);
     boot.name = `${shin.name}_foot`;
-    boot.position.set(0.08 * scale, -0.5 * scale, 0);
+    boot.position.set(0.11 * scale, -0.52 * scale, 0);
     addOutlinedMesh(shin, boot, colors.ink, 0.012 * scale, partsMeshes);
   }
 
@@ -587,7 +685,7 @@ function buildFigure(options: RigOptions, colorsInput: FigureColors, label: stri
   offhand.position.set(0.08 * scale, -0.36 * scale, -0.01 * scale);
   leftForearm.add(offhand);
   if (options.weapon === 'sword' && !options.skeleton) {
-    const shield = makeBox(new THREE.Vector3(0.12 * scale, 0.36 * scale, 0.34 * scale), accentMat);
+    const shield = makeBox(new THREE.Vector3(0.16 * scale, 0.48 * scale, 0.44 * scale), accentMat);
     shield.name = 'kite_shield';
     shield.rotation.z = 0.1;
     addOutlinedMesh(offhand, shield, colors.ink, 0.018 * scale, partsMeshes);
@@ -656,9 +754,9 @@ function buildFigure(options: RigOptions, colorsInput: FigureColors, label: stri
 }
 
 export function buildPlayerFigure(classId: PlayerFigureClassId, colors: FigureColors = {}): ProceduralFigure {
-  return buildFigure(PLAYER_DEFAULTS[classId], colors, `player_${classId}`);
+  return buildFigure(PLAYER_DEFAULTS[classId], { ...PLAYER_COLORS[classId], ...colors }, `player_${classId}`);
 }
 
 export function buildEnemyFigure(kind: EnemyFigureKind, colors: FigureColors = {}): ProceduralFigure {
-  return buildFigure(ENEMY_DEFAULTS[kind], colors, `enemy_${kind}`);
+  return buildFigure(ENEMY_DEFAULTS[kind], { ...ENEMY_COLORS[kind], ...colors }, `enemy_${kind}`);
 }

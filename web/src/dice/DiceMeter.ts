@@ -159,7 +159,7 @@ export function chargeDiceMeter(
   if (amount <= 0) return;
 
   const before = run.diceMeter;
-  run.chargeMeter(amount);
+  run.chargeMeter(amount * meterChargeMultiplier(run));
 
   if (before < METER_FULL && run.diceMeter >= METER_FULL) {
     bus.emit<DiceMeterFullPayload>(Events.DICE_METER_FULL, {
@@ -168,4 +168,13 @@ export function chargeDiceMeter(
       meter: run.diceMeter,
     });
   }
+}
+
+function meterChargeMultiplier(run: RunState): number {
+  let bonus = 0;
+  for (const relic of run.relics) {
+    const value = relic.params.meterChargeMultBonus;
+    if (value !== undefined && Number.isFinite(value)) bonus += value;
+  }
+  return Math.max(0.1, 1 + bonus);
 }

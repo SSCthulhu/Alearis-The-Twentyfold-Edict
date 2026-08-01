@@ -66,7 +66,7 @@ export class MainMenu {
 
     const footer = document.createElement('div');
     footer.className = 'alearis-main-menu__footer';
-    footer.textContent = options.versionText ?? 'No external assets - procedural audio and glyph UI';
+    footer.textContent = options.versionText ?? 'A run of living dice, frost courts, and ascendant oaths';
 
     panel.append(sigil, copy, actions, footer);
     return panel;
@@ -80,7 +80,7 @@ export class MainMenu {
     style.id = id;
     style.textContent = `
       .alearis-main-menu__panel {
-        width: min(1180px, 92vw);
+        width: min(1260px, 94vw);
         min-height: 640px;
         padding: clamp(34px, 4vw, 74px);
         display: grid;
@@ -97,8 +97,10 @@ export class MainMenu {
       }
 
       .alearis-main-menu__copy .alearis-title {
-        font-size: clamp(78px, 9vw, 170px);
+        font-size: clamp(72px, 8vw, 150px);
         letter-spacing: 0.04em;
+        line-height: 0.92;
+        overflow: visible;
       }
 
       .alearis-main-menu__actions {

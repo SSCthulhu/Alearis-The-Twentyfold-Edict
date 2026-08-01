@@ -11,14 +11,24 @@ export interface FinalBossRoll {
   bossId: FinalBossId;
 }
 
+export interface VictoryRewardOptions {
+  bonus?: number;
+  lowRollFloor?: number;
+}
+
 export function relicBandForVictoryRoll(roll: number): RelicBand {
   if (roll <= 8) return 'SURVIVAL';
   if (roll <= 14) return 'CORE';
   return 'GREED_DAMAGE';
 }
 
-export function rollVictoryReward(run: RunState): VictoryRewardRoll {
-  const roll = run.roll('victory_reward');
+export function rollVictoryReward(run: RunState, options: VictoryRewardOptions = {}): VictoryRewardRoll {
+  const rawRoll = run.roll('victory_reward');
+  const roll = Math.max(
+    options.lowRollFloor ?? 0,
+    Math.min(20, rawRoll + (options.bonus ?? 0)),
+  );
+  run.lastRoll = roll;
   return {
     roll,
     band: relicBandForVictoryRoll(roll),

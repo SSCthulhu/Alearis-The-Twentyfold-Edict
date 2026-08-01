@@ -3,7 +3,8 @@ export type PlayerBuffId =
   | 'rogue_evasion'
   | 'mage_locked_focus'
   | 'perfect_dodge'
-  | 'ultimate_empower';
+  | 'ultimate_empower'
+  | 'council_barrier';
 
 export interface PlayerBuff {
   id: PlayerBuffId;

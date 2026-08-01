@@ -278,10 +278,12 @@ export class ProjectilePoolAdapter implements MinimalProjectileSystem {
   readonly group: THREE.Group;
 
   private readonly pool: ExternalProjectilePool;
+  private readonly speedMultiplier: () => number;
   private readonly handles: ExternalProjectileHandle[] = [];
 
-  constructor(pool: ExternalProjectilePool) {
+  constructor(pool: ExternalProjectilePool, speedMultiplier: () => number = () => 1) {
     this.pool = pool;
+    this.speedMultiplier = speedMultiplier;
     this.group = pool.root;
   }
 
@@ -292,7 +294,7 @@ export class ProjectilePoolAdapter implements MinimalProjectileSystem {
     const id = this.pool.spawn({
       origin: spawn.position.clone(),
       direction: normalizeDirection(spawn.direction),
-      speed: spawn.speed,
+      speed: spawn.speed * this.speedMultiplier(),
       lifetime: spawn.lifeSec,
       payload: {
         damage: spawn.damage,

@@ -3,7 +3,7 @@ import { buildPlayerFigure, type ProceduralFigure } from '../actors/ProceduralFi
 import { bus, Events } from '../core/EventBus';
 import type { RunState } from '../core/RunState';
 import type { AABB, DamageInfo, Vec2 } from '../core/types';
-import { getModifierCombatMods } from '../dice/ModifierEffects';
+import { baseCombatMods, getModifierCombatMods, type CombatMods } from '../dice/ModifierEffects';
 import type { Arena, ArenaPlatform } from '../world/ArenaBuilder';
 import type { InputSnapshot } from './Input';
 import { PlayerBuffs } from './PlayerBuffs';
@@ -39,8 +39,16 @@ export interface PlayerFrame {
   grounded: boolean;
   facing: number;
   dashCharges: number;
+  dashStarted: boolean;
   combatEvents: PlayerCombatEvent[];
   debuffTicks: PlayerDebuffTick[];
+}
+
+export interface PlayerRelicModifiers {
+  dashChargesBonus: number;
+  moveSpeedMult: number;
+  perfectWindowBonus: number;
+  critChanceBonus: number;
 }
 
 interface DashState {
@@ -63,10 +71,10 @@ const BASE_STATS: PlayerControllerStats = {
   coyoteTime: 0.11,
   jumpBuffer: 0.12,
   dashSpeed: 13.5,
-  dashDuration: 0.18,
-  dashIFrameDuration: 0.3,
-  perfectDodgeStart: 0.14,
-  perfectDodgeEnd: 0.25,
+  dashDuration: 0.28,
+  dashIFrameDuration: 0.28,
+  perfectDodgeStart: 0.08,
+  perfectDodgeEnd: 0.26,
   dashRechargeTime: 10,
   maxDashCharges: 2,
 };
@@ -95,6 +103,11 @@ export class PlayerController {
   private moveSpeedMult = 1;
   private gravityMult = 1;
   private dashRecoveryMult = 1;
+  private modifierMods: CombatMods = baseCombatMods();
+  private councilMods: CombatMods = baseCombatMods();
+  private relicMoveSpeedMult = 1;
+  private relicPerfectWindowBonus = 0;
+  private relicDashChargesBonus = 0;
   private readonly rng: () => number;
 
   constructor(run: RunState, spawn: Vec2, stats: Partial<PlayerControllerStats> = {}) {
@@ -145,13 +158,30 @@ export class PlayerController {
   }
 
   applyRunModifiers(): void {
-    const mods = getModifierCombatMods(this.run);
-    this.moveSpeedMult = mods.playerMoveSpeedMult;
-    this.gravityMult = mods.playerGravityMult;
-    this.damageTakenMult = mods.playerDamageTakenMult;
-    this.dashRecoveryMult = mods.playerDashRecoveryMult;
-    this.combat.damageMult = mods.playerDamageMult;
-    this.combat.cooldownRecoveryMult = mods.playerCooldownRecoveryMult;
+    this.modifierMods = getModifierCombatMods(this.run);
+    this.updateEffectiveModifiers();
+  }
+
+  setCouncilCombatMods(mods: CombatMods): void {
+    this.councilMods = mods;
+    this.updateEffectiveModifiers();
+  }
+
+  setRelicModifiers(mods: PlayerRelicModifiers): void {
+    const previousMaxCharges = this.stats.maxDashCharges;
+    this.relicDashChargesBonus = Math.max(0, Math.trunc(mods.dashChargesBonus));
+    this.relicMoveSpeedMult = Math.max(0.1, mods.moveSpeedMult);
+    this.relicPerfectWindowBonus = Math.max(0, mods.perfectWindowBonus);
+    this.stats.maxDashCharges = BASE_STATS.maxDashCharges + this.relicDashChargesBonus;
+    if (this.stats.maxDashCharges > previousMaxCharges) {
+      this.dashCharges = Math.min(this.stats.maxDashCharges, this.dashCharges + this.stats.maxDashCharges - previousMaxCharges);
+    } else {
+      this.dashCharges = Math.min(this.dashCharges, this.stats.maxDashCharges);
+    }
+    this.stats.perfectDodgeStart = Math.max(0.02, BASE_STATS.perfectDodgeStart - this.relicPerfectWindowBonus * 0.45);
+    this.stats.perfectDodgeEnd = Math.min(this.stats.dashIFrameDuration, BASE_STATS.perfectDodgeEnd + this.relicPerfectWindowBonus);
+    this.combat.setCritChanceBonus(mods.critChanceBonus);
+    this.updateEffectiveModifiers();
   }
 
   update(dt: number, input: InputSnapshot, arena: Arena): PlayerFrame {
@@ -162,9 +192,21 @@ export class PlayerController {
 
     if (this.health.alive) {
       this.bufferJump(dt, input);
-      this.handleDashInput(input);
+      const dashStarted = this.handleDashInput(input);
       this.updateMovement(dt, input, arena.platforms, arena.bounds);
       this.handleCombatInput(input, combatEvents);
+      this.updateFigure(dt);
+      this.syncRoot();
+      return {
+        position: this.position.clone(),
+        velocity: this.velocity.clone(),
+        grounded: this.grounded,
+        facing: this.facing,
+        dashCharges: this.dashCharges,
+        dashStarted,
+        combatEvents,
+        debuffTicks,
+      };
     }
 
     this.updateFigure(dt);
@@ -175,6 +217,7 @@ export class PlayerController {
       grounded: this.grounded,
       facing: this.facing,
       dashCharges: this.dashCharges,
+      dashStarted: false,
       combatEvents,
       debuffTicks,
     };
@@ -217,10 +260,11 @@ export class PlayerController {
     if (input.jumpPressed) this.jumpBufferTimer = this.stats.jumpBuffer;
   }
 
-  private handleDashInput(input: InputSnapshot): void {
-    if (!input.dashPressed || this.dashCharges <= 0) return;
+  private handleDashInput(input: InputSnapshot): boolean {
+    if (!input.dashPressed || this.dashCharges <= 0) return false;
     const direction = input.moveX !== 0 ? input.moveX : this.facing;
     this.startDash(direction);
+    return true;
   }
 
   private startDash(direction: number): void {
@@ -387,5 +431,14 @@ export class PlayerController {
 
   private syncRoot(): void {
     this.root.position.copy(this.position);
+  }
+
+  private updateEffectiveModifiers(): void {
+    this.moveSpeedMult = this.modifierMods.playerMoveSpeedMult * this.councilMods.playerMoveSpeedMult * this.relicMoveSpeedMult;
+    this.gravityMult = this.modifierMods.playerGravityMult * this.councilMods.playerGravityMult;
+    this.damageTakenMult = this.modifierMods.playerDamageTakenMult * this.councilMods.playerDamageTakenMult;
+    this.dashRecoveryMult = this.modifierMods.playerDashRecoveryMult * this.councilMods.playerDashRecoveryMult;
+    this.combat.damageMult = this.modifierMods.playerDamageMult * this.councilMods.playerDamageMult;
+    this.combat.cooldownRecoveryMult = this.modifierMods.playerCooldownRecoveryMult * this.councilMods.playerCooldownRecoveryMult;
   }
 }

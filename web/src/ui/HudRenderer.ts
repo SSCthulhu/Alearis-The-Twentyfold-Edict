@@ -130,6 +130,7 @@ export class HudRenderer {
   private readonly getState: () => HudState;
   private animationFrame: number | null = null;
   private state: HudState = DEFAULT_STATE;
+  private visible = true;
 
   constructor(options: HudRendererOptions = {}) {
     const canvas = options.canvas ?? document.querySelector<HTMLCanvasElement>('#hud-canvas');
@@ -152,6 +153,17 @@ export class HudRenderer {
     this.state = state;
   }
 
+  setVisible(visible: boolean): void {
+    if (this.visible === visible) return;
+    this.visible = visible;
+    this.canvas.style.visibility = visible ? 'visible' : 'hidden';
+    if (!visible) {
+      const width = this.canvas.clientWidth;
+      const height = this.canvas.clientHeight;
+      this.ctx.clearRect(0, 0, width, height);
+    }
+  }
+
   resize(): void {
     const parent = this.canvas.parentElement;
     const width = parent?.clientWidth ?? window.innerWidth;
@@ -162,9 +174,14 @@ export class HudRenderer {
 
   render(timestamp = performance.now()): void {
     this.resize();
-    const state = this.getState();
     const width = this.canvas.clientWidth;
     const height = this.canvas.clientHeight;
+    if (!this.visible) {
+      this.ctx.clearRect(0, 0, width, height);
+      return;
+    }
+
+    const state = this.getState();
     const scale = scaleForViewport(width, height);
     const offsetX = (width - HUD_BASE_WIDTH * scale) * 0.5;
     const offsetY = (height - HUD_BASE_HEIGHT * scale) * 0.5;
@@ -290,9 +307,10 @@ export class HudRenderer {
     const ctx = this.ctx;
     drawPanel(ctx, { x: 640, y: 290, w: 174, h: 154 }, { alpha: 0.72, chamfer: 22, title: 'DODGE' });
 
-    for (let i = 0; i < 2; i++) {
+    const count = Math.max(2, Math.min(3, charges.length));
+    for (let i = 0; i < count; i++) {
       const charge = charges[i] ?? { ready: false, remaining: 0, duration: 1 };
-      const x = 686 + i * 74;
+      const x = count > 2 ? 672 + i * 48 : 686 + i * 74;
       const y = 360;
       const ready = charge.ready;
       ctx.save();
