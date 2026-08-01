@@ -2,7 +2,7 @@ import * as THREE from 'three';
 import { AudioEngine } from './audio/AudioEngine';
 import { MusicBeds } from './audio/MusicBeds';
 import { Sfx, type SfxName } from './audio/Sfx';
-import { AssetPreloader } from './assets/KayKitLoader';
+import { AssetPreloader, disposeObject3D } from './assets/KayKitLoader';
 import { AscensionCharge } from './boss/AscensionCharge';
 import { BossController } from './boss/BossController';
 import {
@@ -689,9 +689,22 @@ export class Game {
     }
     this.bossVisual = null;
     this.boss = null;
-    if (this.ascension) this.worldRoot.remove(this.ascension.group);
+    if (this.ascension) {
+      this.worldRoot.remove(this.ascension.group);
+      // AscensionCharge owns its orb/station/socket geometry; release it or a
+      // full run leaks every boss floor's ascension meshes.
+      this.ascension.dispose();
+    }
     this.ascension = null;
-    if (this.arena) this.worldRoot.remove(this.arena.root);
+    if (this.arena) {
+      this.worldRoot.remove(this.arena.root);
+      // Arenas are rebuilt every floor from fresh geometry and materials. Cel
+      // ShaderMaterials keep the shared ramp/matcap/surface textures in their
+      // uniforms (not as direct material props), so disposing the tree frees
+      // per-floor geometry and material programs without touching those
+      // run-shared textures.
+      disposeObject3D(this.arena.root);
+    }
     this.arena = null;
     for (const snap of this.projectiles.snapshots()) {
       this.projectiles.deactivate(snap.id);

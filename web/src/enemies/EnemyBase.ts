@@ -199,7 +199,12 @@ export class EnemyBase {
   }
 
   takeDamage(packet: EnemyDamagePacket): EnemyDamageResult {
-    if (this.state === 'dead') return { applied: 0, killed: false, ignored: true, reason: 'dead' };
+    // A lethal hit leaves hp at 0 without flipping to 'dead' (see below), so an
+    // hp<=0 enemy is a corpse awaiting its update() to emit the death. Ignore
+    // further hits on it so a second attack this frame can't double-count.
+    if (this.state === 'dead' || this.hp <= 0) {
+      return { applied: 0, killed: false, ignored: true, reason: 'dead' };
+    }
 
     if (this.shouldIgnoreDamage(packet)) {
       return { applied: 0, killed: false, ignored: true, reason: 'ranged_immune_unless_close' };
@@ -214,7 +219,12 @@ export class EnemyBase {
     if (packet.knockback && packet.sourcePosition) this.applyKnockback(packet.sourcePosition, packet.knockback);
 
     if (this.hp <= 0) {
-      this.transitionTo('dead');
+      // Do NOT transition to 'dead' here. update() short-circuits on the 'dead'
+      // state before it can push to events.deaths, which is the only signal
+      // Game consumes for kill rewards, dice-meter charge and heal-on-kill.
+      // Leaving hp at 0 lets the next update() run enterDeath() and emit the
+      // death into the frame. Melee resolves before EncounterController.update
+      // (same-frame death); projectiles resolve after (next-frame death).
       return { applied: amount, killed: true, ignored: false };
     }
 
