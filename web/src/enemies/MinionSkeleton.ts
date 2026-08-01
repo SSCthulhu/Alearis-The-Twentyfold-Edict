@@ -9,7 +9,12 @@ export class MinionSkeleton extends EnemyBase {
   }
 
   protected override appendAttackEvents(ctx: EnemyAiContext, events: EnemyFrameEvents): void {
+    const before = events.melee.length;
     super.appendAttackEvents(ctx, events);
-    if (ctx.rng() < 0.28) this.statuses.apply({ id: 'bleed', duration: 1.2, sourceId: this.kind });
+    const latest = events.melee[events.melee.length - 1];
+    if (events.melee.length > before && latest && ctx.rng() < 0.28) {
+      latest.status = 'bleed';
+      latest.statusDuration = 2.2;
+    }
   }
 }

@@ -339,7 +339,7 @@ export class ProjectilePool {
   private integrate(projectile: ActiveProjectile, dt: number): void {
     if (projectile.mode === 'homing' && projectile.homingTarget) {
       const target = projectile.homingTarget();
-      const desired = target.sub(projectile.position);
+      const desired = target.clone().sub(projectile.position);
       if (desired.lengthSq() > 0.0001) {
         projectile.direction.lerp(desired.normalize(), THREE.MathUtils.clamp(projectile.turnRate * dt, 0, 1)).normalize();
         projectile.perpendicular.copy(perpendicular2D(projectile.direction));

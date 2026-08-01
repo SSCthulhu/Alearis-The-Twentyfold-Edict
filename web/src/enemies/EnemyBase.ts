@@ -1,7 +1,7 @@
 import * as THREE from 'three';
 import { buildEnemyFigure, type FigureColors, type ProceduralFigure } from '../actors/ProceduralFigure';
 import type { ProjectilePatternSpec } from '../combat/Projectiles';
-import { StatusEffectController } from '../combat/StatusEffects';
+import { StatusEffectController, type StatusEffectId } from '../combat/StatusEffects';
 import {
   DEFAULT_ENEMY_COLORS,
   getEnemyConfig,
@@ -32,6 +32,8 @@ export interface EnemyMeleeEvent {
   damage: number;
   knockback: number;
   telegraphTime: number;
+  status?: StatusEffectId;
+  statusDuration?: number;
 }
 
 export interface EnemyProjectileEvent {
