@@ -6,6 +6,12 @@ import type { AABB, DamageInfo, Vec2 } from '../core/types';
 import { baseCombatMods, getModifierCombatMods, type CombatMods } from '../dice/ModifierEffects';
 import type { Arena, ArenaPlatform } from '../world/ArenaBuilder';
 import type { InputSnapshot } from './Input';
+import {
+  DEFAULT_DOUBLE_JUMP_SPEED,
+  DEFAULT_GRAVITY,
+  DEFAULT_JUMP_SPEED,
+  MAX_SAFE_GRAVITY_MULTIPLIER,
+} from './JumpMath';
 import { PlayerBuffs } from './PlayerBuffs';
 import { PlayerCombat, type PlayerCombatEvent } from './PlayerCombat';
 import { PlayerDebuffs, type PlayerDebuffTick } from './PlayerDebuffs';
@@ -40,6 +46,8 @@ export interface PlayerFrame {
   facing: number;
   dashCharges: number;
   dashStarted: boolean;
+  jumped: boolean;
+  landed: boolean;
   combatEvents: PlayerCombatEvent[];
   debuffTicks: PlayerDebuffTick[];
 }
@@ -57,6 +65,14 @@ interface DashState {
   direction: number;
 }
 
+const FIXED_PHYSICS_STEP = 1 / 120;
+const MAX_PHYSICS_SUBSTEPS = 8;
+const DASH_AIR_GRAVITY_SCALE = 0.35;
+const JUMP_CUT_MULTIPLIER = 0.45;
+const JUMP_CUT_MIN_SPEED = 1;
+const GROUND_SNAP_DISTANCE = 0.1;
+const COLLISION_EPSILON = 0.0001;
+
 const BASE_STATS: PlayerControllerStats = {
   width: 0.66,
   height: 1.82,
@@ -64,12 +80,12 @@ const BASE_STATS: PlayerControllerStats = {
   sprintSpeed: 6.15,
   sprintWarmup: 0.55,
   airControl: 0.72,
-  jumpSpeed: 8.6,
-  doubleJumpSpeed: 8.0,
-  gravity: 25,
+  jumpSpeed: DEFAULT_JUMP_SPEED,
+  doubleJumpSpeed: DEFAULT_DOUBLE_JUMP_SPEED,
+  gravity: DEFAULT_GRAVITY,
   maxFallSpeed: 18,
-  coyoteTime: 0.11,
-  jumpBuffer: 0.12,
+  coyoteTime: 0.14,
+  jumpBuffer: 0.15,
   dashSpeed: 13.5,
   dashDuration: 0.28,
   dashIFrameDuration: 0.28,
@@ -109,6 +125,8 @@ export class PlayerController {
   private relicPerfectWindowBonus = 0;
   private relicDashChargesBonus = 0;
   private readonly rng: () => number;
+  private physicsAccumulator = 0;
+  private jumpWasHeld = false;
 
   constructor(run: RunState, spawn: Vec2, stats: Partial<PlayerControllerStats> = {}) {
     this.run = run;
@@ -154,6 +172,8 @@ export class PlayerController {
     this.coyoteTimer = 0;
     this.jumpBufferTimer = 0;
     this.jumpsUsed = 0;
+    this.physicsAccumulator = 0;
+    this.jumpWasHeld = false;
     this.syncRoot();
   }
 
@@ -191,9 +211,25 @@ export class PlayerController {
     this.updateDashRecharge(dt);
 
     if (this.health.alive) {
-      this.bufferJump(dt, input);
+      this.captureJumpInput(input);
       const dashStarted = this.handleDashInput(input);
-      this.updateMovement(dt, input, arena.platforms, arena.bounds);
+      let jumped = false;
+      let landed = false;
+      this.physicsAccumulator = Math.min(
+        this.physicsAccumulator + Math.max(0, dt),
+        FIXED_PHYSICS_STEP * MAX_PHYSICS_SUBSTEPS,
+      );
+      while (this.physicsAccumulator + COLLISION_EPSILON >= FIXED_PHYSICS_STEP) {
+        const movementFrame = this.updateMovement(
+          FIXED_PHYSICS_STEP,
+          input,
+          arena.platforms,
+          arena.bounds,
+        );
+        jumped = jumped || movementFrame.jumped;
+        landed = landed || movementFrame.landed;
+        this.physicsAccumulator -= FIXED_PHYSICS_STEP;
+      }
       this.handleCombatInput(input, combatEvents);
       this.updateFigure(dt);
       this.syncRoot();
@@ -204,6 +240,8 @@ export class PlayerController {
         facing: this.facing,
         dashCharges: this.dashCharges,
         dashStarted,
+        jumped,
+        landed,
         combatEvents,
         debuffTicks,
       };
@@ -218,6 +256,8 @@ export class PlayerController {
       facing: this.facing,
       dashCharges: this.dashCharges,
       dashStarted: false,
+      jumped: false,
+      landed: false,
       combatEvents,
       debuffTicks,
     };
@@ -255,9 +295,12 @@ export class PlayerController {
     return ticks;
   }
 
-  private bufferJump(dt: number, input: InputSnapshot): void {
-    this.jumpBufferTimer = Math.max(0, this.jumpBufferTimer - dt);
+  private captureJumpInput(input: InputSnapshot): void {
     if (input.jumpPressed) this.jumpBufferTimer = this.stats.jumpBuffer;
+    if (this.jumpWasHeld && !input.jump && this.velocity.y > JUMP_CUT_MIN_SPEED) {
+      this.velocity.y *= JUMP_CUT_MULTIPLIER;
+    }
+    this.jumpWasHeld = input.jump;
   }
 
   private handleDashInput(input: InputSnapshot): boolean {
@@ -273,12 +316,11 @@ export class PlayerController {
     const rollMult = this.combat.stats.rollTravelMult;
     this.dashState = {
       elapsed: 0,
-      duration: this.stats.dashDuration * rollMult,
+      duration: this.stats.dashDuration,
       direction: direction >= 0 ? 1 : -1,
     };
     this.facing = this.dashState.direction;
     this.velocity.x = this.stats.dashSpeed * rollMult * this.dashState.direction;
-    this.velocity.y = Math.max(this.velocity.y, 0);
   }
 
   private updateDashRecharge(dt: number): void {
@@ -293,7 +335,12 @@ export class PlayerController {
     }
   }
 
-  private updateMovement(dt: number, input: InputSnapshot, platforms: readonly ArenaPlatform[], bounds: AABB): void {
+  private updateMovement(
+    dt: number,
+    input: InputSnapshot,
+    platforms: readonly ArenaPlatform[],
+    bounds: AABB,
+  ): { jumped: boolean; landed: boolean } {
     if (input.moveX !== 0) {
       this.facing = input.moveX > 0 ? 1 : -1;
       this.moveHeldTimer += dt;
@@ -302,12 +349,14 @@ export class PlayerController {
     }
 
     this.coyoteTimer = this.grounded ? this.stats.coyoteTime : Math.max(0, this.coyoteTimer - dt);
-    if (this.jumpBufferTimer > 0) this.consumeBufferedJump();
+    const jumped = this.jumpBufferTimer > 0 && this.consumeBufferedJump();
 
     this.updateHorizontalVelocity(dt, input);
     this.updateVerticalVelocity(dt);
-    this.moveAndCollide(dt, platforms);
+    const landed = this.moveAndCollide(dt, platforms);
     this.clampToBounds(bounds);
+    this.jumpBufferTimer = Math.max(0, this.jumpBufferTimer - dt);
+    return { jumped, landed };
   }
 
   private updateHorizontalVelocity(dt: number, input: InputSnapshot): void {
@@ -326,54 +375,68 @@ export class PlayerController {
   }
 
   private updateVerticalVelocity(dt: number): void {
-    if (this.dashState) return;
-    this.velocity.y -= this.stats.gravity * this.gravityMult * dt;
+    const gravityScale = this.dashState
+      ? (this.grounded ? 0 : DASH_AIR_GRAVITY_SCALE)
+      : 1;
+    this.velocity.y -= this.stats.gravity * this.gravityMult * gravityScale * dt;
     this.velocity.y = Math.max(this.velocity.y, -this.stats.maxFallSpeed);
   }
 
-  private consumeBufferedJump(): void {
+  private consumeBufferedJump(): boolean {
     const canGroundJump = this.grounded || this.coyoteTimer > 0;
     const canDoubleJump = !canGroundJump && this.jumpsUsed < 1;
-    if (!canGroundJump && !canDoubleJump) return;
+    if (!canGroundJump && !canDoubleJump) return false;
 
     this.velocity.y = canGroundJump ? this.stats.jumpSpeed : this.stats.doubleJumpSpeed;
     this.grounded = false;
     this.coyoteTimer = 0;
     this.jumpBufferTimer = 0;
     this.jumpsUsed = canGroundJump ? 0 : this.jumpsUsed + 1;
+    return true;
   }
 
-  private moveAndCollide(dt: number, platforms: readonly ArenaPlatform[]): void {
+  private moveAndCollide(dt: number, platforms: readonly ArenaPlatform[]): boolean {
+    const wasGrounded = this.grounded;
     this.grounded = false;
     this.position.x += this.velocity.x * dt;
-    this.resolveAxis(platforms, 'x');
+    const previousY = this.position.y;
     this.position.y += this.velocity.y * dt;
-    this.resolveAxis(platforms, 'y');
+    const landingTop = this.findLandingTop(previousY, platforms);
+    if (landingTop === null) return false;
+
+    this.position.y = landingTop;
+    this.velocity.y = 0;
+    this.grounded = true;
+    this.jumpsUsed = 0;
+    return !wasGrounded;
   }
 
-  private resolveAxis(platforms: readonly ArenaPlatform[], axis: 'x' | 'y'): void {
+  /**
+   * Platforms are one-way. A descending foot sweep catches thin surfaces,
+   * while rising players pass through undersides and edges without snagging.
+   */
+  private findLandingTop(previousY: number, platforms: readonly ArenaPlatform[]): number | null {
+    if (this.velocity.y > 0) return null;
+
+    let landingTop = Number.NEGATIVE_INFINITY;
     for (const platform of platforms) {
-      const overlap = this.overlap(this.hitbox, platform.aabb);
-      if (!overlap) continue;
-
-      if (axis === 'x') {
-        if (this.velocity.x > 0) this.position.x = platform.aabb.x - this.stats.width * 0.5;
-        if (this.velocity.x < 0) this.position.x = platform.aabb.x + platform.aabb.w + this.stats.width * 0.5;
-        this.velocity.x = 0;
-      } else if (this.velocity.y <= 0) {
-        this.position.y = platform.aabb.y + platform.aabb.h;
-        this.velocity.y = 0;
-        this.grounded = true;
-        this.jumpsUsed = 0;
-      } else {
-        this.position.y = platform.aabb.y - this.stats.height;
-        this.velocity.y = 0;
-      }
+      if (!this.hasHorizontalOverlap(platform.aabb)) continue;
+      const top = platform.topY;
+      const crossedTop =
+        previousY >= top - COLLISION_EPSILON &&
+        this.position.y <= top + COLLISION_EPSILON;
+      const withinSnapProbe =
+        this.position.y >= top &&
+        this.position.y - top <= GROUND_SNAP_DISTANCE;
+      if (crossedTop || withinSnapProbe) landingTop = Math.max(landingTop, top);
     }
+    return Number.isFinite(landingTop) ? landingTop : null;
   }
 
-  private overlap(a: AABB, b: AABB): boolean {
-    return a.x < b.x + b.w && a.x + a.w > b.x && a.y < b.y + b.h && a.y + a.h > b.y;
+  private hasHorizontalOverlap(platform: AABB): boolean {
+    const left = this.position.x - this.stats.width * 0.5;
+    const right = this.position.x + this.stats.width * 0.5;
+    return left < platform.x + platform.w && right > platform.x;
   }
 
   private clampToBounds(bounds: AABB): void {
@@ -384,6 +447,7 @@ export class PlayerController {
       this.health.takeDamage({ amount: 20, source: 'hazard', crit: false, elemental: 'none' });
       this.position.y = bounds.y + 1;
       this.velocity.set(0, 0, 0);
+      this.grounded = false;
     }
   }
 
@@ -435,7 +499,13 @@ export class PlayerController {
 
   private updateEffectiveModifiers(): void {
     this.moveSpeedMult = this.modifierMods.playerMoveSpeedMult * this.councilMods.playerMoveSpeedMult * this.relicMoveSpeedMult;
-    this.gravityMult = this.modifierMods.playerGravityMult * this.councilMods.playerGravityMult;
+    // Arena validation assumes this cap: even stacked gravity effects retain
+    // at least 3.2 units of default double-jump clearance over 2.35-unit steps.
+    this.gravityMult = THREE.MathUtils.clamp(
+      this.modifierMods.playerGravityMult * this.councilMods.playerGravityMult,
+      0.1,
+      MAX_SAFE_GRAVITY_MULTIPLIER,
+    );
     this.damageTakenMult = this.modifierMods.playerDamageTakenMult * this.councilMods.playerDamageTakenMult;
     this.dashRecoveryMult = this.modifierMods.playerDashRecoveryMult * this.councilMods.playerDashRecoveryMult;
     this.combat.damageMult = this.modifierMods.playerDamageMult * this.councilMods.playerDamageMult;

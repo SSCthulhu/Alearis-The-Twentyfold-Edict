@@ -263,6 +263,8 @@ export class Game {
 
     this.player = new PlayerController(this.run, this.arena.spawns.player);
     this.applyPlayerRelics();
+    // PlayerController caps the composed gravity multiplier against the same
+    // jump-clearance budget ArenaBuilder uses for platform step validation.
     this.player.setCouncilCombatMods(this.currentCouncilMods);
     this.worldRoot.add(this.player.root);
 
@@ -694,14 +696,16 @@ export class Game {
       if (ev) playSfx(this.sfx, 'diceRollStinger');
     }
 
-    const wasGrounded = this.player.grounded;
     const frame = this.player.update(dt, snap, this.arena);
 
-    if (!wasGrounded && frame.grounded) {
+    if (frame.landed) {
       this.vfx.spawnLandSmoke(this.player.position);
       playSfx(this.sfx, 'land');
     }
-    if (snap.jumpPressed && frame.grounded) playSfx(this.sfx, 'jump');
+    if (frame.jumped) {
+      this.vfx.spawnJumpSmoke(this.player.position);
+      playSfx(this.sfx, 'jump');
+    }
     if (frame.dashStarted) {
       this.vfx.spawnDashSmoke(this.player.position, new THREE.Vector3(frame.facing, 0, 0));
       playSfx(this.sfx, 'rollDashWhoosh');

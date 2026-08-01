@@ -2,6 +2,7 @@ import * as THREE from 'three';
 import { attachOutline, createCelMaterial } from '../render/CelMaterial';
 import { getPalette } from '../render/Palettes';
 import type { AABB, Vec2, WorldId } from '../core/types';
+import { MAX_ADJACENT_PLATFORM_STEP } from '../player/JumpMath';
 
 export type ArenaPlatformKind = 'ice' | 'void' | 'forge' | 'dice';
 
@@ -349,6 +350,43 @@ function addPlatforms(root: THREE.Group, platforms: ArenaPlatform[]): void {
   for (const platform of platforms) root.add(platform.mesh);
 }
 
+/**
+ * Builds ordered platform stacks with a hard upward-step cap. Descending and
+ * near-level layouts remain untouched; only impossible upward transitions move.
+ */
+function createStackPlatform(
+  world: WorldId,
+  id: string,
+  platforms: readonly ArenaPlatform[],
+  proposed: AABB,
+  kind: ArenaPlatformKind,
+): ArenaPlatform {
+  const previous = platforms[platforms.length - 1];
+  const aabb = { ...proposed };
+  if (previous) {
+    const proposedTop = aabb.y + aabb.h;
+    const maxTop = previous.topY + MAX_ADJACENT_PLATFORM_STEP;
+    if (proposedTop > maxTop) aabb.y = maxTop - aabb.h;
+  }
+  return createPlatform(world, id, aabb, kind);
+}
+
+/** Returns any ordered upward transitions that violate the shared jump budget. */
+export function validateAdjacentPlatformSteps(
+  platforms: readonly ArenaPlatform[],
+  maxStep = MAX_ADJACENT_PLATFORM_STEP,
+): string[] {
+  const violations: string[] = [];
+  for (let i = 1; i < platforms.length; i++) {
+    const previous = platforms[i - 1]!;
+    const current = platforms[i]!;
+    if (current.topY - previous.topY > maxStep + 0.0001) {
+      violations.push(`${previous.id}->${current.id}`);
+    }
+  }
+  return violations;
+}
+
 function computeBounds(platforms: readonly ArenaPlatform[]): AABB {
   let minX = Number.POSITIVE_INFINITY;
   let minY = Number.POSITIVE_INFINITY;
@@ -510,6 +548,10 @@ function makeArena(
   portals: ArenaPortal[] = [],
   lanes: ArenaLaneSegment[] = [],
 ): Arena {
+  const invalidSteps = validateAdjacentPlatformSteps(platforms);
+  if (invalidSteps.length > 0) {
+    throw new Error(`Arena has unclearable platform steps: ${invalidSteps.join(', ')}`);
+  }
   const root = new THREE.Group();
   root.name = `arena_world_${world}_floor_${floor}`;
   addPlatforms(root, platforms);
@@ -540,9 +582,11 @@ function buildWorldOne(floor: number, rng: Rng): Arena {
   for (let i = 1; i < tierCount; i++) {
     const side = i % 2 === 0 ? -1 : 1;
     const width = 4.1 + rng() * 1.5 - Math.min(1.1, floor * 0.12);
-    const y = i * 2.55 + (rng() - 0.5) * 0.35;
+    // 1.93–2.23 unit rises are readable by eye and retain input/timing margin.
+    const rise = 2.08 + (rng() - 0.5) * 0.3;
+    const y = platforms[i - 1]!.topY + rise - 0.45;
     const x = side * (1.15 + rng() * 1.1) - width * 0.5;
-    platforms.push(createPlatform(1, `w1_ice_tier_${i}`, { x, y, w: width, h: 0.45 }, 'ice'));
+    platforms.push(createStackPlatform(1, `w1_ice_tier_${i}`, platforms, { x, y, w: width, h: 0.45 }, 'ice'));
   }
   const top = platforms[platforms.length - 1]!;
   const enemyAnchors = platforms.slice(1).map((p, i) => ({ x: p.aabb.x + p.aabb.w * (0.35 + (i % 2) * 0.25), y: p.topY }));
@@ -555,11 +599,11 @@ function buildWorldOne(floor: number, rng: Rng): Arena {
 function buildWorldTwo(floor: number, rng: Rng): Arena {
   const platforms: ArenaPlatform[] = [];
   platforms.push(createPlatform(2, 'w2_arrival_balcony', { x: -4.8, y: 0, w: 4.55 + rng() * 0.35, h: 0.55 }, 'void'));
-  platforms.push(createPlatform(2, 'w2_right_door_walk', { x: 1.1, y: 1.75, w: 4.05 + rng() * 0.4, h: 0.5 }, 'void'));
-  platforms.push(createPlatform(2, 'w2_left_door_walk', { x: -5.2, y: 3.65, w: 4.4 + rng() * 0.45, h: 0.5 }, 'void'));
-  platforms.push(createPlatform(2, 'w2_orb_lane_mid', { x: -1.75 + (rng() - 0.5) * 0.35, y: 5.55, w: 4.2 + rng() * 0.45, h: 0.48 }, 'void'));
-  platforms.push(createPlatform(2, 'w2_socket_gallery', { x: 1.1, y: 7.6, w: 4.7 + rng() * 0.45, h: 0.52 }, 'void'));
-  if (floor >= 4) platforms.push(createPlatform(2, 'w2_boss_antechamber', { x: -5.6, y: 9.5, w: 5.0 + rng() * 0.45, h: 0.5 }, 'void'));
+  platforms.push(createStackPlatform(2, 'w2_right_door_walk', platforms, { x: 1.1, y: 1.75, w: 4.05 + rng() * 0.4, h: 0.5 }, 'void'));
+  platforms.push(createStackPlatform(2, 'w2_left_door_walk', platforms, { x: -5.2, y: 3.65, w: 4.4 + rng() * 0.45, h: 0.5 }, 'void'));
+  platforms.push(createStackPlatform(2, 'w2_orb_lane_mid', platforms, { x: -1.75 + (rng() - 0.5) * 0.35, y: 5.55, w: 4.2 + rng() * 0.45, h: 0.48 }, 'void'));
+  platforms.push(createStackPlatform(2, 'w2_socket_gallery', platforms, { x: 1.1, y: 7.6, w: 4.7 + rng() * 0.45, h: 0.52 }, 'void'));
+  if (floor >= 4) platforms.push(createStackPlatform(2, 'w2_boss_antechamber', platforms, { x: -5.6, y: 9.5, w: 5.0 + rng() * 0.45, h: 0.5 }, 'void'));
 
   const chargeStations = [{ x: platforms[1]!.aabb.x + 0.75, y: platforms[1]!.topY }];
   const sockets = [{ x: platforms[4]!.aabb.x + platforms[4]!.aabb.w - 0.7, y: platforms[4]!.topY }];
@@ -583,7 +627,7 @@ function buildWorldThree(floor: number, rng: Rng): Arena {
     const width = i === 0 ? 5.6 : 3.4 + rng() * 1.2;
     const x = -5.8 + i * 3.8;
     const y = i === 0 ? 0 : 0.65 + Math.sin(i * 1.4 + floor) * 0.7 + Math.floor(i / 3) * 0.9;
-    platforms.push(createPlatform(3, `w3_forge_span_${i}`, { x, y, w: width, h: 0.55 }, 'forge'));
+    platforms.push(createStackPlatform(3, `w3_forge_span_${i}`, platforms, { x, y, w: width, h: 0.55 }, 'forge'));
   }
   const enemyAnchors = platforms.slice(1).map((p, i) => ({ x: p.aabb.x + p.aabb.w * (0.45 + (i % 2) * 0.2), y: p.topY }));
   const player = { x: platforms[0]!.aabb.x + 0.8, y: platforms[0]!.topY };
@@ -604,7 +648,7 @@ function buildWorldFour(floor: number, rng: Rng): Arena {
     const x = Math.cos(angle) * radius - 1.55;
     const y = 1.7 + i * 1.28 + Math.sin(angle) * 0.45 + rng() * 0.2;
     const width = 2.65 + (i % 2) * 0.85;
-    const platform = createPlatform(4, `w4_dice_shard_${i}`, { x, y, w: width, h: 0.42 }, 'dice');
+    const platform = createStackPlatform(4, `w4_dice_shard_${i}`, platforms, { x, y, w: width, h: 0.42 }, 'dice');
     platform.mesh.rotation.z = (rng() - 0.5) * 0.035;
     platforms.push(platform);
   }
