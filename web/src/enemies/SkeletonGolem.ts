@@ -17,7 +17,7 @@ export class SkeletonGolem extends EnemyBase {
       arc: this.config.meleeArc,
       damage: this.config.meleeDamage,
       knockback: 2.2,
-      telegraphTime: this.config.windup,
+      telegraphTime: this.windupDuration,
     });
 
     if (!this.config.projectile || ctx.rng() > 0.55) return;

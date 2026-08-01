@@ -58,6 +58,14 @@ export interface BossProjectileEvent {
   readonly state: BossEncounterState;
 }
 
+export interface BossTelegraphEvent {
+  readonly identity: BossIdentity;
+  readonly scheduleId: string;
+  readonly durationSec: number;
+  readonly cycleIndex: number;
+  readonly state: BossEncounterState;
+}
+
 export interface BossControllerOptions {
   readonly identity: BossIdentity;
   readonly runState: RunState;
@@ -67,6 +75,9 @@ export interface BossControllerOptions {
   readonly ascentDurationSec?: number;
   readonly baseProjectileIntervalSec?: number;
   readonly autoUpdateProjectiles?: boolean;
+  /** Seconds a ground telegraph shows before a pattern fires. Clamped to >= 0.5s. */
+  readonly telegraphSec?: number;
+  readonly onTelegraph?: (event: BossTelegraphEvent) => void;
   readonly onAddSpawn?: (event: BossAddSpawnEvent) => void;
   readonly onPhaseGate?: (event: BossPhaseGateEvent) => void;
   readonly onCastStarted?: (cast: BossCastBar) => void;
@@ -84,6 +95,11 @@ interface MutableCastBar {
   scheduleId: string | null;
 }
 
+interface PendingPattern {
+  scheduleId: string;
+  remainingSec: number;
+}
+
 export class BossController {
   readonly identity: BossIdentity;
   readonly runState: RunState;
@@ -98,6 +114,8 @@ export class BossController {
   private readonly ascentDurationSec: number;
   private readonly baseProjectileIntervalSec: number;
   private readonly autoUpdateProjectiles: boolean;
+  private readonly telegraphSec: number;
+  private readonly onTelegraph?: (event: BossTelegraphEvent) => void;
   private readonly onAddSpawn?: (event: BossAddSpawnEvent) => void;
   private readonly onPhaseGate?: (event: BossPhaseGateEvent) => void;
   private readonly onCastStarted?: (cast: BossCastBar) => void;
@@ -108,6 +126,7 @@ export class BossController {
   private readonly onDefeated?: (identity: BossIdentity) => void;
   private projectileRng: RngFn;
   private projectileCooldownSec = 0;
+  private pendingPattern: PendingPattern | null = null;
   private castBar: MutableCastBar | null = null;
   private dpsWindowRemainingSec = 0;
   private dpsWindowDurationSec = 0;
@@ -126,6 +145,8 @@ export class BossController {
     this.ascentDurationSec = options.ascentDurationSec ?? 4.5;
     this.baseProjectileIntervalSec = options.baseProjectileIntervalSec ?? 3.2;
     this.autoUpdateProjectiles = options.autoUpdateProjectiles ?? true;
+    this.telegraphSec = Math.max(0.5, options.telegraphSec ?? 0.7);
+    this.onTelegraph = options.onTelegraph;
     this.onAddSpawn = options.onAddSpawn;
     this.onPhaseGate = options.onPhaseGate;
     this.onCastStarted = options.onCastStarted;
@@ -151,6 +172,7 @@ export class BossController {
       if (this.dpsWindowRemainingSec <= 0) this.endDpsWindow();
     }
 
+    this.updatePendingPattern(deltaSec);
     this.updateProjectileSchedule(deltaSec);
   }
 
@@ -261,7 +283,7 @@ export class BossController {
     this.dpsWindowRemainingSec = 0;
     this.spawnAdds('phase_gate', this.identity.baseAddBudget + gate.addBudgetBonus + this.cycleIndex);
     this.startCast(gate.castName, gate.castDurationSec, gate.scheduleId);
-    this.emitProjectilePattern(gate.scheduleId);
+    this.beginTelegraph(gate.scheduleId);
     this.onPhaseGate?.({ identity: this.identity, gate, cycleIndex: this.cycleIndex });
   }
 
@@ -300,11 +322,31 @@ export class BossController {
   private updateProjectileSchedule(deltaSec: number): void {
     if (this.state === 'DEFEATED') return;
     this.projectileCooldownSec -= deltaSec;
-    if (this.projectileCooldownSec > 0) return;
+    if (this.projectileCooldownSec > 0 || this.pendingPattern !== null) return;
 
-    const scheduleId = this.nextScheduleId();
-    this.emitProjectilePattern(scheduleId);
+    this.beginTelegraph(this.nextScheduleId());
     this.projectileCooldownSec = this.projectileIntervalForState();
+  }
+
+  /** Telegraph first: warn the player, then fire the pattern once the wind-up elapses. */
+  private beginTelegraph(scheduleId: string): void {
+    this.pendingPattern = { scheduleId, remainingSec: this.telegraphSec };
+    this.onTelegraph?.({
+      identity: this.identity,
+      scheduleId,
+      durationSec: this.telegraphSec,
+      cycleIndex: this.cycleIndex,
+      state: this.state,
+    });
+  }
+
+  private updatePendingPattern(deltaSec: number): void {
+    if (this.pendingPattern === null) return;
+    this.pendingPattern.remainingSec -= deltaSec;
+    if (this.pendingPattern.remainingSec > 0) return;
+    const scheduleId = this.pendingPattern.scheduleId;
+    this.pendingPattern = null;
+    this.emitProjectilePattern(scheduleId);
   }
 
   private emitProjectilePattern(scheduleId: string): void {
@@ -371,6 +413,7 @@ export class BossController {
     this.state = 'DEFEATED';
     this.castBar = null;
     this.pendingGate = null;
+    this.pendingPattern = null;
     this.projectileSystem.clear();
     this.onDefeated?.(this.identity);
   }

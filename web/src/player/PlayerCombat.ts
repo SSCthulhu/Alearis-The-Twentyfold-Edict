@@ -2,27 +2,20 @@ import * as THREE from 'three';
 import type { ClassId, AABB } from '../core/types';
 import type { FigureAnimState } from '../actors/ProceduralFigure';
 import type { PlayerBuffs } from './PlayerBuffs';
+import { getClassDef, type PlayerCombatStats } from './ClassDefs';
+
+export type { PlayerCombatStats } from './ClassDefs';
 
 export type PlayerCombatEventKind =
   | 'light'
+  | 'arcane_bolt'
   | 'heavy'
+  | 'frost_nova'
   | 'dash_attack'
   | 'defend'
   | 'ultimate_wave'
-  | 'ultimate_burst';
-
-export interface PlayerCombatStats {
-  lightDamage: number;
-  heavyDamage: number;
-  ultimateDamage: number;
-  lightRecovery: number;
-  heavyRecovery: number;
-  critChance: number;
-  critMult: number;
-  ultimateCooldown: number;
-  defendCooldown: number;
-  rollTravelMult: number;
-}
+  | 'ultimate_burst'
+  | 'ultimate_storm';
 
 export interface PlayerCombatEvent {
   kind: PlayerCombatEventKind;
@@ -44,46 +37,7 @@ interface ActiveAttack {
 }
 
 export function getPlayerCombatStats(classId: ClassId): PlayerCombatStats {
-  if (classId === 'rogue') {
-    return {
-      lightDamage: 11,
-      heavyDamage: 26,
-      ultimateDamage: 58,
-      lightRecovery: 0.18,
-      heavyRecovery: 0.48,
-      critChance: 0.12,
-      critMult: 1.5,
-      ultimateCooldown: 60,
-      defendCooldown: 60,
-      rollTravelMult: 1.28,
-    };
-  }
-  if (classId === 'mage') {
-    return {
-      lightDamage: 9,
-      heavyDamage: 24,
-      ultimateDamage: 64,
-      lightRecovery: 0.28,
-      heavyRecovery: 0.56,
-      critChance: 0.1,
-      critMult: 1.5,
-      ultimateCooldown: 60,
-      defendCooldown: 60,
-      rollTravelMult: 1,
-    };
-  }
-  return {
-    lightDamage: 14,
-    heavyDamage: 34,
-    ultimateDamage: 70,
-    lightRecovery: 0.26,
-    heavyRecovery: 0.68,
-    critChance: 0.1,
-    critMult: 1.5,
-    ultimateCooldown: 60,
-    defendCooldown: 60,
-    rollTravelMult: 1,
-  };
+  return { ...getClassDef(classId).combat };
 }
 
 export class PlayerCombat {
@@ -99,6 +53,8 @@ export class PlayerCombat {
   private critChanceBonus = 0;
   damageMult = 1;
   cooldownRecoveryMult = 1;
+  /** Modifier/council attack speed (player_attack_speed_mult, divine_fate_echo); scales attack recovery. */
+  attackSpeedMult = 1;
 
   constructor(classId: ClassId, buffs: PlayerBuffs, rng: () => number = Math.random) {
     this.classId = classId;
@@ -135,12 +91,30 @@ export class PlayerCombat {
     if (this.comboGrace <= 0) this.lightComboIndex = 0;
 
     if (!this.activeAttack) return;
-    this.activeAttack.remaining -= dt * this.buffs.attackSpeedMultiplier();
+    this.activeAttack.remaining -= dt * this.buffs.attackSpeedMultiplier() * this.attackSpeedMult;
     if (this.activeAttack.remaining <= 0) this.activeAttack = null;
   }
 
   requestLight(position: THREE.Vector3, facing: number): PlayerCombatEvent | null {
     if (this.busy) return null;
+    if (this.classId === 'mage') {
+      const event = this.createAttackEvent(
+        'arcane_bolt',
+        position,
+        facing,
+        this.stats.lightDamage,
+        1.7,
+        0.72,
+        0.35,
+        0.12,
+        'void',
+      );
+      this.lightComboIndex = 0;
+      this.comboGrace = 0;
+      this.setActiveAttack('cast', this.stats.lightRecovery);
+      return event;
+    }
+
     const comboBonus = this.classId === 'rogue' ? this.lightComboIndex * 0.16 : this.lightComboIndex * 0.08;
     const range = this.classId === 'rogue' ? 1.05 + this.lightComboIndex * 0.08 : 1.18;
     const height = 1.0;
@@ -162,16 +136,31 @@ export class PlayerCombat {
 
   requestHeavy(position: THREE.Vector3, facing: number): PlayerCombatEvent | null {
     if (this.busy) return null;
+    if (this.classId === 'mage') {
+      const event = this.createCenteredAttackEvent(
+        'frost_nova',
+        position,
+        facing,
+        this.stats.heavyDamage,
+        2.35,
+        1.65,
+        1.15,
+        0.38,
+        'frost',
+      );
+      this.setActiveAttack('cast', this.stats.heavyRecovery);
+      return event;
+    }
     if (this.classId === 'rogue') {
       const event = this.createAttackEvent('dash_attack', position, facing, this.stats.heavyDamage, 1.55, 0.78, 1.25, 0.18);
       this.setActiveAttack('attack', this.stats.heavyRecovery);
       return event;
     }
 
-    const range = this.classId === 'knight' ? 1.85 : 1.45;
-    const height = this.classId === 'knight' ? 1.35 : 1.1;
+    const range = 1.85;
+    const height = 1.35;
     const event = this.createAttackEvent('heavy', position, facing, this.stats.heavyDamage, range, height, 1.45, 0.24);
-    this.setActiveAttack(this.classId === 'mage' ? 'cast' : 'attack', this.stats.heavyRecovery);
+    this.setActiveAttack('attack', this.stats.heavyRecovery);
     return event;
   }
 
@@ -196,10 +185,11 @@ export class PlayerCombat {
       });
     } else {
       this.buffs.apply({
-        id: 'mage_locked_focus',
-        duration: 4,
-        damageReduction: 0.12,
-        source: 'mage_locked_stub',
+        id: 'mage_arcane_barrier',
+        duration: 7,
+        damageReduction: 0.28,
+        moveSpeedMult: 0.92,
+        source: 'mage_defend',
       });
     }
     return this.createUtilityEvent('defend', position, facing, 0, 0.9, 1.2, 0);
@@ -208,12 +198,29 @@ export class PlayerCombat {
   requestUltimate(position: THREE.Vector3, facing: number): PlayerCombatEvent | null {
     if (this.busy || this.ultimateRemaining > 0) return null;
     this.ultimateRemaining = this.stats.ultimateCooldown;
+    if (this.classId === 'mage') {
+      const event = this.createCenteredAttackEvent(
+        'ultimate_storm',
+        position,
+        facing,
+        this.stats.ultimateDamage,
+        3.4,
+        5.3,
+        2.4,
+        0.72,
+        'void',
+      );
+      this.buffs.apply({ id: 'ultimate_empower', duration: 1.25, attackSpeedMult: 1.08, source: 'ultimate' });
+      this.setActiveAttack('cast', 0.88);
+      return event;
+    }
+
     const kind: PlayerCombatEventKind = this.classId === 'knight' ? 'ultimate_wave' : 'ultimate_burst';
     const range = this.classId === 'knight' ? 6.25 : 4.4;
-    const height = this.classId === 'mage' ? 2.3 : 1.6;
+    const height = 1.6;
     const event = this.createAttackEvent(kind, position, facing, this.stats.ultimateDamage, range, height, 2.2, 0.46);
     this.buffs.apply({ id: 'ultimate_empower', duration: 1.25, attackSpeedMult: 1.08, source: 'ultimate' });
-    this.setActiveAttack(this.classId === 'mage' ? 'cast' : 'attack', 0.78);
+    this.setActiveAttack('attack', 0.78);
     return event;
   }
 
@@ -237,10 +244,38 @@ export class PlayerCombat {
     height: number,
     knockback: number,
     duration: number,
+    elemental: PlayerCombatEvent['elemental'] = 'none',
   ): PlayerCombatEvent {
     const crit = this.rng() < THREE.MathUtils.clamp(this.stats.critChance + this.critChanceBonus, 0, 0.85);
     const damage = baseDamage * this.damageMult * (crit ? this.stats.critMult : 1);
-    return this.createUtilityEvent(kind, position, facing, damage, range, height, knockback, duration, crit);
+    return this.createUtilityEvent(kind, position, facing, damage, range, height, knockback, duration, crit, elemental);
+  }
+
+  private createCenteredAttackEvent(
+    kind: PlayerCombatEventKind,
+    position: THREE.Vector3,
+    facing: number,
+    baseDamage: number,
+    radius: number,
+    height: number,
+    knockback: number,
+    duration: number,
+    elemental: PlayerCombatEvent['elemental'],
+  ): PlayerCombatEvent {
+    const event = this.createAttackEvent(
+      kind,
+      position,
+      facing,
+      baseDamage,
+      radius * 2,
+      height,
+      knockback,
+      duration,
+      elemental,
+    );
+    event.hitbox.x = position.x - radius;
+    event.hitbox.y = position.y - 0.1;
+    return event;
   }
 
   private createUtilityEvent(
@@ -253,6 +288,7 @@ export class PlayerCombat {
     knockback: number,
     duration = 0.1,
     crit = false,
+    elemental: PlayerCombatEvent['elemental'] = 'none',
   ): PlayerCombatEvent {
     const front = facing >= 0 ? position.x + 0.28 : position.x - 0.28 - range;
     return {
@@ -270,12 +306,12 @@ export class PlayerCombat {
       crit,
       knockback,
       duration,
-      elemental: this.classId === 'mage' ? 'fate' : 'none',
+      elemental,
     };
   }
 
   private setActiveAttack(name: FigureAnimState['name'], duration: number): void {
-    const total = Math.max(0.05, duration / this.buffs.attackSpeedMultiplier());
+    const total = Math.max(0.05, duration / (this.buffs.attackSpeedMultiplier() * Math.max(0.1, this.attackSpeedMult)));
     this.activeAttack = {
       state: { name, attackT: 0, intensity: this.classId === 'knight' ? 1.15 : 1 },
       remaining: total,

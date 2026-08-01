@@ -1,5 +1,7 @@
 import * as THREE from 'three';
-import { buildEnemyFigure, type FigureColors, type ProceduralFigure } from '../actors/ProceduralFigure';
+import type { ActorVisual } from '../actors/ActorVisual';
+import { buildKayKitEnemy, canBuildKayKitEnemy } from '../actors/KayKitFigure';
+import { buildEnemyFigure, type FigureColors } from '../actors/ProceduralFigure';
 import type { ProjectilePatternSpec } from '../combat/Projectiles';
 import { StatusEffectController, type StatusEffectId } from '../combat/StatusEffects';
 import {
@@ -20,6 +22,10 @@ export interface EnemyAiContext {
   rng: () => number;
   playerHurtboxRadius?: number;
   lineOfSight?: (from: THREE.Vector3, to: THREE.Vector3) => boolean;
+  /** Scales config.aggroDelay (world modifiers: tithe_of_patience, wakeful_hounds...). */
+  aggroDelayMult?: number;
+  /** Extra telegraph/windup seconds (council divine_clarity). */
+  windupAddSeconds?: number;
 }
 
 export interface EnemyMeleeEvent {
@@ -70,7 +76,7 @@ export interface EnemyFrameEvents {
 export class EnemyBase {
   readonly kind: EnemyKind;
   readonly config: EnemyConfig;
-  readonly figure: ProceduralFigure;
+  readonly figure: ActorVisual;
   readonly root: THREE.Group;
   readonly statuses: StatusEffectController;
   hp: number;
@@ -83,13 +89,20 @@ export class EnemyBase {
   protected contactCooldownRemaining = 0;
   protected currentPlatform: PlatformSpan | null = null;
   protected deathT = 0;
+  /** Horizontal shove applied over time instead of an instant position pop. */
+  protected knockbackVelocityX = 0;
+  /** Effective windup used for the current attack (config.windup + council telegraph bonus). */
+  protected windupDuration: number;
 
   constructor(kind: EnemyKind, position = new THREE.Vector3(), colors: FigureColors = {}) {
     this.kind = kind;
     this.config = getEnemyConfig(kind);
+    this.windupDuration = this.config.windup;
     this.hp = this.config.maxHp;
     this.statuses = new StatusEffectController();
-    this.figure = buildEnemyFigure(kind, { ...DEFAULT_ENEMY_COLORS[kind], ...colors });
+    this.figure = canBuildKayKitEnemy(kind)
+      ? buildKayKitEnemy(kind)
+      : buildEnemyFigure(kind, { ...DEFAULT_ENEMY_COLORS[kind], ...colors });
     this.root = this.figure.root;
     this.root.position.copy(position);
     this.root.userData.enemy = this;
@@ -133,6 +146,7 @@ export class EnemyBase {
     }
 
     this.currentPlatform = this.findPlatform(ctx.platforms);
+    this.updateKnockback(dt);
     this.emitContactIfOverlapping(ctx, events);
 
     const modifiers = this.statuses.modifiers();
@@ -148,7 +162,7 @@ export class EnemyBase {
 
     if (this.state === 'idle' || this.state === 'patrol') {
       if (canSeePlayer) {
-        this.transitionTo('aggroDelay', this.config.aggroDelay);
+        this.transitionTo('aggroDelay', this.config.aggroDelay * Math.max(0.1, ctx.aggroDelayMult ?? 1));
       } else {
         this.patrol(dt, modifiers.movementScale);
       }
@@ -162,7 +176,8 @@ export class EnemyBase {
       if (playerDistance > this.config.deaggroRange) {
         this.transitionTo('patrol');
       } else if (playerDistance <= this.config.attackRange && this.attackCooldownRemaining <= 0) {
-        this.transitionTo('windup', this.config.windup);
+        this.windupDuration = this.config.windup + Math.max(0, ctx.windupAddSeconds ?? 0);
+        this.transitionTo('windup', this.windupDuration);
       } else if (playerDistance > this.config.stopRange) {
         this.moveHorizontal(this.facing * this.config.chaseSpeed * modifiers.movementScale * dt);
       }
@@ -227,7 +242,7 @@ export class EnemyBase {
       arc: this.config.meleeArc,
       damage: this.config.meleeDamage,
       knockback: 1.2,
-      telegraphTime: this.config.windup,
+      telegraphTime: this.windupDuration,
     });
   }
 
@@ -257,7 +272,7 @@ export class EnemyBase {
         scale: attack.scale,
         color: attack.color,
       },
-      telegraphTime: this.config.windup,
+      telegraphTime: this.windupDuration,
     };
   }
 
@@ -360,7 +375,17 @@ export class EnemyBase {
 
   private applyKnockback(sourcePosition: THREE.Vector3, strength: number): void {
     const dir = this.root.position.x >= sourcePosition.x ? 1 : -1;
-    this.moveHorizontal(dir * strength * 0.18);
+    this.knockbackVelocityX = dir * strength * 2.6;
+  }
+
+  private updateKnockback(dt: number): void {
+    if (Math.abs(this.knockbackVelocityX) < 0.02) {
+      this.knockbackVelocityX = 0;
+      return;
+    }
+    this.moveHorizontal(this.knockbackVelocityX * dt);
+    // Exponential decay so heavy hits shove hard then settle quickly.
+    this.knockbackVelocityX = THREE.MathUtils.damp(this.knockbackVelocityX, 0, 9, dt);
   }
 
   private enterDeath(events: EnemyFrameEvents): void {
@@ -372,7 +397,7 @@ export class EnemyBase {
 
   private updateFigureAnimation(dt: number, playerDistance: number): void {
     if (this.state === 'windup') {
-      const attackT = 1 - this.stateTimer / Math.max(this.config.windup, 0.01);
+      const attackT = 1 - this.stateTimer / Math.max(this.windupDuration, 0.01);
       this.figure.updateAnim(dt, {
         name: this.config.projectile && playerDistance > this.config.meleeRange ? 'cast' : 'attack',
         attackT,

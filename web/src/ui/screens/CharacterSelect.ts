@@ -1,4 +1,5 @@
 import type { ClassId } from '../../core/types';
+import { getClassDef } from '../../player/ClassDefs';
 import { UI_COLORS, createButton, createPanel, createScreenRoot, installUiTheme, mountElement } from '../UiTheme';
 
 export interface CharacterSelectOption {
@@ -6,37 +7,24 @@ export interface CharacterSelectOption {
   name: string;
   role: string;
   description: string;
-  locked?: boolean;
 }
 
 export interface CharacterSelectOptions {
   root?: HTMLElement | string;
   selected?: ClassId;
-  onSelect?: (classId: Exclude<ClassId, 'mage'>) => void;
+  onSelect?: (classId: ClassId) => void;
   onBack?: () => void;
 }
 
-const CHARACTERS: readonly CharacterSelectOption[] = [
-  {
-    id: 'knight',
-    name: 'Knight',
-    role: 'Shielded Vanguard',
-    description: 'Wide guard arcs, deliberate burst windows, and reliable Ascension Charge carries.',
-  },
-  {
-    id: 'rogue',
-    name: 'Rogue',
-    role: 'Tempo Duelist',
-    description: 'Fast cancels, riskier spacing, and extra value from perfect dodge chimes.',
-  },
-  {
-    id: 'mage',
-    name: 'Mage',
-    role: 'Locked Preview',
-    description: 'A future spell-weaver focused on meter manipulation and arena control.',
-    locked: true,
-  },
-];
+const CHARACTERS: readonly CharacterSelectOption[] = (['knight', 'rogue', 'mage'] as const).map((id) => {
+  const def = getClassDef(id);
+  return {
+    id: def.id,
+    name: def.name,
+    role: def.role,
+    description: def.description,
+  };
+});
 
 export class CharacterSelect {
   readonly element: HTMLDivElement;
@@ -77,7 +65,7 @@ export class CharacterSelect {
     header.innerHTML = `
       <div class="alearis-kicker">Choose your vessel</div>
       <h2 class="alearis-title">Character Select</h2>
-      <p class="alearis-copy">Two classes are playable now. The Mage is shown as a locked systems preview.</p>
+      <p class="alearis-copy">Three classes stand ready to fulfill the Edict.</p>
     `;
 
     const grid = document.createElement('div');
@@ -101,7 +89,6 @@ export class CharacterSelect {
     button.type = 'button';
     button.className = 'alearis-panel alearis-card alearis-character-card';
     button.dataset.classId = character.id;
-    button.disabled = character.locked === true;
 
     const glyph = document.createElement('canvas');
     glyph.width = 180;
@@ -109,9 +96,7 @@ export class CharacterSelect {
     glyph.className = 'alearis-character-card__glyph';
     drawCharacterGlyph(glyph, character.id);
 
-    const lock = character.locked === true ? '<div class="alearis-character-card__lock">Locked</div>' : '';
     button.innerHTML = `
-      ${lock}
       <div class="alearis-character-card__glyph-slot"></div>
       <div class="alearis-kicker">${character.role}</div>
       <h3>${character.name}</h3>
@@ -119,13 +104,11 @@ export class CharacterSelect {
     `;
     button.querySelector('.alearis-character-card__glyph-slot')?.appendChild(glyph);
 
-    if (character.locked !== true) {
-      button.addEventListener('click', () => {
-        this.selected = character.id;
-        this.refreshCards();
-        options.onSelect?.(character.id as Exclude<ClassId, 'mage'>);
-      });
-    }
+    button.addEventListener('click', () => {
+      this.selected = character.id;
+      this.refreshCards();
+      options.onSelect?.(character.id);
+    });
 
     return button;
   }
@@ -169,27 +152,10 @@ export class CharacterSelect {
         box-shadow: 0 0 44px rgba(214, 174, 84, 0.22), inset 0 0 0 1px rgba(255, 224, 154, 0.32);
       }
 
-      .alearis-character-card:disabled {
-        cursor: not-allowed;
-        opacity: 0.58;
-      }
-
       .alearis-character-card__glyph {
         width: 180px;
         max-width: 100%;
         height: auto;
-      }
-
-      .alearis-character-card__lock {
-        position: absolute;
-        top: 18px;
-        right: 18px;
-        padding: 7px 10px;
-        border: 1px solid rgba(214, 90, 84, 0.8);
-        color: ${UI_COLORS.red};
-        font: 800 12px "Cascadia Mono", monospace;
-        letter-spacing: 0.16em;
-        text-transform: uppercase;
       }
 
       .alearis-character-select__footer {

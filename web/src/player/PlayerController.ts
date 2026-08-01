@@ -1,10 +1,13 @@
 import * as THREE from 'three';
-import { buildPlayerFigure, type ProceduralFigure } from '../actors/ProceduralFigure';
+import type { ActorVisual } from '../actors/ActorVisual';
+import { buildKayKitPlayer, canBuildKayKitPlayer } from '../actors/KayKitFigure';
+import { buildPlayerFigure } from '../actors/ProceduralFigure';
 import { bus, Events } from '../core/EventBus';
 import type { RunState } from '../core/RunState';
 import type { AABB, DamageInfo, Vec2 } from '../core/types';
 import { baseCombatMods, getModifierCombatMods, type CombatMods } from '../dice/ModifierEffects';
 import type { Arena, ArenaPlatform } from '../world/ArenaBuilder';
+import { getClassDef } from './ClassDefs';
 import type { InputSnapshot } from './Input';
 import {
   DEFAULT_DOUBLE_JUMP_SPEED,
@@ -91,14 +94,14 @@ const BASE_STATS: PlayerControllerStats = {
   dashIFrameDuration: 0.28,
   perfectDodgeStart: 0.08,
   perfectDodgeEnd: 0.26,
-  dashRechargeTime: 10,
+  dashRechargeTime: 3.5,
   maxDashCharges: 2,
 };
 
 export class PlayerController {
   readonly run: RunState;
   readonly root = new THREE.Group();
-  readonly figure: ProceduralFigure;
+  readonly figure: ActorVisual;
   readonly buffs = new PlayerBuffs();
   readonly debuffs = new PlayerDebuffs();
   readonly health: PlayerHealth;
@@ -130,15 +133,18 @@ export class PlayerController {
 
   constructor(run: RunState, spawn: Vec2, stats: Partial<PlayerControllerStats> = {}) {
     this.run = run;
-    this.stats = { ...BASE_STATS, ...stats };
-    this.figure = buildPlayerFigure(run.classId);
+    const classDef = getClassDef(run.classId);
+    this.stats = { ...BASE_STATS, ...classDef.movement, ...stats };
+    this.figure = canBuildKayKitPlayer(run.classId)
+      ? buildKayKitPlayer(run.classId)
+      : buildPlayerFigure(run.classId);
     this.root.name = `player_${run.classId}_controller`;
     this.root.add(this.figure.root);
     this.position.set(spawn.x, spawn.y, 0);
     this.root.position.copy(this.position);
     this.rng = run.rng('encounter', 0x51a7);
     this.combat = new PlayerCombat(run.classId, this.buffs, this.rng);
-    this.health = new PlayerHealth(this.buffs, this.debuffs, 100);
+    this.health = new PlayerHealth(this.buffs, this.debuffs, classDef.maxHealth);
     this.dashCharges = this.stats.maxDashCharges;
     this.applyRunModifiers();
   }
@@ -261,6 +267,14 @@ export class PlayerController {
       combatEvents,
       debuffTicks,
     };
+  }
+
+  /** Horizontal shove away from an attacker, dampened by knockback_resist_mult modifiers. */
+  applyKnockback(sourceX: number, strength: number): void {
+    if (strength <= 0) return;
+    const resist = Math.max(0.1, this.modifierMods.playerKnockbackResistMult * this.councilMods.playerKnockbackResistMult);
+    const direction = this.position.x >= sourceX ? 1 : -1;
+    this.velocity.x += (direction * strength * 3.2) / resist;
   }
 
   takeDamage(info: DamageInfo): PlayerDamageResult {
@@ -482,12 +496,19 @@ export class PlayerController {
       return;
     }
     if (!this.grounded) {
-      this.figure.updateAnim(dt, { name: 'idle', intensity: this.dashState ? 1.2 : 0.7 });
+      this.figure.updateAnim(dt, {
+        name: this.velocity.y >= 0 ? 'jump' : 'fall',
+        intensity: this.dashState ? 1.2 : 0.7,
+      });
       return;
     }
     const speed = Math.abs(this.velocity.x);
     if (speed > 0.25) {
-      this.figure.updateAnim(dt, { name: 'walk', speed: speed / this.stats.walkSpeed, intensity: 1 });
+      this.figure.updateAnim(dt, {
+        name: speed > this.stats.walkSpeed * 1.12 ? 'run' : 'walk',
+        speed: speed / this.stats.walkSpeed,
+        intensity: 1,
+      });
     } else {
       this.figure.updateAnim(dt, { name: 'idle' });
     }
@@ -510,5 +531,6 @@ export class PlayerController {
     this.dashRecoveryMult = this.modifierMods.playerDashRecoveryMult * this.councilMods.playerDashRecoveryMult;
     this.combat.damageMult = this.modifierMods.playerDamageMult * this.councilMods.playerDamageMult;
     this.combat.cooldownRecoveryMult = this.modifierMods.playerCooldownRecoveryMult * this.councilMods.playerCooldownRecoveryMult;
+    this.combat.attackSpeedMult = this.modifierMods.playerAttackSpeedMult * this.councilMods.playerAttackSpeedMult;
   }
 }

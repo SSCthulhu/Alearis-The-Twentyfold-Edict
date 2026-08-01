@@ -1,7 +1,7 @@
 export type PlayerBuffId =
   | 'knight_shield'
   | 'rogue_evasion'
-  | 'mage_locked_focus'
+  | 'mage_arcane_barrier'
   | 'perfect_dodge'
   | 'ultimate_empower'
   | 'council_barrier';

@@ -22,3 +22,9 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Playwright / screenshot-harness generated artifacts
+harness/frames
+harness/report
+test-results
+playwright-report

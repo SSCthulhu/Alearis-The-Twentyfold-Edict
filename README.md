@@ -1,43 +1,19 @@
 # Alearis: The Twentyfold Edict
 
-A 2D vertical action-platformer roguelite built with Godot 4.5.1
+Cel-shaded 2.5D vertical action-platformer roguelite.
 
-## 🎮 About
+## Play (Web — primary deliverable)
 
-**Alearis: The Twentyfold Edict** is inspired by Destiny 2 raids and Rabbit & Steel, featuring:
-- Vertical multi-floor arenas with intense combat encounters
-- Dice-based risk/reward mechanics
-- Phase-based boss fights with Ascension Charge mechanics
-- Tight, responsive combat with high player agency
-- Procedural progression with relics and modifiers
+```bash
+cd web
+npm install
+npm run dev
+```
 
-## 🏗️ Structure
+Full documentation, controls, architecture, and systems map: **[`web/README.md`](web/README.md)**.
 
-- **5 floors per world**: Floors 1-4 combat, Floor 5 boss
-- **3 main worlds** + final boss world
-- **Deterministic RNG** via run seed system
+Stack: Vite + Three.js + TypeScript. Zero external assets — every mesh, texture, sound, and UI glyph is generated in code.
 
-## 🎲 Core Systems
+## Design Reference (Godot)
 
-- **Dice Range System**: Dynamic risk/reward based on `dice_min`/`dice_max`
-- **Ascension Charge**: Boss mechanic requiring orb delivery for DPS phases
-- **Relic System**: Run-persistent upgrades that modify gameplay
-- **Perfect Dodge**: Skill-based defensive mechanics
-
-## 🛠️ Tech Stack
-
-- **Engine**: Godot 4.5.1
-- **Language**: GDScript (strict-typed)
-- **Repository**: [GitHub](https://github.com/SSCthulhu/Aleatoris-The-Twentyfold-Edict)
-
-## 📋 Project Status
-
-Active development - Core combat system, enemy AI, and progression systems implemented.
-
-## 🤝 Development
-
-This project follows strict typing conventions and modular architecture patterns. See `.cursor/rules/aetherfall-project.mdc` for full coding standards.
-
----
-
-**© 2026 Phillip Carle**
+The Godot project in this repository remains **design reference only**. The browser rebuild invents all visuals and audio procedurally and does not port Godot meshes, textures, shaders, scenes, or gameplay code.

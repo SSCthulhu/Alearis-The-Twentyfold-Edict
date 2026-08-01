@@ -18,6 +18,19 @@ export interface CameraShake {
 
 type CinematicMode = 'none' | 'boss_reveal' | 'victory_orbit';
 
+/** Half-height of a player figure, used when solving two-subject framing. */
+const PLAYER_HALF_HEIGHT = 1.9;
+/**
+ * HUD safe areas as a fraction of frame height. These must be fractions, not
+ * world distances: the boss bar always covers the same share of the screen, so
+ * a constant in world units under-reserves exactly when the boss is tallest.
+ */
+const HUD_TOP_FRACTION = 0.19;
+const HUD_BOTTOM_FRACTION = 0.07;
+/** Share of a half-frame left usable once each HUD band is reserved. */
+const TOP_USABLE = 1 - 2 * HUD_TOP_FRACTION;
+const BOTTOM_USABLE = 1 - 2 * HUD_BOTTOM_FRACTION;
+
 interface CinematicState {
   mode: CinematicMode;
   elapsed: number;
@@ -61,17 +74,35 @@ export class GameCamera {
     this.camera.updateProjectionMatrix();
   }
 
-  update(dt: number, target: THREE.Vector3, world: WorldId, bounds?: AABB): void {
+  update(
+    dt: number,
+    target: THREE.Vector3,
+    world: WorldId,
+    bounds?: AABB,
+    secondary?: THREE.Vector3 | null,
+    framingBias = 0.35,
+    secondaryHalfHeight = 0,
+  ): void {
     if (this.cinematic) {
       this.updateCinematic(dt);
       return;
     }
 
-    const trackX = world === 3 ? target.x : THREE.MathUtils.damp(this.focus.x, target.x * 0.38, 3.4, dt);
-    this.focus.set(trackX, target.y + this.verticalOffset, 0);
-    this.constrainFocus(bounds);
+    let focusX = target.x;
+    let focusY = target.y + this.verticalOffset;
+    if (secondary) {
+      focusX = THREE.MathUtils.lerp(target.x, secondary.x, framingBias);
+      focusY = this.solveFramingCentre(target, secondary, secondaryHalfHeight);
+    }
 
-    this.desired.set(this.focus.x, this.focus.y, this.sideDistance);
+    const trackX = world === 3 ? focusX : THREE.MathUtils.damp(this.focus.x, focusX * (secondary ? 1 : 0.38), 3.4, dt);
+    this.focus.set(trackX, focusY, 0);
+    this.constrainFocus(bounds, secondary != null);
+
+    const pullBack = secondary
+      ? this.solvePullBack(target, secondary, secondaryHalfHeight)
+      : this.sideDistance;
+    this.desired.set(this.focus.x, this.focus.y, pullBack);
     this.camera.position.x = THREE.MathUtils.damp(this.camera.position.x, this.desired.x, 5.5, dt);
     this.camera.position.y = THREE.MathUtils.damp(this.camera.position.y, this.desired.y, 6.8, dt);
     this.camera.position.z = THREE.MathUtils.damp(this.camera.position.z, this.desired.z, 4.2, dt);
@@ -85,14 +116,25 @@ export class GameCamera {
     this.shakeTimer = Math.max(this.shakeTimer, duration);
   }
 
-  startBossReveal(playerPosition: THREE.Vector3, bossPosition: THREE.Vector3, duration = 2.35): void {
+  /** `bossCenter` is the boss's visual centre, not its root, so tall bosses stay in frame. */
+  startBossReveal(
+    playerPosition: THREE.Vector3,
+    bossCenter: THREE.Vector3,
+    duration = 2.35,
+    bossHalfHeight = 2.4,
+  ): void {
+    const distance = THREE.MathUtils.clamp(
+      (bossHalfHeight * 1.25) / Math.tan(THREE.MathUtils.degToRad(this.camera.fov * 0.5)),
+      this.sideDistance * 0.84,
+      this.sideDistance * 1.9,
+    );
     this.cinematic = {
       mode: 'boss_reveal',
       elapsed: 0,
       duration,
       from: this.camera.position.clone(),
-      target: bossPosition.clone().lerp(playerPosition, 0.22).add(new THREE.Vector3(0, 1.2, this.sideDistance * 0.84)),
-      center: bossPosition.clone().add(new THREE.Vector3(0, 1.35, 0)),
+      target: bossCenter.clone().lerp(playerPosition, 0.22).add(new THREE.Vector3(0, 0, distance)),
+      center: bossCenter.clone(),
     };
   }
 
@@ -136,12 +178,59 @@ export class GameCamera {
     if (state.elapsed >= state.duration) this.cinematic = null;
   }
 
-  private constrainFocus(bounds?: AABB): void {
+  /**
+   * Distance needed to keep both subjects inside the vertical field of view.
+   * A fixed multiplier of `sideDistance` cannot do this: a tier-8 boss is more
+   * than twice the height of a tier-1 boss, so any constant either clips the
+   * big ones or leaves the small ones lost in empty sky.
+   */
+  private solvePullBack(
+    target: THREE.Vector3,
+    secondary: THREE.Vector3,
+    secondaryHalfHeight: number,
+  ): number {
+    const top = Math.max(secondary.y + secondaryHalfHeight, target.y + PLAYER_HALF_HEIGHT);
+    const bottom = Math.min(secondary.y - secondaryHalfHeight, target.y - PLAYER_HALF_HEIGHT);
+    // Grow the half-span so each subject clears its side's HUD band. A crown
+    // hidden behind the boss health bar still reads as clipped.
+    const halfSpan = Math.max(
+      (top - this.focus.y) / TOP_USABLE,
+      (this.focus.y - bottom) / BOTTOM_USABLE,
+    );
+    const needed = halfSpan / Math.tan(THREE.MathUtils.degToRad(this.camera.fov * 0.5));
+    return THREE.MathUtils.clamp(needed, this.sideDistance * 1.12, this.sideDistance * 3.9);
+  }
+
+  /**
+   * Vertical centre that lets both subjects clear their own side's HUD band at
+   * the smallest pull-back that can do it. A fixed bias lerp between the two
+   * cannot: the reserved bands are asymmetric, so the point that balances them
+   * is not the midpoint, and the error is worst exactly when the separation is
+   * widest — player on the arena floor, boss overhead — which is where the
+   * crown was being cut off.
+   */
+  private solveFramingCentre(
+    target: THREE.Vector3,
+    secondary: THREE.Vector3,
+    secondaryHalfHeight: number,
+  ): number {
+    const top = Math.max(secondary.y + secondaryHalfHeight, target.y + PLAYER_HALF_HEIGHT);
+    const bottom = Math.min(secondary.y - secondaryHalfHeight, target.y - PLAYER_HALF_HEIGHT);
+    return (BOTTOM_USABLE * top + TOP_USABLE * bottom) / (TOP_USABLE + BOTTOM_USABLE);
+  }
+
+  private constrainFocus(bounds?: AABB, framingSecondary = false): void {
     if (!bounds) return;
     const marginX = 2.2;
     const marginY = 1.6;
     this.focus.x = THREE.MathUtils.clamp(this.focus.x, bounds.x + marginX, bounds.x + bounds.w - marginX);
-    this.focus.y = THREE.MathUtils.clamp(this.focus.y, bounds.y + marginY, bounds.y + bounds.h - marginY);
+    // A boss hovers above the platform the arena bounds were built from, so
+    // clamping the focus to those bounds drags it back down and undoes the
+    // framing solve. While a second subject is being framed the ceiling is
+    // released; the floor still holds, so the camera never drops through the
+    // arena.
+    const ceiling = framingSecondary ? Infinity : bounds.y + bounds.h - marginY;
+    this.focus.y = THREE.MathUtils.clamp(this.focus.y, bounds.y + marginY, ceiling);
   }
 
   private applyShake(dt: number): void {

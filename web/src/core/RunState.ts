@@ -57,9 +57,13 @@ export class RunState {
   floor = 1;
   dice: DiceRange;
   lastRoll = 10;
+  /** Snapshot of the victory/final-boss roll used for meta progression, immune to mid-fight meter invokes. */
+  metaRoll: number | null = null;
   relics: OwnedRelic[] = [];
   worldModifiers: ActiveModifier[] = [];
   diceMeter = 0;
+  /** Count of dice meter invokes this run; feeds RNG `extra` so consecutive invokes can differ. */
+  meterInvokes = 0;
   enemiesRemaining = 0;
   floorElapsed = 0;
   runElapsed = 0;
@@ -162,9 +166,10 @@ export class RunState {
     return this.floor === 5 || this.world === 4;
   }
 
-  recordClear(runTimeSec: number): void {
+  recordClear(runTimeSec: number, finalRoll?: number): void {
     this.meta.clears += 1;
-    this.meta.startRange = Math.max(1, Math.min(20, this.lastRoll));
+    const roll = finalRoll ?? this.metaRoll ?? this.lastRoll;
+    this.meta.startRange = Math.max(1, Math.min(20, roll));
     if (this.meta.bestTimeSec <= 0 || runTimeSec < this.meta.bestTimeSec) {
       this.meta.bestTimeSec = runTimeSec;
     }

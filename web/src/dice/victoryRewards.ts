@@ -29,6 +29,7 @@ export function rollVictoryReward(run: RunState, options: VictoryRewardOptions =
     Math.min(20, rawRoll + (options.bonus ?? 0)),
   );
   run.lastRoll = roll;
+  run.metaRoll = roll;
   return {
     roll,
     band: relicBandForVictoryRoll(roll),
@@ -47,6 +48,7 @@ export function rollFinalBoss(run: RunState): FinalBossRoll {
   const roll = run.roll('final_boss');
   const bossId = finalBossForRoll(roll);
   run.finalBossId = bossId;
+  run.metaRoll = roll;
   return {
     roll,
     bossId,

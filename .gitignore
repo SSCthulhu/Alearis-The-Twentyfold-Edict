@@ -68,3 +68,6 @@ bld/
 .directory
 .Trash-*
 nohup.out
+
+# Web screenshot-harness output (generated, not source)
+screenshots/

@@ -2,6 +2,7 @@ import type { DiceDelta } from '../core/types';
 import type { RunState } from '../core/RunState';
 import { rngShuffle } from '../core/SeededRng';
 import { MODIFIER_DATABASE, type ModifierDef } from './ModifierDatabase';
+import { IMPLEMENTED_MODIFIER_EFFECT_IDS } from './ModifierEffects';
 
 const OFFER_SIZE = 5;
 const NON_HEAL_DELTAS: readonly DiceDelta[] = [-2, -1, 1, 2];
@@ -38,6 +39,7 @@ export function offerModifiers(run: RunState): ModifierDef[] {
 }
 
 function canOfferModifier(run: RunState, modifier: ModifierDef): boolean {
+  if (!IMPLEMENTED_MODIFIER_EFFECT_IDS.has(modifier.effectId)) return false;
   return modifier.exclusiveTag === undefined || !run.hasExclusive(modifier.exclusiveTag);
 }
 

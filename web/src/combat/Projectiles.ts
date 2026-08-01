@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import type { DamageInfo } from '../core/types';
 import { getSharedRamp } from '../render/CelMaterial';
 import { perfBudget } from '../performance/Budget';
 import type { StatusEffectId } from './StatusEffects';
@@ -11,6 +12,9 @@ export interface ProjectilePayload {
   owner: 'player' | 'enemy' | 'boss' | 'hazard';
   status?: StatusEffectId;
   knockback?: number;
+  crit?: boolean;
+  elemental?: NonNullable<DamageInfo['elemental']>;
+  sourcePosition?: THREE.Vector3;
 }
 
 export interface ProjectileSpawnSpec {

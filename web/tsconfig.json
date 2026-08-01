@@ -18,11 +18,11 @@
     "noUncheckedSideEffectImports": true,
     "resolveJsonModule": true,
     "isolatedModules": true,
-    "ignoreDeprecations": "6.0",
+    "types": ["node"],
     "baseUrl": ".",
     "paths": {
       "@/*": ["src/*"]
     }
   },
-  "include": ["src", "harness"]
+  "include": ["src"]
 }

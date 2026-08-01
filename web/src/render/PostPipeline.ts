@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import { SRGB_ENCODE_GLSL } from './CelMaterial';
 import { getPalette } from './Palettes';
 
 /**
@@ -17,6 +18,7 @@ export class PostPipeline {
   private readonly normalDepthMaterial: THREE.ShaderMaterial;
   private width = 1;
   private height = 1;
+  private vignetteStrength = 0;
   enabled = true;
   edgeStrength = 0.85;
   edgeThreshold = 0.12;
@@ -30,6 +32,10 @@ export class PostPipeline {
       magFilter: THREE.LinearFilter,
       format: THREE.RGBAFormat,
     });
+    // Built-in materials only apply output encoding when the target says so.
+    // Without this they would stay linear while the NPR shaders encode
+    // themselves, and unlit VFX would render darker than the surfaces they sit on.
+    this.beautyTarget.texture.colorSpace = THREE.SRGBColorSpace;
     this.normalDepthTarget = new THREE.WebGLRenderTarget(w, h, {
       minFilter: THREE.NearestFilter,
       magFilter: THREE.NearestFilter,
@@ -41,9 +47,23 @@ export class PostPipeline {
       vertexShader: /* glsl */ `
         varying vec3 vNormal;
         varying float vDepth;
+        #include <common>
+        #include <batching_pars_vertex>
+        #include <morphtarget_pars_vertex>
+        #include <skinning_pars_vertex>
         void main() {
-          vNormal = normalize(normalMatrix * normal);
-          vec4 mv = modelViewMatrix * vec4(position, 1.0);
+          #include <batching_vertex>
+          #include <beginnormal_vertex>
+          #include <morphinstance_vertex>
+          #include <morphnormal_vertex>
+          #include <skinbase_vertex>
+          #include <skinnormal_vertex>
+          #include <defaultnormal_vertex>
+          #include <begin_vertex>
+          #include <morphtarget_vertex>
+          #include <skinning_vertex>
+          vNormal = normalize(transformedNormal);
+          vec4 mv = modelViewMatrix * vec4(transformed, 1.0);
           vDepth = -mv.z;
           gl_Position = projectionMatrix * mv;
         }
@@ -65,6 +85,7 @@ export class PostPipeline {
         uEdgeColor: { value: new THREE.Color('#1a1420') },
         uStrength: { value: this.edgeStrength },
         uThreshold: { value: this.edgeThreshold },
+        uVignette: { value: 0 },
       },
       vertexShader: /* glsl */ `
         varying vec2 vUv;
@@ -74,12 +95,14 @@ export class PostPipeline {
         }
       `,
       fragmentShader: /* glsl */ `
+        ${SRGB_ENCODE_GLSL}
         uniform sampler2D tDiffuse;
         uniform sampler2D tNormalDepth;
         uniform vec2 uResolution;
         uniform vec3 uEdgeColor;
         uniform float uStrength;
         uniform float uThreshold;
+        uniform float uVignette;
         varying vec2 vUv;
 
         float sobel(sampler2D tex, vec2 uv, vec2 px) {
@@ -101,7 +124,7 @@ export class PostPipeline {
           vec3 nr  = texture2D(tex, uv + px * vec2( 1.0,  0.0)).rgb;
           vec3 nbl = texture2D(tex, uv + px * vec2(-1.0, -1.0)).rgb;
           vec3 nb  = texture2D(tex, uv + px * vec2( 0.0, -1.0)).rgb;
-          vec3 nbr = texture2D(tex, uv + px * vec2( 1.0,  0.0)).rgb;
+          vec3 nbr = texture2D(tex, uv + px * vec2( 1.0, -1.0)).rgb;
           vec3 ngx = -ntl - 2.0*nl - nbl + ntr + 2.0*nr + nbr;
           vec3 ngy = -ntl - 2.0*nt - ntr + nbl + 2.0*nb + nbr;
           float nEdge = length(ngx) + length(ngy);
@@ -113,9 +136,12 @@ export class PostPipeline {
           vec4 beauty = texture2D(tDiffuse, vUv);
           float edge = sobel(tNormalDepth, vUv, px);
           float mask = smoothstep(uThreshold, uThreshold + 0.08, edge) * uStrength;
-          // Keep edges thin/graphic — avoid soft photoreal AO look
-          vec3 col = mix(beauty.rgb, uEdgeColor, clamp(mask, 0.0, 0.85));
-          gl_FragColor = vec4(col, 1.0);
+          // Keep edges thin/graphic — avoid soft photoreal AO look. The beauty
+          // buffer is already display-encoded, so the ink must be too.
+          vec3 col = mix(beauty.rgb, alearisEncode(uEdgeColor), clamp(mask, 0.0, 0.85));
+          // Council pressure vignette (void lanterns): mild edge darkening only
+          float vig = 1.0 - uVignette * smoothstep(0.32, 0.78, distance(vUv, vec2(0.5)));
+          gl_FragColor = vec4(col * vig, 1.0);
         }
       `,
     });
@@ -135,6 +161,11 @@ export class PostPipeline {
   setWorld(world: number): void {
     const p = getPalette(world);
     this.edgeMaterial.uniforms.uEdgeColor!.value.copy(p.ink);
+  }
+
+  /** Screen-edge darkening 0..1; used by council void-lantern pressure. */
+  setVignette(strength: number): void {
+    this.vignetteStrength = THREE.MathUtils.clamp(strength, 0, 1);
   }
 
   render(scene: THREE.Scene, camera: THREE.Camera): void {
@@ -162,6 +193,7 @@ export class PostPipeline {
     this.edgeMaterial.uniforms.tNormalDepth!.value = this.normalDepthTarget.texture;
     this.edgeMaterial.uniforms.uStrength!.value = this.edgeStrength;
     this.edgeMaterial.uniforms.uThreshold!.value = this.edgeThreshold;
+    this.edgeMaterial.uniforms.uVignette!.value = this.vignetteStrength;
     this.renderer.setRenderTarget(null);
     this.renderer.render(this.edgeScene, this.edgeCamera);
   }

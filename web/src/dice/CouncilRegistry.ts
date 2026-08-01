@@ -183,7 +183,7 @@ export const COUNCIL_EVENTS: readonly CouncilEvent[] = [
     duration: 12,
     description: 'Enemy intent lines and projectile arcs become easier to read.',
     effectId: 'divine_clarity',
-    params: { telegraphSecondsAdd: 0.35, projectileAlphaMult: 1.35, critWindowAdd: 0.05 },
+    params: { telegraphSecondsAdd: 0.35, projectileSpeedMult: 0.82, projectileAlphaMult: 1.35, critWindowAdd: 0.05 },
   },
   {
     roll: 16,

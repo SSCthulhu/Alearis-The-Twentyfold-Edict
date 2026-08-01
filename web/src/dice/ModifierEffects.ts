@@ -8,6 +8,7 @@ export interface CombatMods {
   enemyProjectileSpeedMult: number;
   enemyDamageMult: number;
   enemySpawnRateMult: number;
+  enemyWindupAddSeconds: number;
   eliteSpawnChanceAdd: number;
   hazardFrequencyMult: number;
   playerDamageMult: number;
@@ -32,6 +33,32 @@ export interface ModifierChosenPayload {
   healAmount: number;
 }
 
+/**
+ * Effect ids with a live mechanical hook. Offers must never surface an effect
+ * outside this set (e.g. gold_find_mult has no currency system yet).
+ */
+export const IMPLEMENTED_MODIFIER_EFFECT_IDS: ReadonlySet<ModifierEffectId> = new Set<ModifierEffectId>([
+  'heal',
+  'enemy_hp_mult',
+  'enemy_projectile_speed_mult',
+  'enemy_damage_mult',
+  'player_damage_mult',
+  'player_move_speed_mult',
+  'player_attack_speed_mult',
+  'gravity_mult',
+  'damage_taken_mult',
+  'aggro_delay_mult',
+  'enemy_spawn_rate_mult',
+  'hazard_frequency_mult',
+  'player_heal_on_floor',
+  'elite_spawn_chance',
+  'cooldown_recovery_mult',
+  'meter_gain_mult',
+  'dash_recovery_mult',
+  'knockback_resist_mult',
+  'floor_timer_mult',
+]);
+
 export function baseCombatMods(): CombatMods {
   return {
     enemyHpMult: 1,
@@ -39,6 +66,7 @@ export function baseCombatMods(): CombatMods {
     enemyProjectileSpeedMult: 1,
     enemyDamageMult: 1,
     enemySpawnRateMult: 1,
+    enemyWindupAddSeconds: 0,
     eliteSpawnChanceAdd: 0,
     hazardFrequencyMult: 1,
     playerDamageMult: 1,

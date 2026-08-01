@@ -1,6 +1,7 @@
 import { bus, Events } from '../core/EventBus';
 import type { RunState } from '../core/RunState';
 import { getCouncilEvent, type CouncilEvent } from './CouncilRegistry';
+import { getModifierCombatMods } from './ModifierEffects';
 
 const METER_FULL = 100;
 const KILL_CHARGE = 8;
@@ -59,7 +60,9 @@ export class DiceMeterState {
   tryInvoke(run: RunState): CouncilEvent | null {
     if (!run.spendMeter()) return null;
 
-    const roll = run.roll('dice_meter');
+    // Distinct `extra` per invoke so back-to-back invokes in the same context can differ.
+    const roll = run.roll('dice_meter', run.meterInvokes);
+    run.meterInvokes += 1;
     const event = getCouncilEvent(roll);
     this.current = {
       event,
@@ -129,8 +132,13 @@ export function onBossKill(run: RunState): void {
   chargeDiceMeter(run, BOSS_KILL_CHARGE, 'boss_kill');
 }
 
+/** Fast-clear window in seconds, shrunk/stretched by floor_timer_mult modifiers. */
+export function getFastClearSeconds(run: RunState): number {
+  return FAST_CLEAR_SECONDS * getModifierCombatMods(run).floorTimerMult;
+}
+
 export function onFastClear(run: RunState, clearTimeSeconds: number): void {
-  if (clearTimeSeconds <= FAST_CLEAR_SECONDS) {
+  if (clearTimeSeconds <= getFastClearSeconds(run)) {
     chargeDiceMeter(run, FAST_CLEAR_CHARGE, 'fast_clear');
   }
 }
@@ -176,5 +184,5 @@ function meterChargeMultiplier(run: RunState): number {
     const value = relic.params.meterChargeMultBonus;
     if (value !== undefined && Number.isFinite(value)) bonus += value;
   }
-  return Math.max(0.1, 1 + bonus);
+  return Math.max(0.1, (1 + bonus) * getModifierCombatMods(run).meterGainMult);
 }

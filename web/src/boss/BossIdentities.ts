@@ -411,11 +411,12 @@ export function getFinalBossIdentity(finalBossId: FinalBossId): BossIdentity {
   return BOSS_IDENTITIES[FINAL_BOSS_IDS[finalBossId]];
 }
 
+/** Spec: 1→A, 2–7→B, 8–13→C, 14–19→D, 20→E */
 export function selectFinalBossIdFromDiceRoll(roll: number): FinalBossId {
-  if (roll <= 4) return 'a';
-  if (roll <= 8) return 'b';
-  if (roll <= 12) return 'c';
-  if (roll <= 16) return 'd';
+  if (roll <= 1) return 'a';
+  if (roll <= 7) return 'b';
+  if (roll <= 13) return 'c';
+  if (roll <= 19) return 'd';
   return 'e';
 }
 

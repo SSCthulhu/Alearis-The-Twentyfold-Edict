@@ -137,27 +137,53 @@ export function drawPanelTitle(ctx: CanvasRenderingContext2D, rect: Rect, title:
   ctx.restore();
 }
 
+export interface BarOptions {
+  /** Trailing value the bar drains toward; renders as a lag ghost band. */
+  ghost?: number;
+  ghostColor?: string;
+  /** Bright cap on the fill's leading edge. On by default. */
+  leadingEdge?: boolean;
+}
+
 export function fillBar(
   ctx: CanvasRenderingContext2D,
   rect: Rect,
   ratio: number,
   fill: string,
   back = 'rgba(255, 255, 255, 0.08)',
+  options: BarOptions = {},
 ): void {
   const clamped = clamp01(ratio);
+  const ghost = clamp01(options.ghost ?? 0);
+  const chamfer = Math.min(rect.h * 0.4, 14);
+
   ctx.save();
-  traceChamferedRect(ctx, rect, Math.min(rect.h * 0.4, 14));
+  traceChamferedRect(ctx, rect, chamfer);
   ctx.fillStyle = back;
   ctx.fill();
   ctx.clip();
+
+  // Lag ghost sits between the new value and the old one, so a hit reads as a
+  // measurable bite out of the bar rather than an instant jump.
+  if (ghost > clamped) {
+    ctx.fillStyle = options.ghostColor ?? 'rgba(255, 226, 168, 0.5)';
+    ctx.fillRect(rect.x + rect.w * clamped, rect.y, rect.w * (ghost - clamped), rect.h);
+  }
+
   ctx.fillStyle = fill;
   ctx.fillRect(rect.x, rect.y, rect.w * clamped, rect.h);
+
+  if (options.leadingEdge !== false && clamped > 0.004 && clamped < 0.997) {
+    const capWidth = Math.max(4, rect.h * 0.16);
+    ctx.fillStyle = UI_COLORS.goldBright;
+    ctx.fillRect(rect.x + rect.w * clamped - capWidth, rect.y, capWidth, rect.h);
+  }
   ctx.restore();
 
   ctx.save();
   ctx.strokeStyle = UI_COLORS.goldDim;
-  ctx.lineWidth = 2;
-  traceChamferedRect(ctx, rect, Math.min(rect.h * 0.4, 14));
+  ctx.lineWidth = 2.5;
+  traceChamferedRect(ctx, rect, chamfer);
   ctx.stroke();
   ctx.restore();
 }

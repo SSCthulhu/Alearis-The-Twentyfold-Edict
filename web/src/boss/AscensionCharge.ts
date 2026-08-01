@@ -101,6 +101,10 @@ export interface AscensionChargeOptions {
 
 const DEFAULT_ASCENSION_COLOR = '#ffd36e';
 const DEFAULT_SECONDARY_COLOR = '#fff3b0';
+/** Fixed orb identity — see `buildOrbVisuals` for why this ignores world palette. */
+const ORB_CORE_COLOR = '#fff8e0';
+const ORB_HALO_COLOR = '#ffbe2e';
+const ORB_INK = '#2b1a0c';
 const WRONG_PORTAL_DEBUFF: AscensionDebuff = {
   id: 'vesperra_wrong_portal_astral_static',
   durationSec: 6,
@@ -139,6 +143,7 @@ export class AscensionCharge {
   private readonly onAttractAdds?: (event: AscensionDropEvent) => void;
   private readonly hazardPulse: THREE.Mesh;
   private readonly socketCore: THREE.Mesh;
+  private readonly orbGlow: THREE.Mesh;
   private carrier: AscensionCarrier | null = null;
   private activeStation: AscensionStationRuntime | null = null;
   private ascendantCoreBonusConsumed = false;
@@ -172,6 +177,7 @@ export class AscensionCharge {
     this.socketCore = this.socket.group.getObjectByName('ascension_socket_core') as THREE.Mesh;
 
     buildOrbVisuals(this.orbGroup, accent, secondary);
+    this.orbGlow = this.orbGroup.getObjectByName('ascension_orb_glow') as THREE.Mesh;
     this.group.add(this.orbGroup, this.socket.group, this.hazardPulse);
     for (const station of this.stations) this.group.add(station.group);
 
@@ -347,8 +353,19 @@ export class AscensionCharge {
   }
 
   private updateVisuals(deltaSec: number): void {
-    const orbScale = 0.85 + this.chargeProgress * 0.25 + Math.sin(performance.now() * 0.006) * 0.04;
+    // Carried orb reads as a live power source: bigger, with a pulsing shell.
+    const held = this.state === 'carried' || this.state === 'charging' || this.state === 'charged';
+    const orbScale =
+      (0.85 + this.chargeProgress * 0.25 + Math.sin(performance.now() * 0.006) * 0.04) * (held ? 1.18 : 1);
     this.orbGroup.scale.setScalar(orbScale);
+
+    const glowMaterial = this.orbGlow.material;
+    if (glowMaterial instanceof THREE.MeshBasicMaterial) {
+      // Solid corona, so these run far hotter than the old additive haze did.
+      const pulse = (Math.sin(performance.now() * 0.009) * 0.5 + 0.5) * 0.1;
+      glowMaterial.opacity = held ? (this.state === 'charged' ? 1 : 0.88) + pulse : 0.62;
+    }
+    this.orbGlow.scale.setScalar(held ? 1.3 : 1);
 
     for (const station of this.stations) {
       const material = station.beam.material;
@@ -405,45 +422,91 @@ function buildOrbVisuals(
   accent: THREE.ColorRepresentation,
   secondary: THREE.ColorRepresentation,
 ): void {
+  /**
+   * The orb is a universal exception to palette lock. Deriving it from the boss
+   * accent makes it pale cyan in a pale cyan frost world, where it cannot
+   * out-read anything; it keeps a fixed warm identity instead, and the dark
+   * contour ring guarantees separation even against a white sky.
+   */
   const core = new THREE.Mesh(
     new THREE.SphereGeometry(0.55, 32, 18),
     createCelMaterial({
-      color: accent,
-      rimColor: secondary,
+      color: ORB_CORE_COLOR,
+      rimColor: ORB_HALO_COLOR,
       rimStrength: 1.15,
-      ambient: 0.55,
+      ambient: 0.95,
       specularStrength: 0.65,
     }),
   );
   core.name = 'ascension_orb_core';
 
-  const glow = new THREE.Mesh(
-    new THREE.SphereGeometry(0.72, 24, 14),
+  /**
+   * Hard-edged stepped corona in place of an additive glow sphere. Additive
+   * blending is bloom soup — it dissolves the silhouette instead of stating it.
+   * Flat rings in the XY plane always face the locked side camera.
+   */
+  const halo = new THREE.Mesh(
+    new THREE.RingGeometry(0.64, 0.98, 32),
+    new THREE.MeshBasicMaterial({
+      color: ORB_HALO_COLOR,
+      transparent: true,
+      opacity: 0.95,
+      depthWrite: false,
+      side: THREE.DoubleSide,
+    }),
+  );
+  halo.name = 'ascension_orb_glow';
+  halo.position.z = -0.18;
+
+  // Dark contour between the hot corona and the world. Without it the orb
+  // dissolves into any light background no matter how bright the core is.
+  const contour = new THREE.Mesh(
+    new THREE.RingGeometry(0.98, 1.1, 32),
+    new THREE.MeshBasicMaterial({
+      color: ORB_INK,
+      transparent: true,
+      opacity: 0.92,
+      depthWrite: false,
+      side: THREE.DoubleSide,
+    }),
+  );
+  contour.name = 'ascension_orb_contour';
+  contour.position.z = -0.19;
+
+  // Outermost band keeps a tie to the boss identity colour.
+  const haloOuter = new THREE.Mesh(
+    new THREE.RingGeometry(1.14, 1.28, 32),
     new THREE.MeshBasicMaterial({
       color: accent,
       transparent: true,
-      opacity: 0.22,
-      blending: THREE.AdditiveBlending,
+      opacity: 0.7,
       depthWrite: false,
+      side: THREE.DoubleSide,
     }),
   );
-  glow.name = 'ascension_orb_glow';
+  haloOuter.name = 'ascension_orb_halo_outer';
+  haloOuter.position.z = -0.2;
 
+  // Heavier tubes so the rings survive as shapes at gameplay distance.
   const ringMaterial = createCelMaterial({
     color: secondary,
     rimColor: '#ffffff',
     rimStrength: 0.8,
-    ambient: 0.45,
+    ambient: 0.7,
   });
-  const ringA = new THREE.Mesh(new THREE.TorusGeometry(0.9, 0.035, 8, 36), ringMaterial);
-  const ringB = new THREE.Mesh(new THREE.TorusGeometry(0.9, 0.035, 8, 36), ringMaterial);
+  const ringA = new THREE.Mesh(new THREE.TorusGeometry(0.9, 0.075, 8, 36), ringMaterial);
+  const ringB = new THREE.Mesh(new THREE.TorusGeometry(0.9, 0.075, 8, 36), ringMaterial);
   ringA.name = 'ascension_orb_ring_a';
   ringB.name = 'ascension_orb_ring_b';
   ringA.rotation.x = Math.PI * 0.5;
   ringB.rotation.y = Math.PI * 0.5;
 
-  parent.add(glow, core, ringA, ringB);
-  attachOutline(parent, core, '#201422', 0.025);
+  parent.add(haloOuter, contour, halo, core, ringA, ringB);
+  attachOutline(parent, core, '#201422', 0.05);
+  // Ink scaled to the tube, not to the orb: a wider hull than this eats the
+  // ring's own colour and the halo reads as a dark circle.
+  attachOutline(parent, ringA, '#201422', 0.007);
+  attachOutline(parent, ringB, '#201422', 0.007);
 }
 
 function createStationRuntime(

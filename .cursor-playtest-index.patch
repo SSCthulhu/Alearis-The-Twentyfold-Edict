@@ -1,0 +1,91 @@
+diff --git a/web/src/Game.ts b/web/src/Game.ts
+--- a/web/src/Game.ts
++++ b/web/src/Game.ts
+@@ -77,9 +77,29 @@ export type HarnessScenario =
+   | 'victory'
+   | 'death';
+ 
++export interface PlayerDebugState {
++  x: number;
++  y: number;
++  grounded: boolean;
++  classId: string;
++  hp: number;
++  alive: boolean;
++  jumpedLastFrame?: boolean;
++}
++
++export interface RunTelemetry {
++  phase: string;
++  kills: number;
++  floor: number;
++  world: number;
++  classId: string;
++  enemyAlive: number;
++}
++
+ export interface AlearisDebugApi {
+   getPhase: () => GamePhase;
+   getRunSnapshot: () => Record<string, unknown>;
++  getPlayerState: () => PlayerDebugState | null;
++  getRunTelemetry: () => RunTelemetry;
+   setScenario: (scenario: HarnessScenario) => Promise<void>;
+   startRun: (classId?: ClassId, seed?: number) => void;
+   ready: boolean;
+@@ -145,6 +165,7 @@ export class Game {
+   private bossIntroTimer = 0;
+   private livePlayerPos = new THREE.Vector3();
+   private currentCouncilMods: CombatMods = getCouncilCombatMods(null);
++  private playerJumpedLastFrame = false;
+ 
+   constructor() {
+     const canvas = document.querySelector<HTMLCanvasElement>('#game-canvas');
+@@ -281,6 +302,7 @@ export class Game {
+   private loadFloor(): void {
+@@
+     this.player = new PlayerController(this.run, this.arena.spawns.player);
++    this.playerJumpedLastFrame = false;
+     this.applyPlayerRelics();
+     // PlayerController caps the composed gravity multiplier against the same
+     // jump-clearance budget ArenaBuilder uses for platform step validation.
+@@ -591,6 +613,7 @@ export class Game {
+   private update(dt: number): void {
++    this.playerJumpedLastFrame = false;
+     this.sky.update(this.time);
+     this.vfx.update(dt);
+     this.damageNumbers.update(dt);
+@@ -696,6 +719,7 @@ export class Game {
+     }
+ 
+     const frame = this.player.update(dt, snap, this.arena);
++    this.playerJumpedLastFrame = frame.jumped;
+ 
+     if (frame.landed) {
+       this.vfx.spawnLandSmoke(this.player.position);
+@@ -1044,6 +1068,25 @@ export class Game {
+         bossHp: this.boss?.hp ?? null,
+         bossState: this.boss?.state ?? null,
+       }),
++      getPlayerState: () => {
++        if (!this.player) return null;
++        return {
++          x: this.player.position.x,
++          y: this.player.position.y,
++          grounded: this.player.grounded,
++          classId: this.run.classId,
++          hp: this.player.health.hp,
++          alive: this.player.health.alive,
++          jumpedLastFrame: this.playerJumpedLastFrame,
++        };
++      },
++      getRunTelemetry: () => ({
++        phase: this.run.phase,
++        kills: this.run.kills,
++        floor: this.run.floor,
++        world: this.run.world,
++        classId: this.run.classId,
++        enemyAlive: this.encounter?.aliveCount ?? 0,
++      }),
+       startRun: (classId = 'knight', seed) => this.startRun(classId, seed),
+       setScenario: async (scenario) => {
+         await this.applyScenario(scenario);

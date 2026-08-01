@@ -2,7 +2,7 @@ import * as THREE from 'three';
 import { bus, Events } from '../core/EventBus';
 import type { RunState } from '../core/RunState';
 import type { WorldId } from '../core/types';
-import { getModifierCombatMods, type CombatMods } from '../dice/ModifierEffects';
+import { baseCombatMods, getModifierCombatMods, type CombatMods } from '../dice/ModifierEffects';
 import { EnemyBase, type EnemyAiContext, type EnemyFrameEvents } from '../enemies/EnemyBase';
 import { MeleeKnightAdd } from '../enemies/MeleeKnightAdd';
 import { MinionSkeleton } from '../enemies/MinionSkeleton';
@@ -18,6 +18,18 @@ interface WeightedEnemy {
   kind: EnemyKind;
   weight: number;
 }
+
+/** Budget points each enemy kind consumes when a boss wave spends its add budget. */
+const ENEMY_BUDGET_COST: Record<EnemyKind, number> = {
+  minionSkeleton: 1,
+  rogueSkeleton: 2,
+  skeletonMage: 2,
+  meleeKnightAdd: 2,
+  necromancer: 3,
+  skeletonGolem: 3,
+};
+
+const MAX_WAVE_SPAWNS = 12;
 
 export interface EncounterDifficulty {
   hpMult: number;
@@ -41,7 +53,9 @@ export class EncounterController {
   private readonly rng: () => number;
   private readonly combatMods: CombatMods;
   private readonly difficulty: EncounterDifficulty;
+  private councilMods: CombatMods = baseCombatMods();
   private clearedEmitted = false;
+  private waveAnchorCursor = 0;
 
   constructor(run: RunState, arena: Arena) {
     this.run = run;
@@ -62,6 +76,11 @@ export class EncounterController {
     return this.enemies.reduce((count, enemy) => count + (enemy.alive ? 1 : 0), 0);
   }
 
+  /** Live council-event mods (aggro delay, telegraph extension) fed from Game each frame. */
+  setCouncilCombatMods(mods: CombatMods): void {
+    this.councilMods = mods;
+  }
+
   spawnInitialWave(): EnemyBase[] {
     this.clear();
     const spawned: EnemyBase[] = [];
@@ -80,6 +99,33 @@ export class EncounterController {
     return spawned;
   }
 
+  /**
+   * Spends a boss add budget on a reinforcement wave without clearing live
+   * enemies, so repeated cycles keep pressure up. Budget points map to enemy
+   * kinds via ENEMY_BUDGET_COST.
+   */
+  spawnWave(budget: number): EnemyBase[] {
+    const spawned: EnemyBase[] = [];
+    const anchors = this.arena.enemyAnchors.length > 0 ? this.arena.enemyAnchors : this.arena.spawns.enemies;
+    if (anchors.length === 0) return spawned;
+
+    let remaining = Math.max(1, Math.round(budget));
+    while (remaining > 0 && spawned.length < MAX_WAVE_SPAWNS) {
+      const kind = this.pickEnemyKind(this.arena.world, this.arena.floor);
+      const cost = ENEMY_BUDGET_COST[kind];
+      if (cost > remaining && spawned.length > 0) break;
+      remaining -= cost;
+      const anchor = anchors[this.waveAnchorCursor % anchors.length]!;
+      this.waveAnchorCursor += 1;
+      const jitter = (this.rng() - 0.5) * 0.42;
+      spawned.push(this.spawnEnemy(kind, new THREE.Vector3(anchor.x + jitter, anchor.y, 0)));
+    }
+
+    if (spawned.length > 0) this.clearedEmitted = false;
+    this.run.enemiesRemaining = this.aliveCount;
+    return spawned;
+  }
+
   update(
     dt: number,
     playerPosition: THREE.Vector3,
@@ -92,6 +138,8 @@ export class EncounterController {
       rng: this.rng,
       playerHurtboxRadius: 0.38,
       lineOfSight,
+      aggroDelayMult: this.combatMods.aggroDelayMult * this.councilMods.aggroDelayMult,
+      windupAddSeconds: this.combatMods.enemyWindupAddSeconds + this.councilMods.enemyWindupAddSeconds,
     };
 
     for (const enemy of this.enemies) {
@@ -110,6 +158,27 @@ export class EncounterController {
     return frame;
   }
 
+  /** Council mirror spawns: fragile, non-elite shades near the player (roll 16). */
+  spawnFragileShades(count: number, hpMult: number, near: THREE.Vector3): EnemyBase[] {
+    const spawned: EnemyBase[] = [];
+    const safeCount = Math.max(1, Math.trunc(count));
+    const safeHpMult = Math.max(0.05, hpMult);
+    for (let i = 0; i < safeCount; i++) {
+      const side = i % 2 === 0 ? 1 : -1;
+      const offset = 2.1 + this.rng() * 1.4;
+      const shade = this.createEnemy('minionSkeleton', new THREE.Vector3(near.x + side * offset, near.y, 0));
+      shade.hp = Math.max(1, shade.config.maxHp * safeHpMult);
+      shade.root.userData.maxHp = shade.hp;
+      shade.root.userData.damageMult = this.difficulty.damageMult;
+      shade.root.userData.mirrorShade = true;
+      this.enemies.push(shade);
+      this.root.add(shade.root);
+      spawned.push(shade);
+    }
+    this.run.enemiesRemaining = this.aliveCount;
+    return spawned;
+  }
+
   notifyEnemyKilled(enemy: EnemyBase): void {
     if (!this.enemies.includes(enemy)) return;
     this.run.enemiesRemaining = this.aliveCount;
@@ -117,7 +186,10 @@ export class EncounterController {
   }
 
   clear(): void {
-    for (const enemy of this.enemies) this.root.remove(enemy.root);
+    for (const enemy of this.enemies) {
+      this.root.remove(enemy.root);
+      enemy.figure.dispose();
+    }
     this.enemies.length = 0;
     this.run.enemiesRemaining = 0;
     this.clearedEmitted = false;

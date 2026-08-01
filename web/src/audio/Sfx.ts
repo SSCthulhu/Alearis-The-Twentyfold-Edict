@@ -2,6 +2,10 @@ import { AudioEngine } from './AudioEngine';
 
 export type SfxName =
   | 'combatHit'
+  | 'arcaneBolt'
+  | 'frostNova'
+  | 'arcaneBarrier'
+  | 'arcaneStorm'
   | 'perfectDodgeChime'
   | 'rollDashWhoosh'
   | 'orbPickup'
@@ -72,6 +76,18 @@ export class Sfx {
       case 'combatHit':
         this.combatHit(options.intensity);
         return;
+      case 'arcaneBolt':
+        this.arcaneBolt();
+        return;
+      case 'frostNova':
+        this.frostNova();
+        return;
+      case 'arcaneBarrier':
+        this.arcaneBarrier();
+        return;
+      case 'arcaneStorm':
+        this.arcaneStorm();
+        return;
       case 'perfectDodgeChime':
         this.perfectDodgeChime();
         return;
@@ -140,6 +156,93 @@ export class Sfx {
       filterType: 'lowpass',
       filterFrequency: 820,
       envelope: { attack: 0.002, decay: 0.045, hold: 0.02, release: 0.16 },
+    });
+  }
+
+  arcaneBolt(): void {
+    const ctx = this.engine.context;
+    const now = ctx.currentTime;
+    [440, 880].forEach((frequency, index) => {
+      scheduleTone(ctx, {
+        frequency,
+        endFrequency: frequency * 1.7,
+        start: now + index * 0.012,
+        duration: 0.16,
+        type: index === 0 ? 'triangle' : 'sine',
+        gain: index === 0 ? 0.13 : 0.08,
+        destination: this.engine.sfxBus,
+        filterType: 'highpass',
+        filterFrequency: 360,
+        envelope: { attack: 0.002, decay: 0.04, sustain: 0.28, hold: 0.01, release: 0.08 },
+      });
+    });
+  }
+
+  frostNova(): void {
+    const ctx = this.engine.context;
+    const now = ctx.currentTime;
+    playNoise(ctx, this.engine.sfxBus, {
+      start: now,
+      duration: 0.34,
+      gain: 0.18,
+      filterType: 'highpass',
+      filterFrequency: 2400,
+      envelope: { attack: 0.004, decay: 0.08, sustain: 0.4, hold: 0.04, release: 0.2 },
+    });
+    [523.25, 783.99, 1046.5].forEach((frequency, index) => {
+      scheduleTone(ctx, {
+        frequency,
+        endFrequency: frequency * 0.72,
+        start: now + index * 0.018,
+        duration: 0.36,
+        type: 'sine',
+        gain: 0.1,
+        destination: this.engine.sfxBus,
+        envelope: { attack: 0.006, decay: 0.08, sustain: 0.35, hold: 0.04, release: 0.2 },
+      });
+    });
+  }
+
+  arcaneBarrier(): void {
+    const ctx = this.engine.context;
+    const now = ctx.currentTime;
+    [293.66, 440, 587.33].forEach((frequency, index) => {
+      scheduleTone(ctx, {
+        frequency,
+        start: now + index * 0.025,
+        duration: 0.52,
+        type: 'sine',
+        gain: 0.1,
+        destination: this.engine.sfxBus,
+        envelope: { attack: 0.018, decay: 0.1, sustain: 0.5, hold: 0.08, release: 0.26 },
+      });
+    });
+  }
+
+  arcaneStorm(): void {
+    const ctx = this.engine.context;
+    const now = ctx.currentTime;
+    playNoise(ctx, this.engine.sfxBus, {
+      start: now,
+      duration: 0.68,
+      gain: 0.16,
+      filterType: 'bandpass',
+      filterFrequency: 720,
+      envelope: { attack: 0.03, decay: 0.12, sustain: 0.62, hold: 0.18, release: 0.32 },
+    });
+    [146.83, 220, 440, 659.25].forEach((frequency, index) => {
+      scheduleTone(ctx, {
+        frequency,
+        endFrequency: frequency * 1.3,
+        start: now + index * 0.045,
+        duration: 0.62,
+        type: index < 2 ? 'sawtooth' : 'triangle',
+        gain: index < 2 ? 0.09 : 0.11,
+        destination: this.engine.sfxBus,
+        filterType: 'lowpass',
+        filterFrequency: 2600,
+        envelope: { attack: 0.025, decay: 0.12, sustain: 0.5, hold: 0.12, release: 0.28 },
+      });
     });
   }
 

@@ -64,6 +64,7 @@ export interface HudState {
   maxShield: number;
   ultimateRemaining: number;
   ultimateDuration: number;
+  ultimateLabel: string;
   abilities: readonly CooldownState[];
   dodgeCharges: readonly DodgeChargeState[];
   boss: BossHudState;
@@ -84,6 +85,7 @@ const DEFAULT_STATE: HudState = {
   maxShield: 60,
   ultimateRemaining: 18,
   ultimateDuration: 45,
+  ultimateLabel: 'Judgment',
   abilities: [
     { id: 'primary', label: 'I', remaining: 0, duration: 6 },
     { id: 'special', label: 'II', remaining: 3.4, duration: 8 },
@@ -123,6 +125,20 @@ const DEFAULT_STATE: HudState = {
   ],
 };
 
+interface GhostTrack {
+  /** Trailing ratio currently drawn behind the fill. */
+  value: number;
+  /** Seconds left before the ghost starts draining. */
+  hold: number;
+  /** Previous frame's true ratio, used to detect a fresh hit. */
+  prev: number;
+}
+
+/** Beat of stillness after a hit so the player can read how much was lost. */
+const GHOST_HOLD_SEC = 0.42;
+/** Fraction of the full bar the ghost drains per second once the hold expires. */
+const GHOST_DRAIN_PER_SEC = 0.55;
+
 export class HudRenderer {
   readonly canvas: HTMLCanvasElement;
 
@@ -131,6 +147,14 @@ export class HudRenderer {
   private animationFrame: number | null = null;
   private state: HudState = DEFAULT_STATE;
   private visible = true;
+  private readonly ghosts = new Map<string, GhostTrack>();
+  private lastFrameMs = 0;
+  private frameDt = 0;
+  private lastSeenRoll = -1;
+  private rollCeremonyUntil = 0;
+  private rollCeremonyTarget = 10;
+  private rollCeremonyMin = 1;
+  private rollCeremonyMax = 20;
 
   constructor(options: HudRendererOptions = {}) {
     const canvas = options.canvas ?? document.querySelector<HTMLCanvasElement>('#hud-canvas');
@@ -182,6 +206,8 @@ export class HudRenderer {
     }
 
     const state = this.getState();
+    this.frameDt = this.lastFrameMs === 0 ? 0 : Math.min(0.1, (timestamp - this.lastFrameMs) / 1000);
+    this.lastFrameMs = timestamp;
     const scale = scaleForViewport(width, height);
     const offsetX = (width - HUD_BASE_WIDTH * scale) * 0.5;
     const offsetY = (height - HUD_BASE_HEIGHT * scale) * 0.5;
@@ -214,6 +240,28 @@ export class HudRenderer {
     this.animationFrame = null;
   }
 
+  /**
+   * Trailing value for a bar. Gains snap forward immediately; losses hold for a
+   * beat and then drain, which is what makes a hit legible as an amount rather
+   * than as a bar that is simply shorter than it was.
+   */
+  private trackGhost(id: string, ratio: number): number {
+    const track = this.ghosts.get(id) ?? { value: ratio, hold: 0, prev: ratio };
+    if (ratio > track.value) {
+      track.value = ratio;
+      track.hold = 0;
+    } else if (ratio < track.prev - 0.0001) {
+      track.hold = GHOST_HOLD_SEC;
+    } else if (track.hold > 0) {
+      track.hold = Math.max(0, track.hold - this.frameDt);
+    } else {
+      track.value = Math.max(ratio, track.value - GHOST_DRAIN_PER_SEC * this.frameDt);
+    }
+    track.prev = ratio;
+    this.ghosts.set(id, track);
+    return track.value;
+  }
+
   private drawVignette(timestamp: number): void {
     const pulse = 0.5 + Math.sin(timestamp * 0.0015) * 0.5;
     const ctx = this.ctx;
@@ -240,17 +288,24 @@ export class HudRenderer {
     ctx.fillText('ASCENDANT VESSEL', 88, 150);
     ctx.restore();
 
-    fillBar(ctx, { x: 300, y: 92, w: 456, h: 34 }, safeRatio(state.hp, state.maxHp), UI_COLORS.red, 'rgba(75, 23, 24, 0.65)');
-    fillBar(ctx, { x: 300, y: 142, w: 456, h: 26 }, safeRatio(state.shield, state.maxShield), UI_COLORS.blue, 'rgba(23, 38, 55, 0.68)');
+    const hpRatio = safeRatio(state.hp, state.maxHp);
+    const shieldRatio = safeRatio(state.shield, state.maxShield);
+    fillBar(ctx, { x: 300, y: 92, w: 456, h: 34 }, hpRatio, UI_COLORS.red, 'rgba(75, 23, 24, 0.65)', {
+      ghost: this.trackGhost('player_hp', hpRatio),
+    });
+    fillBar(ctx, { x: 300, y: 142, w: 456, h: 26 }, shieldRatio, UI_COLORS.blue, 'rgba(23, 38, 55, 0.68)', {
+      ghost: this.trackGhost('player_shield', shieldRatio),
+      ghostColor: 'rgba(168, 226, 255, 0.45)',
+    });
     this.drawValueText(`${Math.ceil(state.hp)} / ${Math.ceil(state.maxHp)}`, 528, 119);
     this.drawValueText(`${Math.ceil(state.shield)} / ${Math.ceil(state.maxShield)}`, 528, 164);
 
-    this.drawUltimate(state.ultimateRemaining, state.ultimateDuration);
+    this.drawUltimate(state.ultimateRemaining, state.ultimateDuration, state.ultimateLabel);
     this.drawAbilityCooldowns(state.abilities);
     this.drawDodgeCharges(state.dodgeCharges);
   }
 
-  private drawUltimate(remaining: number, duration: number): void {
+  private drawUltimate(remaining: number, duration: number, label: string): void {
     const ctx = this.ctx;
     const centerX = 128;
     const centerY = 338;
@@ -267,10 +322,13 @@ export class HudRenderer {
     ctx.strokeStyle = ready ? UI_COLORS.goldBright : UI_COLORS.gold;
     ctx.lineWidth = 8;
     ctx.stroke();
-    ctx.font = `800 17px ${UI_FONTS.mono}`;
+    ctx.font = `800 15px ${UI_FONTS.mono}`;
     ctx.textAlign = 'center';
     ctx.fillStyle = UI_COLORS.ivory;
-    ctx.fillText(ready ? 'ULT' : `${remaining.toFixed(0)}s`, 0, 82);
+    ctx.fillText(label.toUpperCase(), 0, 76);
+    ctx.font = `700 12px ${UI_FONTS.mono}`;
+    ctx.fillStyle = ready ? UI_COLORS.goldBright : UI_COLORS.muted;
+    ctx.fillText(ready ? 'READY' : `${remaining.toFixed(0)}s`, 0, 96);
     ctx.restore();
   }
 
@@ -292,7 +350,8 @@ export class HudRenderer {
         ctx.restore();
       }
       ctx.save();
-      ctx.font = `900 20px ${UI_FONTS.mono}`;
+      const labelSize = ability.label.length <= 4 ? 20 : ability.label.length <= 7 ? 15 : 13;
+      ctx.font = `900 ${labelSize}px ${UI_FONTS.mono}`;
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
       ctx.fillStyle = ready ? UI_COLORS.goldBright : UI_COLORS.muted;
@@ -343,7 +402,10 @@ export class HudRenderer {
     ctx.fillText(boss.name.toUpperCase(), 1280, 92);
     ctx.restore();
 
-    fillBar(ctx, { x: 860, y: 116, w: 840, h: 34 }, safeRatio(boss.hp, boss.maxHp), UI_COLORS.red, 'rgba(75, 23, 24, 0.72)');
+    const bossRatio = safeRatio(boss.hp, boss.maxHp);
+    fillBar(ctx, { x: 860, y: 116, w: 840, h: 34 }, bossRatio, UI_COLORS.red, 'rgba(75, 23, 24, 0.72)', {
+      ghost: this.trackGhost('boss_hp', bossRatio),
+    });
     this.drawValueText(`${Math.ceil(boss.hp)} / ${Math.ceil(boss.maxHp)}`, 1280, 141);
 
     if (boss.castName !== undefined && boss.castName.length > 0) {
@@ -381,14 +443,37 @@ export class HudRenderer {
 
   private drawDiceCluster(dice: DiceHudState, timestamp: number): void {
     const ctx = this.ctx;
+    if (dice.lastRoll !== this.lastSeenRoll && this.lastSeenRoll !== -1) {
+      this.rollCeremonyUntil = timestamp + 1100;
+      this.rollCeremonyTarget = dice.lastRoll;
+      this.rollCeremonyMin = dice.min;
+      this.rollCeremonyMax = dice.max;
+    }
+    this.lastSeenRoll = dice.lastRoll;
+
     drawPanel(ctx, { x: 1744, y: 1010, w: 762, h: 358 }, { alpha: 0.82, glow: true, title: 'DICE ORACLE' });
     ctx.save();
     ctx.font = `900 74px ${UI_FONTS.title}`;
     ctx.fillStyle = UI_COLORS.goldBright;
     ctx.fillText(`${dice.min} - ${dice.max}`, 1790, 1124);
+
+    const ceremonyActive = timestamp < this.rollCeremonyUntil;
+    let displayRoll = dice.lastRoll;
+    if (ceremonyActive) {
+      const t = 1 - (this.rollCeremonyUntil - timestamp) / 1100;
+      const span = Math.max(1, this.rollCeremonyMax - this.rollCeremonyMin);
+      if (t < 0.72) {
+        displayRoll = this.rollCeremonyMin + Math.floor(((timestamp * 0.045) % 1) * (span + 1));
+        displayRoll = Math.min(this.rollCeremonyMax, Math.max(this.rollCeremonyMin, displayRoll));
+      } else {
+        displayRoll = this.rollCeremonyTarget;
+      }
+      this.drawRollCeremony(displayRoll, t, timestamp);
+    }
+
     ctx.font = `800 22px ${UI_FONTS.mono}`;
-    ctx.fillStyle = UI_COLORS.muted;
-    ctx.fillText(`LAST ROLL: ${dice.lastRoll}`, 1800, 1164);
+    ctx.fillStyle = ceremonyActive ? UI_COLORS.goldBright : UI_COLORS.muted;
+    ctx.fillText(`LAST ROLL: ${displayRoll}`, 1800, 1164);
     ctx.restore();
 
     this.drawDiceMeter(dice.meterCharge, 1796, 1210, 638, 38);
@@ -401,9 +486,28 @@ export class HudRenderer {
       ctx.restore();
     }
 
-    if (dice.eventBanner !== undefined && dice.eventBanner.length > 0) {
+    if (dice.eventBanner !== undefined && dice.eventBanner.length > 0 && !ceremonyActive) {
       this.drawEventBanner(dice.eventBanner, timestamp);
     }
+  }
+
+  private drawRollCeremony(roll: number, t: number, timestamp: number): void {
+    const ctx = this.ctx;
+    const pulse = 0.85 + Math.sin(timestamp * 0.02) * 0.15;
+    drawPanel(ctx, { x: 980, y: 420, w: 600, h: 280 }, { alpha: 0.88, accent: UI_COLORS.gold, chamfer: 36, glow: true });
+    ctx.save();
+    ctx.globalAlpha = pulse;
+    ctx.textAlign = 'center';
+    ctx.font = `800 22px ${UI_FONTS.mono}`;
+    ctx.fillStyle = UI_COLORS.gold;
+    ctx.fillText('THE DICE TURNS', 1280, 480);
+    ctx.font = `900 120px ${UI_FONTS.title}`;
+    ctx.fillStyle = t >= 0.72 ? UI_COLORS.goldBright : UI_COLORS.ivory;
+    ctx.fillText(String(roll), 1280, 600);
+    ctx.font = `700 20px ${UI_FONTS.body}`;
+    ctx.fillStyle = UI_COLORS.muted;
+    ctx.fillText(`${this.rollCeremonyMin}–${this.rollCeremonyMax}`, 1280, 650);
+    ctx.restore();
   }
 
   private drawDiceMeter(charge: number, x: number, y: number, w: number, h: number): void {
