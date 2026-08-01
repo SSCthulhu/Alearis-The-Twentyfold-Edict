@@ -2,6 +2,7 @@ import * as THREE from 'three';
 import {
   KAYKIT_ANIMATION_BANKS,
   KAYKIT_MODELS,
+  applyCelMaterials,
   cloneCachedGLTF,
   getCachedGLTF,
   hasCachedGLTF,
@@ -176,7 +177,8 @@ export class KayKitFigure implements ActorVisual {
   private readonly mixer: THREE.AnimationMixer;
   private readonly actions = new Map<FigureAnimName, THREE.AnimationAction>();
   private currentName: FigureAnimName | null = null;
-  private facing = 1;
+  private facingYaw = 0;
+  private targetFacingYaw = 0;
   private disposed = false;
 
   constructor(options: KayKitFigureOptions) {
@@ -184,6 +186,11 @@ export class KayKitFigure implements ActorVisual {
     this.model = clone.scene;
     this.root.name = `${options.name}_kaykit_root`;
     this.model.name = `${options.name}_kaykit_model`;
+
+    // KayKit ships PBR MeshStandardMaterials; converted to self-lit cel so the
+    // skinned figure reads with its painted atlas colours under the same NPR
+    // grade as the world, rather than as a black PBR silhouette.
+    applyCelMaterials(this.model);
 
     this.model.traverse((object) => {
       if (!(object instanceof THREE.Mesh)) return;
@@ -228,15 +235,21 @@ export class KayKitFigure implements ActorVisual {
 
   setFacing(dir: number): void {
     const next = dir < 0 ? -1 : 1;
-    if (next === this.facing) return;
-    this.facing = next;
-    this.root.rotation.y = next < 0 ? Math.PI : 0;
+    this.targetFacingYaw = next < 0 ? Math.PI : 0;
   }
 
   updateAnim(dt: number, state: FigureAnimState): void {
     if (this.disposed) return;
     const requested = this.actions.has(state.name) ? state.name : 'idle';
     this.playState(requested);
+
+    // Smooth 180° turns so KayKit silhouettes don't hard-pop every direction change.
+    const yawDelta = Math.atan2(
+      Math.sin(this.targetFacingYaw - this.facingYaw),
+      Math.cos(this.targetFacingYaw - this.facingYaw),
+    );
+    this.facingYaw += yawDelta * Math.min(1, dt * 14);
+    this.root.rotation.y = this.facingYaw;
 
     const action = this.actions.get(requested);
     const locomotionScale =

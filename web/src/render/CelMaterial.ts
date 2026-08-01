@@ -473,6 +473,165 @@ export function createCelMaterial(opts: CelMaterialOptions): THREE.ShaderMateria
   });
 }
 
+/**
+ * Skinned/textured cel vertex stage. Mirrors the normal/depth prepass so the
+ * exact same skinning deforms the beauty pass — a plain CelMaterial vertex has
+ * no skinning includes and would freeze KayKit rigs in bind pose. The skinning
+ * chunks are `USE_SKINNING`-guarded, so static props compile them out and fall
+ * back to `position`/`normal` unchanged.
+ */
+const CEL_SKINNED_VERT = /* glsl */ `
+varying vec3 vNormal;
+varying vec3 vViewPos;
+varying vec2 vCelUv;
+#include <common>
+#include <skinning_pars_vertex>
+
+void main() {
+  vCelUv = uv;
+  #include <beginnormal_vertex>
+  #include <skinbase_vertex>
+  #include <skinnormal_vertex>
+  #include <defaultnormal_vertex>
+  #include <begin_vertex>
+  #include <skinning_vertex>
+  vNormal = normalize(transformedNormal);
+  vec4 mv = modelViewMatrix * vec4(transformed, 1.0);
+  vViewPos = mv.xyz;
+  gl_Position = projectionMatrix * mv;
+}
+`;
+
+/**
+ * Textured cel fragment. Identical NPR lighting to CEL_FRAG, but the albedo is
+ * read from the GLB base-colour atlas through the mesh UVs instead of a flat
+ * uniform, and an emissive term carries KayKit glow materials (skeleton eyes).
+ * The sampled texel is sRGB, so it is decoded to the linear working space the
+ * rest of the math (and every THREE.Color uniform) already lives in.
+ */
+const CEL_SKINNED_FRAG = /* glsl */ `
+${SRGB_ENCODE_GLSL}
+uniform vec3 uColor;
+uniform vec3 uRimColor;
+uniform float uRimPower;
+uniform float uRimStrength;
+uniform sampler2D uRamp;
+uniform sampler2D uMatcap;
+uniform sampler2D uMap;
+uniform float uHasMap;
+uniform sampler2D uEmissiveMap;
+uniform float uHasEmissiveMap;
+uniform vec3 uEmissive;
+uniform float uEmissiveIntensity;
+uniform vec3 uKeyDir;
+uniform vec3 uFillColor;
+uniform vec3 uShadowTint;
+uniform float uShadowBias;
+uniform float uSpecularBand;
+uniform float uSpecularStrength;
+uniform float uAmbient;
+uniform float uMatcapMix;
+
+varying vec3 vNormal;
+varying vec3 vViewPos;
+varying vec2 vCelUv;
+
+vec3 celSrgbToLinear(vec3 c) {
+  return mix(c / 12.92, pow((c + 0.055) / 1.055, vec3(2.4)), step(0.04045, c));
+}
+
+void main() {
+  vec3 N = normalize(vNormal);
+  vec3 V = normalize(-vViewPos);
+  vec3 L = normalize(uKeyDir);
+
+  float ndl = clamp((dot(N, L) + 0.12) / 1.12, 0.0, 1.0);
+  float rampU = clamp(ndl * 0.82 + uAmbient * 0.26, 0.04, 0.99);
+  vec3 ramp = texture2D(uRamp, vec2(rampU, 0.5)).rgb;
+
+  vec3 albedo = uColor;
+  if (uHasMap > 0.5) {
+    albedo *= celSrgbToLinear(texture2D(uMap, vCelUv).rgb);
+  }
+
+  float dark = 1.0 - rampU;
+  vec3 base = albedo * ramp;
+  base = mix(base, base * uShadowTint * 1.55, dark * dark * uShadowBias);
+
+  vec2 matUv = N.xy * 0.5 + 0.5;
+  vec3 matcap = texture2D(uMatcap, matUv).rgb;
+  base = mix(base, base * matcap * 1.9, uMatcapMix);
+
+  vec3 H = normalize(L + V);
+  float spec = max(dot(N, H), 0.0);
+  base += vec3(step(uSpecularBand, spec) * uSpecularStrength);
+
+  base += uFillColor * 0.13;
+
+  float fres = pow(1.0 - max(dot(N, V), 0.0), uRimPower);
+  base += uRimColor * fres * uRimStrength;
+
+  vec3 emissive = uEmissive * uEmissiveIntensity;
+  if (uHasEmissiveMap > 0.5) {
+    emissive *= celSrgbToLinear(texture2D(uEmissiveMap, vCelUv).rgb);
+  }
+  base += emissive;
+
+  gl_FragColor = vec4(alearisEncode(base), 1.0);
+}
+`;
+
+/**
+ * Rebuilds a KayKit `MeshStandardMaterial` as a self-lit cel material so
+ * skinned characters, enemies and bosses read with the game's NPR grade and
+ * their painted atlas colours — instead of collapsing to black silhouettes,
+ * which is what a PBR material does under the vestigial scene lights the rest
+ * of the self-lit world ignores. The source's base-colour and emissive maps,
+ * tint and side are carried across; the shared ramp/matcap keep the figure on
+ * the active world palette. Uniform textures stay owned by KayKitLoader.
+ */
+export function createCelMaterialFromStandard(
+  source: THREE.MeshStandardMaterial,
+): THREE.ShaderMaterial {
+  const map = source.map ?? null;
+  if (map) map.colorSpace = THREE.SRGBColorSpace;
+  const emissiveMap = source.emissiveMap ?? null;
+  if (emissiveMap) emissiveMap.colorSpace = THREE.SRGBColorSpace;
+  const keyDir = new THREE.Vector3(0.45, 0.78, 0.44).normalize();
+
+  const material = new THREE.ShaderMaterial({
+    uniforms: {
+      uColor: { value: source.color.clone() },
+      uRimColor: { value: new THREE.Color('#ffe9a8') },
+      uRimPower: { value: 3.2 },
+      uRimStrength: { value: 0.5 },
+      uRamp: { value: getSharedRamp() },
+      uMatcap: { value: getSharedMatcap() },
+      uMatcapMix: { value: 0.0 },
+      uMap: { value: map ?? getSharedRamp() },
+      uHasMap: { value: map ? 1 : 0 },
+      uEmissiveMap: { value: emissiveMap ?? getSharedRamp() },
+      uHasEmissiveMap: { value: emissiveMap ? 1 : 0 },
+      uEmissive: { value: source.emissive.clone() },
+      uEmissiveIntensity: { value: source.emissiveIntensity ?? 1 },
+      uKeyDir: { value: keyDir },
+      uFillColor: { value: new THREE.Color('#6a9cc0') },
+      uShadowTint: { value: activeShadowTint.clone() },
+      uShadowBias: { value: 0.4 },
+      uSpecularBand: { value: 0.9 },
+      uSpecularStrength: { value: 0.14 },
+      uAmbient: { value: 0.72 },
+    },
+    vertexShader: CEL_SKINNED_VERT,
+    fragmentShader: CEL_SKINNED_FRAG,
+  });
+  material.name = `${source.name || 'kaykit'}_cel`;
+  material.side = source.side;
+  material.transparent = source.transparent;
+  material.alphaTest = source.alphaTest;
+  return material;
+}
+
 /** Inverted-hull outline — BackSide, push along smoothed normals. */
 export function createOutlineMesh(
   source: THREE.Mesh | THREE.SkinnedMesh,

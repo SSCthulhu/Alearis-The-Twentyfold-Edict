@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import { KAYKIT_PROPS, applyCelMaterials, cloneCachedGLTF, hasCachedGLTF } from '../assets/KayKitLoader';
 import { attachOutline, createCelMaterial, type SurfaceTextureKind } from '../render/CelMaterial';
 import { getPalette } from '../render/Palettes';
 import type { AABB, Vec2, WorldId } from '../core/types';
@@ -120,6 +121,52 @@ function createOutlinedBox(
   parent.add(mesh);
   attachOutline(parent, mesh, ink, outlineWidth);
   return mesh;
+}
+
+/**
+ * Normalizes a cached KayKit prop to a feet-origin gameplay marker. Cached
+ * geometry, materials and textures stay owned by KayKitLoader across floors.
+ */
+function createKayKitProp(
+  url: string,
+  name: string,
+  position: Vec2,
+  targetHeight: number,
+  depth: number,
+): THREE.Group | null {
+  if (!hasCachedGLTF(url)) return null;
+
+  const model = cloneCachedGLTF(url).scene;
+  model.updateMatrixWorld(true);
+  const sourceBounds = new THREE.Box3().setFromObject(model);
+  const sourceHeight = sourceBounds.max.y - sourceBounds.min.y;
+  if (sourceBounds.isEmpty() || !Number.isFinite(sourceHeight) || sourceHeight <= 0.001) return null;
+
+  const sourceCenter = sourceBounds.getCenter(new THREE.Vector3());
+  const visualScale = targetHeight / sourceHeight;
+  model.scale.setScalar(visualScale);
+  model.position.set(
+    position.x - sourceCenter.x * visualScale,
+    position.y - sourceBounds.min.y * visualScale,
+    depth - sourceCenter.z * visualScale,
+  );
+  // Match the actors: cel-convert the prop's PBR materials so chests, barrels
+  // and crates carry the same NPR grade instead of leaning on scene lights.
+  applyCelMaterials(model);
+
+  model.traverse((object) => {
+    if (!(object instanceof THREE.Mesh)) return;
+    object.castShadow = true;
+    object.receiveShadow = true;
+    object.frustumCulled = true;
+    object.userData.cacheOwnedResources = true;
+  });
+
+  const root = new THREE.Group();
+  root.name = name;
+  root.userData.kayKitProp = true;
+  root.add(model);
+  return root;
 }
 
 /**
@@ -946,16 +993,36 @@ function addLedgeProps(root: THREE.Group, world: WorldId, platforms: readonly Ar
     specularStrength: 0.22,
   });
 
+  let placed = 0;
   for (let i = 0; i < platforms.length; i++) {
     const platform = platforms[i]!;
-    if (platform.aabb.w < 2.8 || i % 2 !== 0) continue;
+    if (platform.aabb.w < 3.4 || i % 2 !== 0 || placed >= 2) continue;
     const side = i % 4 === 0 ? -1 : 1;
+    const position = {
+      x: platform.aabb.x + platform.aabb.w * (side < 0 ? 0.16 : 0.84),
+      y: platform.topY,
+    };
+    const isBarrel = placed % 2 === 0;
+    const prop = createKayKitProp(
+      isBarrel ? KAYKIT_PROPS.barrelSmall : KAYKIT_PROPS.crateLarge,
+      `${platform.id}_${isBarrel ? 'barrel' : 'crate'}_${i}`,
+      position,
+      isBarrel ? 0.72 : 0.58,
+      0.78,
+    );
+    if (prop) {
+      prop.userData.interactive = false;
+      root.add(prop);
+      placed++;
+      continue;
+    }
+
     createOutlinedBox(
       root,
       `${platform.id}_ledge_prop_${i}`,
       new THREE.Vector3(0.38 + (i % 3) * 0.12, 0.16, 0.42),
       new THREE.Vector3(
-        platform.aabb.x + platform.aabb.w * (side < 0 ? 0.18 : 0.82),
+        position.x,
         platform.topY + 0.1,
         1.24,
       ),
@@ -963,6 +1030,7 @@ function addLedgeProps(root: THREE.Group, world: WorldId, platforms: readonly Ar
       palette.ink,
       0.014,
     );
+    placed++;
   }
 }
 
@@ -1387,8 +1455,20 @@ function addWorldFourDiceDecor(root: THREE.Group, floor: number, bounds: AABB): 
   }
 }
 
+function createRewardChest(arena: Arena): THREE.Group {
+  const name = `w${arena.world}_f${arena.floor}_chest`;
+  const preferredUrl = arena.floor === 5 ? KAYKIT_PROPS.chestGold : KAYKIT_PROPS.chest;
+  const chestUrl = hasCachedGLTF(preferredUrl) ? preferredUrl : KAYKIT_PROPS.chest;
+  const chest = createKayKitProp(chestUrl, name, arena.chest, 1.1, 0.78);
+  if (chest) {
+    chest.userData.interactionPoint = cloneVec2(arena.chest);
+    return chest;
+  }
+  return createMarker(arena.world, name, arena.chest);
+}
+
 function addArenaMarkers(arena: Arena): void {
-  arena.root.add(createMarker(arena.world, `w${arena.world}_f${arena.floor}_chest`, arena.chest));
+  arena.root.add(createRewardChest(arena));
   arena.root.add(arena.gate.mesh);
   for (let i = 0; i < arena.chargeStations.length; i++) {
     arena.root.add(createMarker(arena.world, `charge_station_${i}`, arena.chargeStations[i]!, '#70e0ff'));

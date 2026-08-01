@@ -1,6 +1,7 @@
 import * as THREE from 'three';
 import { GLTFLoader, type GLTF } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import { clone as cloneSkeleton } from 'three/examples/jsm/utils/SkeletonUtils.js';
+import { createCelMaterialFromStandard } from '../render/CelMaterial';
 
 const baseUrl = import.meta.env.BASE_URL.endsWith('/')
   ? import.meta.env.BASE_URL
@@ -28,6 +29,13 @@ export const KAYKIT_MODELS = {
   umbraBentDie: kayKitUrl('bosses/4GTN_Forgotten.glb'),
   aurelineLoadedSaint: kayKitUrl('bosses/Tiefling.glb'),
   twentyfoldSovereign: kayKitUrl('bosses/4GTN.glb'),
+} as const;
+
+export const KAYKIT_PROPS = {
+  chest: kayKitUrl('props/chest.gltf'),
+  chestGold: kayKitUrl('props/chest_gold.gltf'),
+  barrelSmall: kayKitUrl('props/barrel_small.gltf'),
+  crateLarge: kayKitUrl('props/crate_large.gltf'),
 } as const;
 
 export const KAYKIT_ANIMATION_BANKS = {
@@ -82,7 +90,7 @@ export async function loadGLTF(url: string): Promise<GLTF> {
 
 export function getCachedGLTF(url: string): GLTF {
   const gltf = cache.get(url);
-  if (!gltf) throw new Error(`KayKit GLB was not preloaded: ${url}`);
+  if (!gltf) throw new Error(`KayKit GLTF was not preloaded: ${url}`);
   return gltf;
 }
 
@@ -93,6 +101,38 @@ export function cloneCachedGLTF(url: string): CachedGLTFClone {
     scene: cloneSkeleton(source.scene) as THREE.Group,
     animations: source.animations,
   };
+}
+
+/**
+ * Cel materials converted from the KayKit PBR sources, keyed by the source
+ * material's uuid. SkeletonUtils shares source materials by reference across
+ * every clone, so one cel material per source is built once and reused by all
+ * figures/props for the run — matching how geometry and textures are shared.
+ */
+const celMaterialCache = new Map<string, THREE.ShaderMaterial>();
+
+function toCelMaterial(source: THREE.Material): THREE.Material {
+  if (!(source instanceof THREE.MeshStandardMaterial)) return source;
+  const cached = celMaterialCache.get(source.uuid);
+  if (cached) return cached;
+  const cel = createCelMaterialFromStandard(source);
+  celMaterialCache.set(source.uuid, cel);
+  return cel;
+}
+
+/**
+ * Swaps every KayKit `MeshStandardMaterial` on a cloned scene for its self-lit
+ * cel equivalent. Skinned characters otherwise render as black silhouettes:
+ * they are the only meshes that rely on the scene's three lights, which the
+ * rest of the self-lit cel world ignores. Textures/geometry stay cache-owned.
+ */
+export function applyCelMaterials(root: THREE.Object3D): void {
+  root.traverse((object) => {
+    if (!(object instanceof THREE.Mesh)) return;
+    object.material = Array.isArray(object.material)
+      ? object.material.map(toCelMaterial)
+      : toCelMaterial(object.material);
+  });
 }
 
 function disposeMaterial(material: THREE.Material, textures: Set<THREE.Texture>): void {
@@ -109,7 +149,7 @@ export function disposeObject3D(root: THREE.Object3D): void {
   const textures = new Set<THREE.Texture>();
 
   root.traverse((object) => {
-    if (!(object instanceof THREE.Mesh)) return;
+    if (!(object instanceof THREE.Mesh) || object.userData.cacheOwnedResources === true) return;
     geometries.add(object.geometry);
     const meshMaterials = Array.isArray(object.material) ? object.material : [object.material];
     for (const material of meshMaterials) materials.add(material);
@@ -129,11 +169,14 @@ export function disposeCachedGLTF(url: string): void {
 
 export function disposeKayKitCache(): void {
   for (const url of [...cache.keys()]) disposeCachedGLTF(url);
+  for (const material of celMaterialCache.values()) material.dispose();
+  celMaterialCache.clear();
   pending.clear();
 }
 
 const CRITICAL_URLS: readonly string[] = [
   ...Object.values(KAYKIT_MODELS),
+  ...Object.values(KAYKIT_PROPS),
   ...Object.values(KAYKIT_ANIMATION_BANKS.medium),
   ...Object.values(KAYKIT_ANIMATION_BANKS.large),
 ];
